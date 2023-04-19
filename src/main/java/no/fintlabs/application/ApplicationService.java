@@ -39,10 +39,10 @@ public class ApplicationService {
 
     @PostConstruct
     public void init(){
-        log.info("Starting up.....");
+        log.info("Starting up applicationService.....");
         List<String> appResId1 = new ArrayList<>();
-        appResId1.add("Skole1");
-        appResId1.add("Skole2");
+        appResId1.add("appResId1");
+        appResId1.add("appResId2");
         Application a1 = Application
                 .builder()
                 .applicationId("AdobeK12")
