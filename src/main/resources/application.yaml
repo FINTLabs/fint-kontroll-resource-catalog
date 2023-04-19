@@ -1,6 +1,45 @@
+fint:
+  org-id: fintlabs.no
+  application-id: fint-kontroll-resource-catalog
+  kafka:
+    default-replicas: 1
+    topic:
+      org-id: ${fint.org-id}
+      domain-context: kontroll
+    application-id: ${fint.application-id}
+  client:
+    password: ''
+    username: ''
+    base-url: https://beta.felleskomponent.no
+    registration-id: fint
+  kontroll:
+    orgunit-catalog:
+      pagesize: 50
 spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ${fint.application-id}
+  jpa:
+    hibernate:
+      #ddl-auto: validate
+      ddl-auto: create
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: https://idp.felleskomponent.no/nidp/oauth/nam
+  datasource:
+    hikari:
+      schema: public
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+  server:
+    port: 8082
+  logging:
+    level:
+      org.apache.kafka: OFF
+      no.fintlabs.kafka: OFF
+      org.springframework.kafka: OFF
