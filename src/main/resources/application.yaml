@@ -1,12 +1,12 @@
 fint:
   org-id: fintlabs.no
   application-id: fint-kontroll-resource-catalog
-  kafka:
-    default-replicas: 1
-    topic:
-      org-id: ${fint.org-id}
-      domain-context: kontroll
-    application-id: ${fint.application-id}
+#  kafka:
+#    default-replicas: 1
+#    topic:
+#      org-id: ${fint.org-id}
+#      domain-context: kontroll
+#   application-id: ${fint.application-id}
   client:
     password: ''
     username: ''
@@ -16,10 +16,10 @@ fint:
     orgunit-catalog:
       pagesize: 50
 spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: ${fint.application-id}
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    consumer:
+#      group-id: ${fint.application-id}
   jpa:
     hibernate:
       #ddl-auto: validate
