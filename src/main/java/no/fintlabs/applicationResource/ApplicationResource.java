@@ -2,6 +2,7 @@ package no.fintlabs.applicationResource;
 
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.resource.Resource;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name="application_resource")
-public class ApplicationResource {
+public class ApplicationResource extends Resource {
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -4,11 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResourceDTO;
 import no.fintlabs.applicationResource.ApplicationResourceRepository;
 import no.fintlabs.applicationResource.ApplicationResourceService;
+import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -28,5 +31,11 @@ public class ResourceController {
     @GetMapping()
     public List<ApplicationResourceDTO> getAllResources(@AuthenticationPrincipal Jwt jwt){
         return applicationResourceService.getAllApplicationResources();
+    }
+
+    @GetMapping("/{id}")
+    public ApplicationResourceDTO getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
+        log.info("Fetching applicationResourse by id: " + id);
+        return applicationResourceService.getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
     }
 }

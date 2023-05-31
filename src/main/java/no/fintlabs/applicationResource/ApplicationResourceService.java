@@ -2,13 +2,16 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -49,6 +52,16 @@ public class ApplicationResourceService {
                 .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public ApplicationResourceDTO getApplicationResourceById(FintJwtEndUserPrincipal from, Long id) {
+        ModelMapper modelMapper = new ModelMapper();
+        Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
+        return applicationResourceOptional.stream()
+                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
+                .findFirst().get();
+    }
+
 
     @PostConstruct
     public void init(){
