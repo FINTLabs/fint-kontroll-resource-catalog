@@ -17,7 +17,7 @@ public class ApplicationResourceDTO {
     private String resourceType;
     private String applicationAccessType;
     private String applicationAccessRole;
-    private String platform;
+    private List<String> platform;
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;

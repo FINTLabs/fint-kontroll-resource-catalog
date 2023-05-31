@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name="application_resource",schema = "public")
+@Table(name="application_resource")
 public class ApplicationResource {
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +23,10 @@ public class ApplicationResource {
     private String resourceType;
     private String applicationAccessType;
     private String applicationAccessRole;
-    private String platform;
+
+    @ElementCollection
+    @CollectionTable(name = "application_resource_platform",joinColumns = @JoinColumn(name="application_resource_id"))
+    private List<String> platform = new ArrayList<>();
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;
@@ -31,10 +34,10 @@ public class ApplicationResource {
 
 
     @ElementCollection
-    @CollectionTable(name = "application_resource_valid_for_roles",joinColumns = @JoinColumn(name = "application_resource_id"))
+    @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "application_resource_id"))
     private List<String> validForRoles= new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "application_resource_id")
     @CollectionTable(name="application_resource_valid_for_org_units")
     private List<ApplicationResourceLocation> validForOrgUnits = new ArrayList<>();

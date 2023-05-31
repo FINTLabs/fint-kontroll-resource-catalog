@@ -6,6 +6,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,6 +41,15 @@ public class ApplicationResourceService {
         };
     }
 
+    @Transactional
+    public List<ApplicationResourceDTO> getAllApplicationResources() {
+        ModelMapper modelMapper = new ModelMapper();
+        List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
+        return applicationResources.stream()
+                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
+                .collect(Collectors.toList());
+    }
+
     @PostConstruct
     public void init(){
         log.info("Starting applicationResourceService....");
@@ -52,6 +62,17 @@ public class ApplicationResourceService {
         List<String> validForRolesAppRes3 = new ArrayList<>();
         validForRolesAppRes3.add("student");
         validForRolesAppRes3.add("employee");
+
+        List<String> plattformAppres1 = new ArrayList<>();
+        plattformAppres1.add("WIN");
+        plattformAppres1.add("Linux");
+        List<String> plattformAppres2 = new ArrayList<>();
+        plattformAppres2.add("Mac");
+        plattformAppres2.add("WIN");
+        List<String> plattformAppres3 = new ArrayList<>();
+        plattformAppres3.add("ios");
+        plattformAppres3.add("android");
+        plattformAppres3.add("WIN");
 
         //ApplicationResource1
         ApplicationResource appRes1 = new ApplicationResource();
@@ -83,7 +104,7 @@ public class ApplicationResourceService {
         appRes1.setValidForOrgUnits(locationsAppRes1);
         appRes1.setApplicationAccessType("ApplikasjonTilgang");
         appRes1.setApplicationAccessRole("Full access");
-        appRes1.setPlatform("WIN");
+        appRes1.setPlatform(plattformAppres1);
         appRes1.setAccessType("device");
         this.save(appRes1);
 
@@ -118,7 +139,7 @@ public class ApplicationResourceService {
         appRes2.setValidForOrgUnits(locationsAppRes2);
         appRes2.setApplicationAccessType("ApplikasjonTilgang");
         appRes2.setApplicationAccessRole("Full access");
-        appRes2.setPlatform("WIN");
+        appRes2.setPlatform(plattformAppres2);
         appRes2.setAccessType("device");
         this.save(appRes2);
 
@@ -152,17 +173,11 @@ public class ApplicationResourceService {
         appRes3.setValidForOrgUnits(locationsAppRes3);
         appRes3.setApplicationAccessType("ApplikasjonTilgang");
         appRes3.setApplicationAccessRole("Full access");
-        appRes3.setPlatform("WIN");
+        appRes3.setPlatform(plattformAppres3);
         appRes3.setAccessType("device");
         this.save(appRes3);
     }
 
-    public List<ApplicationResourceDTO> getAllApplicationResources() {
-        ModelMapper modelMapper = new ModelMapper();
-        List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
-        return applicationResources.stream()
-                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
-                .collect(Collectors.toList());
-    }
+
 
 }
