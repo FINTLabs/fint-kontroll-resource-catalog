@@ -5,7 +5,6 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -45,7 +44,7 @@ public class ApplicationResourceService {
     }
 
     @Transactional
-    public List<ApplicationResourceDTO> getAllApplicationResources() {
+    public List<ApplicationResourceDTO> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
         ModelMapper modelMapper = new ModelMapper();
         List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
         return applicationResources.stream()
@@ -54,12 +53,12 @@ public class ApplicationResourceService {
     }
 
     @Transactional
-    public ApplicationResourceDTO getApplicationResourceById(FintJwtEndUserPrincipal from, Long id) {
+    public Optional <ApplicationResourceDTO> getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
         ModelMapper modelMapper = new ModelMapper();
         Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
-        return applicationResourceOptional.stream()
-                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
-                .findFirst().get();
+        return applicationResourceOptional
+                .map(applicationResource -> modelMapper.map(applicationResource,ApplicationResourceDTO.class));
+
     }
 
 

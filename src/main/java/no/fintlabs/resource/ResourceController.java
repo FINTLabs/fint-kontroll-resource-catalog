@@ -30,12 +30,13 @@ public class ResourceController {
 
     @GetMapping()
     public List<ApplicationResourceDTO> getAllResources(@AuthenticationPrincipal Jwt jwt){
-        return applicationResourceService.getAllApplicationResources();
+        return applicationResourceService.getAllApplicationResources(FintJwtEndUserPrincipal.from(jwt));
     }
 
-    @GetMapping("/{id}")
-    public ApplicationResourceDTO getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
-        log.info("Fetching applicationResourse by id: " + id);
-        return applicationResourceService.getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
-    }
+//    @GetMapping("/{id}")
+//    public ApplicationResourceDTO getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
+//        log.info("Fetching applicationResourse by id: " + id);
+//        return applicationResourceService.getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
+//        //endre til responsEntity 200/404
+//    }
 }
