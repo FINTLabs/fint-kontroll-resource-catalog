@@ -16,7 +16,7 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
     List<ApplicationResource> findAllApplicationResources();
 
 
-    @Query("select a from ApplicationResource a where upper(a.resourceName) like upper(?1)")
+    @Query("select a from ApplicationResource a where upper(a.resourceName) like upper(concat('%', ?1, '%'))")
     List<ApplicationResource> getApplicationResourceBySearch(String resourceName);
 
 }
