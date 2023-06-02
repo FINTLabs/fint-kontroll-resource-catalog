@@ -62,6 +62,20 @@ public class ApplicationResourceService {
     }
 
 
+    public List<ApplicationResourceDTOSimplified> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
+                                                                                      String search) {
+        List<ApplicationResource> applicationResources;
+
+        applicationResources = applicationResourceRepository.getApplicationResourceBySearch(search);
+        log.info("Fetching applicationResources. Count: " + applicationResources.size());
+
+        return applicationResources
+                .stream()
+                .map(ApplicationResource::toApplicationResourceDTOSimplified)
+                .toList();
+    }
+
+
     @PostConstruct
     public void init(){
         log.info("Starting applicationResourceService....");
@@ -189,7 +203,6 @@ public class ApplicationResourceService {
         appRes3.setAccessType("device");
         this.save(appRes3);
     }
-
 
 
 }

@@ -36,5 +36,19 @@ public class ApplicationResource extends Resource {
     @CollectionTable(name="application_resource_valid_for_org_units")
     private List<ApplicationResourceLocation> validForOrgUnits = new ArrayList<>();
 
+
+    public ApplicationResourceDTOSimplified toApplicationResourceDTOSimplified(){
+        return ApplicationResourceDTOSimplified
+                .builder()
+                .id(id)
+                .resourceId(resourceId)
+                .resourceName(resourceName)
+                .resourceType(resourceType)
+                .resourceLimit(resourceLimit)
+                .build();
+    }
+
+
+
 }
 
