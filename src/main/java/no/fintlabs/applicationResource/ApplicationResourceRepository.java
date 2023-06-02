@@ -17,7 +17,7 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
     List<ApplicationResource> findAllApplicationResources();
 
     @Query("select a from ApplicationResource a where a.id = ?1")
-    Mono<ApplicationResource> getApplicationResourceById(Long id);
+    Optional<ApplicationResource> getApplicationResourceById(Long id);
 
 
     @Query("select a from ApplicationResource a where upper(a.resourceName) like upper(concat('%', ?1, '%'))")

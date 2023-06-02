@@ -61,6 +61,7 @@ public class ApplicationResourceService {
 
     }
 
+
 //applicationResourceOptional.ifPresentOrElse(ar -> modelMapper.map(ar,ApplicationResourceDTO.class),null);
     public List<ApplicationResourceDTOSimplified> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
                                                                                       String search) {
