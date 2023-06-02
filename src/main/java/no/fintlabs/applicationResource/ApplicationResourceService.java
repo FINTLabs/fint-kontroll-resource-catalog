@@ -1,12 +1,18 @@
 package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -37,54 +43,165 @@ public class ApplicationResourceService {
         };
     }
 
+    @Transactional
+    public List<ApplicationResourceDTO> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
+        ModelMapper modelMapper = new ModelMapper();
+        List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
+        return applicationResources.stream()
+                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Optional <ApplicationResourceDTO> getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
+        ModelMapper modelMapper = new ModelMapper();
+        Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
+        return applicationResourceOptional
+                .map(applicationResource -> modelMapper.map(applicationResource,ApplicationResourceDTO.class));
+
+    }
+
+//applicationResourceOptional.ifPresentOrElse(ar -> modelMapper.map(ar,ApplicationResourceDTO.class),null);
+    public List<ApplicationResourceDTOSimplified> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
+                                                                                      String search) {
+        List<ApplicationResource> applicationResources;
+
+        applicationResources = applicationResourceRepository.getApplicationResourceBySearch(search);
+        log.info("Fetching applicationResources. Count: " + applicationResources.size());
+
+        return applicationResources
+                .stream()
+                .map(ApplicationResource::toApplicationResourceDTOSimplified)
+                .toList();
+    }
+
+
     @PostConstruct
     public void init(){
         log.info("Starting applicationResourceService....");
-        List<String> childresResourceIdsAppres1 = new ArrayList<>();
-        childresResourceIdsAppres1.add("appResId2");
-        List<String> validForRolesAppRes1_2 = new ArrayList<>();
-        validForRolesAppRes1_2.add("student");
 
-        //Overordna
+
+        List<String> validForRolesAppRes1 = new ArrayList<>();
+        validForRolesAppRes1.add("student");
+        List<String> validForRolesAppRes2 = new ArrayList<>();
+        validForRolesAppRes2.add("employee");
+        List<String> validForRolesAppRes3 = new ArrayList<>();
+        validForRolesAppRes3.add("student");
+        validForRolesAppRes3.add("employee");
+
+        List<String> plattformAppres1 = new ArrayList<>();
+        plattformAppres1.add("WIN");
+        plattformAppres1.add("Linux");
+        List<String> plattformAppres2 = new ArrayList<>();
+        plattformAppres2.add("Mac");
+        plattformAppres2.add("WIN");
+        List<String> plattformAppres3 = new ArrayList<>();
+        plattformAppres3.add("ios");
+        plattformAppres3.add("android");
+        plattformAppres3.add("WIN");
+
+        //ApplicationResource1
         ApplicationResource appRes1 = new ApplicationResource();
-        appRes1.setResourceId("appResId1");
+        appRes1.setResourceId("adobek12");
         appRes1.setResourceName("Adobe K12 Utdanning");
+        appRes1.setResourceType("ApplicationResource");
+
         appRes1.setResourceLimit(1000L);
         appRes1.setResourceOwnerOrgUnitId("6");
-        appRes1.setResourceOwnerName("KOMP Utdanning og kompetanse");
-        appRes1.setResourceConsumerOrgUnitId("153");
-        appRes1.setResourceConsumerName("KOMP Område sørvest");
-        appRes1.setParentResourceId("appResId1");
-        appRes1.setChildrenResourceId(childresResourceIdsAppres1);
-        appRes1.setValidForRoles(validForRolesAppRes1_2);
-
+        appRes1.setResourceOwnerOrgUnitName("KOMP Utdanning og kompetanse");
+        appRes1.setValidForRoles(validForRolesAppRes1);
+        ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
+                .builder()
+                .resourceId("adobek12")
+                .orgunitId("194")
+                .orgUnitName("VGMIDT Midtbyen videregående skole")
+                .resourceLimit(100L)
+                .build();
+        ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
+                .builder()
+                .resourceId("adobek12")
+                .orgunitId("198")
+                .orgUnitName("VGSTOR Storskog videregående skole")
+                .resourceLimit(200L)
+                .build();
+        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
+        locationsAppRes1.add(applicationResourceLocation1);
+        locationsAppRes1.add(applicationResourceLocation2);
+        appRes1.setValidForOrgUnits(locationsAppRes1);
         appRes1.setApplicationAccessType("ApplikasjonTilgang");
         appRes1.setApplicationAccessRole("Full access");
-        appRes1.setPlatform("WIN");
+        appRes1.setPlatform(plattformAppres1);
         appRes1.setAccessType("device");
-        appRes1.setApplicationId("AdobeK12");
         this.save(appRes1);
 
 
-        //Underordna
+        //ApplicationResource2
         ApplicationResource appRes2 = new ApplicationResource();
-        appRes2.setResourceId("appResId2");
-        appRes2.setResourceName("Adobe K12 ved Storskog VGS");
+        appRes2.setResourceId("msproject");
+        appRes2.setResourceName("Microsoft Project Enterprise");
         appRes2.setResourceType("ApplicationResource");
-        appRes2.setResourceLimit(200L);
-        appRes2.setResourceOwnerOrgUnitId("6");
-        appRes2.setResourceOwnerName("KOMP Utdanning og kompetanse");
-        appRes2.setResourceConsumerOrgUnitId("198");
-        appRes2.setResourceConsumerName("VGSTOR Storskogen videregående skole");
-        appRes2.setParentResourceId("appResId1");
-        appRes2.setValidForRoles(validForRolesAppRes1_2);
+        appRes2.setResourceLimit(100L);
 
+        appRes2.setResourceOwnerOrgUnitId("5");
+        appRes2.setResourceOwnerOrgUnitName("FAK Finans og administrasjon");
+        appRes2.setValidForRoles(validForRolesAppRes2);
+        ApplicationResourceLocation applicationResourceLocation3 = ApplicationResourceLocation
+                .builder()
+                .resourceId("msproject")
+                .orgunitId("26")
+                .orgUnitName("OKO Økonomiavdeling")
+                .resourceLimit(20L)
+                .build();
+        ApplicationResourceLocation applicationResourceLocation4 = ApplicationResourceLocation
+                .builder()
+                .resourceId("msproject")
+                .orgunitId("30")
+                .orgUnitName("OKO Regnskapsseksjon")
+                .resourceLimit(30L)
+                .build();
+        List<ApplicationResourceLocation> locationsAppRes2 = new ArrayList<>();
+        locationsAppRes2.add(applicationResourceLocation3);
+        locationsAppRes2.add(applicationResourceLocation4);
+        appRes2.setValidForOrgUnits(locationsAppRes2);
         appRes2.setApplicationAccessType("ApplikasjonTilgang");
         appRes2.setApplicationAccessRole("Full access");
-        appRes2.setPlatform("WIN");
+        appRes2.setPlatform(plattformAppres2);
         appRes2.setAccessType("device");
-        appRes2.setApplicationId("AdobeK12");
         this.save(appRes2);
+
+        //ApplicationResource3
+        ApplicationResource appRes3 = new ApplicationResource();
+        appRes3.setResourceId("mskabal");
+        appRes3.setResourceName("Microsoft Kabal");
+        appRes3.setResourceType("ApplicationResource");
+        appRes3.setResourceLimit(300L);
+
+        appRes3.setResourceOwnerOrgUnitId("36");
+        appRes3.setResourceOwnerOrgUnitName("DIGIT Digitaliseringsavdeling");
+        appRes3.setValidForRoles(validForRolesAppRes3);
+        ApplicationResourceLocation applicationResourceLocation5 = ApplicationResourceLocation
+                .builder()
+                .resourceId("mskabal")
+                .orgunitId("47")
+                .orgUnitName("DIGIT Fagtjenester")
+                .resourceLimit(70L)
+                .build();
+        ApplicationResourceLocation applicationResourceLocation6 = ApplicationResourceLocation
+                .builder()
+                .resourceId("mskabal")
+                .orgunitId("38")
+                .orgUnitName("DIGIT Teknologiseksjon")
+                .resourceLimit(30L)
+                .build();
+        List<ApplicationResourceLocation> locationsAppRes3 = new ArrayList<>();
+        locationsAppRes3.add(applicationResourceLocation5);
+        locationsAppRes3.add(applicationResourceLocation6);
+        appRes3.setValidForOrgUnits(locationsAppRes3);
+        appRes3.setApplicationAccessType("ApplikasjonTilgang");
+        appRes3.setApplicationAccessRole("Full access");
+        appRes3.setPlatform(plattformAppres3);
+        appRes3.setAccessType("device");
+        this.save(appRes3);
     }
 
 
