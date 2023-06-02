@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @Slf4j
@@ -40,10 +41,10 @@ public class ResourceController {
         return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,type,page,size);
     }
 
-//    @GetMapping("/{id}")
-//    public ApplicationResourceDTO getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
-//        log.info("Fetching applicationResourse by id: " + id);
-//        return applicationResourceService.getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
-//        //endre til responsEntity 200/404
-//    }
+    @GetMapping("/{id}")
+    public Optional<ApplicationResourceDTO> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
+        log.info("Fetching applicationResourse by id: " + id);
+        return applicationResourceService.getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
+        //endre til responsEntity 200/404
+    }
 }
