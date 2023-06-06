@@ -18,9 +18,11 @@ import java.util.stream.Collectors;
 @Service
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
+    private final ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService) {
         this.applicationResourceRepository = applicationResourceRepository;
+        this.applicationResourceDTOSimplifiedService = applicationResourceDTOSimplifiedService;
     }
 
     public void save(ApplicationResource applicationResource){
@@ -134,6 +136,7 @@ public class ApplicationResourceService {
         appRes1.setPlatform(plattformAppres1);
         appRes1.setAccessType("device");
         this.save(appRes1);
+        applicationResourceDTOSimplifiedService.process(appRes1);
 
 
         //ApplicationResource2
@@ -169,6 +172,7 @@ public class ApplicationResourceService {
         appRes2.setPlatform(plattformAppres2);
         appRes2.setAccessType("device");
         this.save(appRes2);
+        applicationResourceDTOSimplifiedService.process(appRes2);
 
         //ApplicationResource3
         ApplicationResource appRes3 = new ApplicationResource();
@@ -203,6 +207,7 @@ public class ApplicationResourceService {
         appRes3.setPlatform(plattformAppres3);
         appRes3.setAccessType("device");
         this.save(appRes3);
+        applicationResourceDTOSimplifiedService.process(appRes3);
     }
 
 
