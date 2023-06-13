@@ -1,0 +1,40 @@
+fint:
+  org-id: fintlabs.no
+  kafka:
+    default-replicas: 1
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ${fint.application-id}
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://idp.felleskomponent.no/nidp/oauth/nam
+  kafka:
+    bootstrap-servers: localhost:9092
+  jpa:
+    properties:
+      javax:
+        persistence:
+          schema-generation:
+            scripts:
+              action: create
+              create-target: __init.sql
+              create-source: metadata
+    hibernate:
+      ddl-auto: none
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/
+    username: postgres
+    password: postgres
+    hikari:
+      schema: resource
+  flyway:
+    locations: classpath:db/migration/
+    lock-retry-count: 300
+
+server:
+  port: 8084
+

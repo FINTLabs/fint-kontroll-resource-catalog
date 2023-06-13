@@ -11,7 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "application_resource_location", schema = "public")
+@Table(name = "application_resource_location")
 public class ApplicationResourceLocation {
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
