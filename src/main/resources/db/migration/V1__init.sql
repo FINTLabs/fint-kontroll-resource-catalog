@@ -50,19 +50,3 @@ create table application_resource_valid_for_roles
             references application_resource,
     valid_for_roles varchar(255)
 );
-
-alter table application_resource_platform
-    add constraint fk65hwdpt5pfioanqbjw94g88qx
-        foreign key (id) references application_resource;
-
-alter table application_resource_valid_for_org_units
-    add constraint fk5xu4y1oug35mkm2x7q70b9pet
-        foreign key (application_resource_id) references application_resource;
-
-alter table application_resource_valid_for_org_units
-    add constraint fkf5c29k5i7vgjl2ds4moekvgle
-        foreign key (valid_for_org_units_id) references application_resource_location;
-
-alter table application_resource_valid_for_roles
-    add constraint fk5c86mybjdkjvmkixg8s9u1cnw
-        foreign key (id) references application_resource;
