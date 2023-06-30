@@ -30,7 +30,7 @@ spring:
     username: postgres
     password: postgres
     hikari:
-      schema: resource
+      schema: resources
   flyway:
     locations: classpath:db/migration/
     lock-retry-count: 300
