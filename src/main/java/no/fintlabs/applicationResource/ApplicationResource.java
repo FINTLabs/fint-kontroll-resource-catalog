@@ -1,10 +1,11 @@
 package no.fintlabs.applicationResource;
 
+import jakarta.persistence.*;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.resource.Resource;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 

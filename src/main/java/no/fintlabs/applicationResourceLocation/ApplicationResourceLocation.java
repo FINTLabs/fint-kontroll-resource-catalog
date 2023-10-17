@@ -1,9 +1,10 @@
 package no.fintlabs.applicationResourceLocation;
 
+import jakarta.persistence.*;
 import lombok.*;
 import no.fintlabs.applicationResource.ApplicationResource;
 
-import javax.persistence.*;
+
 
 @Getter
 @Setter

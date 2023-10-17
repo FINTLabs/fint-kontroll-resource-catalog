@@ -20,13 +20,11 @@ import java.util.Optional;
 @RequestMapping("/api/resources")
 public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
-    private final ApplicationResourceRepository applicationResourceRepository;
     private final ResponseFactory responseFactory;
 
 
     public ResourceController(ApplicationResourceService applicationResourceService, ApplicationResourceRepository applicationResourceRepository, ResponseFactory responseFactory) {
         this.applicationResourceService = applicationResourceService;
-        this.applicationResourceRepository = applicationResourceRepository;
         this.responseFactory = responseFactory;
     }
 

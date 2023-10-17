@@ -2,15 +2,15 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.opa.model.Scope;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
+import no.fintlabs.opa.AuthorizationClient;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -19,10 +19,12 @@ import java.util.stream.Collectors;
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService;
+    private final AuthorizationClient authorizationClient;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService, AuthorizationClient authorizationClient) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.applicationResourceDTOSimplifiedService = applicationResourceDTOSimplifiedService;
+        this.authorizationClient = authorizationClient;
     }
 
     public void save(ApplicationResource applicationResource){
@@ -64,7 +66,7 @@ public class ApplicationResourceService {
     }
 
 
-//applicationResourceOptional.ifPresentOrElse(ar -> modelMapper.map(ar,ApplicationResourceDTO.class),null);
+
     public List<ApplicationResourceDTOSimplified> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
                                                                                       String search) {
         List<ApplicationResource> applicationResources;
@@ -77,6 +79,19 @@ public class ApplicationResourceService {
                 .map(ApplicationResource::toApplicationResourceDTOSimplified)
                 .toList();
     }
+
+
+    public List<String> getAllAuthorizedOrgUnitIDs(){
+        List<Scope> scopes = authorizationClient.getUserScopes();
+        List<String> authorizedOrgUnitIDs = scopes.stream()
+                .filter(s -> s.getObjectType().equals("resource"))
+                .map(Scope::getOrgUnits)
+                .flatMap(Collection::stream)
+                .toList();
+        log.info("Authorized orgUnitIDs : " +authorizedOrgUnitIDs);
+        return authorizedOrgUnitIDs;
+    }
+
 
 
     @PostConstruct
