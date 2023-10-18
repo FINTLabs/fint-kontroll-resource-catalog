@@ -69,9 +69,10 @@ public class ApplicationResourceService {
 
     public List<ApplicationResourceDTOSimplified> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
                                                                                       String search) {
+        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
         List<ApplicationResource> applicationResources;
 
-        applicationResources = applicationResourceRepository.getApplicationResourceBySearch(search);
+        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search,validOrgUnits);
         log.info("Fetching applicationResources. Count: " + applicationResources.size());
 
         return applicationResources

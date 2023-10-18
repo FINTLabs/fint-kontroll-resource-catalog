@@ -22,8 +22,12 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
 
     @Query("""
             select a from ApplicationResource a inner join a.validForOrgUnits validForOrgUnits
-            where validForOrgUnits.orgunitId in ?1""")
-    List<ApplicationResource> findApplicationResourceByOrgUnitId(Collection<String> orgUnitIDs);
+            where 
+            validForOrgUnits.orgunitId in ?2
+            and upper(a.resourceName) like upper(concat('%', ?1, '%'))
+            """)
+    List<ApplicationResource> findApplicationResourceByOrgUnitIds(String resourceName,Collection<String> orgUnitIDs);
+
 
 }
 
