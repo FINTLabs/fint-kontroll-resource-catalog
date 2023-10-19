@@ -10,7 +10,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApplicationResourceDTO {
+public class ApplicationResourceDTOFrontendDetail {
     private Long id;
     private String resourceId;
     private String resourceName;

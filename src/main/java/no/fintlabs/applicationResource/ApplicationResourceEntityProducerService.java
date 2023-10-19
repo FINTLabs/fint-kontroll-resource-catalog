@@ -9,14 +9,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ApplicationResourceEntityProducerService {
-    private final EntityProducer<ApplicationResourceDTOSimplified> entityProducer;
+    private final EntityProducer<ApplicationResourceDTOFrontendList> entityProducer;
     private final EntityTopicNameParameters entityTopicNameParameters;
 
     public ApplicationResourceEntityProducerService(
             EntityProducerFactory entityProducerFactory,
             EntityTopicService entityTopicService
     ) {
-        entityProducer = entityProducerFactory.createProducer(ApplicationResourceDTOSimplified.class);
+        entityProducer = entityProducerFactory.createProducer(ApplicationResourceDTOFrontendList.class);
         entityTopicNameParameters = EntityTopicNameParameters
                 .builder()
                 .resource("resource-group")
@@ -26,7 +26,7 @@ public class ApplicationResourceEntityProducerService {
     public void publish(ApplicationResource applicationResource) {
         String key = applicationResource.getId().toString();
         entityProducer.send(
-                EntityProducerRecord.<ApplicationResourceDTOSimplified>builder()
+                EntityProducerRecord.<ApplicationResourceDTOFrontendList>builder()
                         .topicNameParameters(entityTopicNameParameters)
                         .key(key)
                         .value(applicationResource.toApplicationResourceDTOSimplified())

@@ -1,7 +1,7 @@
 package no.fintlabs;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceDTOSimplified;
+import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendList;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.data.domain.Page;
@@ -30,11 +30,11 @@ public class ResponseFactory {
                                                                String type,
                                                                int page,
                                                                int size) {
-        List<ApplicationResourceDTOSimplified> applicationResourceDTOSimplifieds =
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
                 applicationResourceService.getApplicationResourceDTOSimplified(principal, search);
 
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
-                toPage(applicationResourceDTOSimplifieds,
+                toPage(applicationResourceDTOFrontendLists,
                 PageRequest.of(page, size))
         );
         return entity;
@@ -47,7 +47,7 @@ public class ResponseFactory {
         return null;
     }
 
-    public ResponseEntity<Map<String, Object>> toResponseEntity(Page<ApplicationResourceDTOSimplified> page) {
+    public ResponseEntity<Map<String, Object>> toResponseEntity(Page<ApplicationResourceDTOFrontendList> page) {
         return new ResponseEntity<>(
                 Map.of("totalItems", page.getTotalElements(),
                         "resources", page.getContent(),
@@ -58,7 +58,7 @@ public class ResponseFactory {
         );
     }
 
-    private Page<ApplicationResourceDTOSimplified> toPage(List<ApplicationResourceDTOSimplified> dtoSimplifiedList, Pageable paging) {
+    private Page<ApplicationResourceDTOFrontendList> toPage(List<ApplicationResourceDTOFrontendList> dtoSimplifiedList, Pageable paging) {
         int start = (int) paging.getOffset();
         int end = Math.min((start + paging.getPageSize()), dtoSimplifiedList.size());
 

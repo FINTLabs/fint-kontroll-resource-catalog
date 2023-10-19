@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 @Service
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
-    private final ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService;
+    private final ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceDTOSimplifiedService applicationResourceDTOSimplifiedService) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService) {
         this.applicationResourceRepository = applicationResourceRepository;
-        this.applicationResourceDTOSimplifiedService = applicationResourceDTOSimplifiedService;
+        this.applicationResourceDTOFrontendListService = applicationResourceDTOFrontendListService;
     }
 
     public void save(ApplicationResource applicationResource){
@@ -47,27 +47,27 @@ public class ApplicationResourceService {
     }
 
     @Transactional
-    public List<ApplicationResourceDTO> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
+    public List<ApplicationResourceDTOFrontendDetail> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
         ModelMapper modelMapper = new ModelMapper();
         List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
         return applicationResources.stream()
-                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTO.class))
+                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public Optional <ApplicationResourceDTO> getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
+    public Optional <ApplicationResourceDTOFrontendDetail> getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
         ModelMapper modelMapper = new ModelMapper();
         Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
         return applicationResourceOptional
-                .map(applicationResource -> modelMapper.map(applicationResource,ApplicationResourceDTO.class));
+                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class));
 
     }
 
 
 //applicationResourceOptional.ifPresentOrElse(ar -> modelMapper.map(ar,ApplicationResourceDTO.class),null);
-    public List<ApplicationResourceDTOSimplified> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
-                                                                                      String search) {
+    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
+                                                                                        String search) {
         List<ApplicationResource> applicationResources;
 
         applicationResources = applicationResourceRepository.getApplicationResourceBySearch(search);
@@ -138,7 +138,7 @@ public class ApplicationResourceService {
         appRes1.setPlatform(plattformAppres1);
         appRes1.setAccessType("device");
         this.save(appRes1);
-        applicationResourceDTOSimplifiedService.process(appRes1);
+        applicationResourceDTOFrontendListService.process(appRes1);
 
 
         //ApplicationResource2
@@ -175,7 +175,7 @@ public class ApplicationResourceService {
         appRes2.setPlatform(plattformAppres2);
         appRes2.setAccessType("device");
         this.save(appRes2);
-        applicationResourceDTOSimplifiedService.process(appRes2);
+        applicationResourceDTOFrontendListService.process(appRes2);
 
         //ApplicationResource3
         ApplicationResource appRes3 = new ApplicationResource();
@@ -211,7 +211,7 @@ public class ApplicationResourceService {
         appRes3.setPlatform(plattformAppres3);
         appRes3.setAccessType("device");
         this.save(appRes3);
-        applicationResourceDTOSimplifiedService.process(appRes3);
+        applicationResourceDTOFrontendListService.process(appRes3);
     }
 
 

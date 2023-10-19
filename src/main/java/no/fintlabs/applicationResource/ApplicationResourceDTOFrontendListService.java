@@ -3,12 +3,12 @@ package no.fintlabs.applicationResource;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ApplicationResourceDTOSimplifiedService {
+public class ApplicationResourceDTOFrontendListService {
     private final ApplicationResourceEntityProducerService applicationResourceEntityProducerService;
     private final ApplicationResourceRepository applicationResourceRepository;
 
-    public ApplicationResourceDTOSimplifiedService(ApplicationResourceEntityProducerService applicationResourceEntityProducerService,
-                                                   ApplicationResourceRepository applicationResourceRepository) {
+    public ApplicationResourceDTOFrontendListService(ApplicationResourceEntityProducerService applicationResourceEntityProducerService,
+                                                     ApplicationResourceRepository applicationResourceRepository) {
         this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
         this.applicationResourceRepository = applicationResourceRepository;
     }

@@ -2,7 +2,7 @@ package no.fintlabs.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
-import no.fintlabs.applicationResource.ApplicationResourceDTO;
+import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
 import no.fintlabs.applicationResource.ApplicationResourceRepository;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -11,7 +11,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,13 +19,11 @@ import java.util.Optional;
 @RequestMapping("/api/resources")
 public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
-    private final ApplicationResourceRepository applicationResourceRepository;
     private final ResponseFactory responseFactory;
 
 
     public ResourceController(ApplicationResourceService applicationResourceService, ApplicationResourceRepository applicationResourceRepository, ResponseFactory responseFactory) {
         this.applicationResourceService = applicationResourceService;
-        this.applicationResourceRepository = applicationResourceRepository;
         this.responseFactory = responseFactory;
     }
 
@@ -42,7 +39,7 @@ public class ResourceController {
     }
 
     @GetMapping("/{id}")
-    public Optional<ApplicationResourceDTO> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
+    public Optional<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
         log.info("Fetching applicationResourse by id: " + id);
         return applicationResourceService.getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
         //endre til responsEntity 200/404
