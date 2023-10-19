@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,4 +22,5 @@ public abstract class Resource {
     protected String resourceId;
     protected String resourceName;
     protected String resourceType;
+    protected UUID identityProviderGroupObjectId;
 }

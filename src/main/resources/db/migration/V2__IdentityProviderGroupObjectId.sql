@@ -1,0 +1,1 @@
+alter table resources.application_resource add identity_provider_group_object_id uuid;

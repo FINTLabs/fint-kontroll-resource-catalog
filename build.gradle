@@ -48,14 +48,14 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'cglib:cglib-nodep:3.3.0'
-    testImplementation 'org.spockframework:spock-spring:2.3-groovy-3.0'
-    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+
 
 
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'no.fintlabs:fint-kafka:2.3.0'
     implementation 'no.fintlabs:fint-resource-server-security:1.1.0'
     implementation 'org.modelmapper:modelmapper:2.4.5'
+
 }
 
 test {

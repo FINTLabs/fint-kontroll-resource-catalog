@@ -11,6 +11,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -108,6 +109,7 @@ public class ApplicationResourceService {
         appRes1.setResourceId("adobek12");
         appRes1.setResourceName("Adobe K12 Utdanning");
         appRes1.setResourceType("ApplicationResource");
+        appRes1.setIdentityProviderGroupObjectId(UUID.fromString("735e619a-8905-4f68-9dab-b908076c097b"));
 
         appRes1.setResourceLimit(1000L);
         appRes1.setResourceOwnerOrgUnitId("6");
@@ -144,6 +146,7 @@ public class ApplicationResourceService {
         appRes2.setResourceId("msproject");
         appRes2.setResourceName("Microsoft Project Enterprise");
         appRes2.setResourceType("ApplicationResource");
+        appRes2.setIdentityProviderGroupObjectId(UUID.fromString("f1f7e61f-73cb-49c0-bb72-5b17b3083ced"));
         appRes2.setResourceLimit(100L);
 
         appRes2.setResourceOwnerOrgUnitId("5");
@@ -179,6 +182,7 @@ public class ApplicationResourceService {
         appRes3.setResourceId("mskabal");
         appRes3.setResourceName("Microsoft Kabal");
         appRes3.setResourceType("ApplicationResource");
+        appRes3.setIdentityProviderGroupObjectId(UUID.fromString("f08a85cf-f2da-4456-8568-bc144926cb9b"));
         appRes3.setResourceLimit(300L);
 
         appRes3.setResourceOwnerOrgUnitId("36");
