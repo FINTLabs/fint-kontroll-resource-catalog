@@ -12,7 +12,5 @@ public class ApplicationResourceDTOFrontendListService {
         this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
         this.applicationResourceRepository = applicationResourceRepository;
     }
-    public void process(ApplicationResource applicationResource) {
-        applicationResourceEntityProducerService.publish(applicationResource);
-    }
+
 }

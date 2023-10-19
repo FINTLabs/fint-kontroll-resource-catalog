@@ -38,3 +38,13 @@ alter table application_resource_platform add constraint FK65hwdpt5pfioanqbjw94g
 alter table application_resource_valid_for_org_units add constraint FKf5c29k5i7vgjl2ds4moekvgle foreign key (valid_for_org_units_id) references application_resource_location;
 alter table application_resource_valid_for_org_units add constraint FK5xu4y1oug35mkm2x7q70b9pet foreign key (application_resource_id) references application_resource;
 alter table application_resource_valid_for_roles add constraint FK5c86mybjdkjvmkixg8s9u1cnw foreign key (id) references application_resource;
+create table application_resource (id  bigserial not null, identity_provider_group_object_id uuid, resource_id varchar(255), resource_name varchar(255), resource_type varchar(255), access_type varchar(255), application_access_role varchar(255), application_access_type varchar(255), resource_limit int8, resource_owner_org_unit_id varchar(255), resource_owner_org_unit_name varchar(255), primary key (id));
+create table application_resource_location (id  bigserial not null, org_unit_name varchar(255), orgunit_id varchar(255), resource_id varchar(255), resource_limit int8, primary key (id));
+create table application_resource_platform (id int8 not null, platform varchar(255));
+create table application_resource_valid_for_org_units (application_resource_id int8 not null, valid_for_org_units_id int8 not null);
+create table application_resource_valid_for_roles (id int8 not null, valid_for_roles varchar(255));
+alter table application_resource_valid_for_org_units add constraint UK_70eq9s89y72lu9fkxw5g4qak3 unique (valid_for_org_units_id);
+alter table application_resource_platform add constraint FK65hwdpt5pfioanqbjw94g88qx foreign key (id) references application_resource;
+alter table application_resource_valid_for_org_units add constraint FKf5c29k5i7vgjl2ds4moekvgle foreign key (valid_for_org_units_id) references application_resource_location;
+alter table application_resource_valid_for_org_units add constraint FK5xu4y1oug35mkm2x7q70b9pet foreign key (application_resource_id) references application_resource;
+alter table application_resource_valid_for_roles add constraint FK5c86mybjdkjvmkixg8s9u1cnw foreign key (id) references application_resource;

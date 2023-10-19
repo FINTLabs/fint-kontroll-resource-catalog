@@ -19,10 +19,12 @@ import java.util.stream.Collectors;
 @Service
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
+    private final ApplicationResourceEntityProducerService applicationResourceEntityProducerService;
     private final ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService, ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService) {
         this.applicationResourceRepository = applicationResourceRepository;
+        this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
         this.applicationResourceDTOFrontendListService = applicationResourceDTOFrontendListService;
     }
 
@@ -78,6 +80,7 @@ public class ApplicationResourceService {
                 .map(ApplicationResource::toApplicationResourceDTOSimplified)
                 .toList();
     }
+
 
 
     @PostConstruct
@@ -138,7 +141,7 @@ public class ApplicationResourceService {
         appRes1.setPlatform(plattformAppres1);
         appRes1.setAccessType("device");
         this.save(appRes1);
-        applicationResourceDTOFrontendListService.process(appRes1);
+        applicationResourceEntityProducerService.publish(appRes1);
 
 
         //ApplicationResource2
@@ -175,7 +178,7 @@ public class ApplicationResourceService {
         appRes2.setPlatform(plattformAppres2);
         appRes2.setAccessType("device");
         this.save(appRes2);
-        applicationResourceDTOFrontendListService.process(appRes2);
+        applicationResourceEntityProducerService.publish(appRes2);
 
         //ApplicationResource3
         ApplicationResource appRes3 = new ApplicationResource();
@@ -211,7 +214,7 @@ public class ApplicationResourceService {
         appRes3.setPlatform(plattformAppres3);
         appRes3.setAccessType("device");
         this.save(appRes3);
-        applicationResourceDTOFrontendListService.process(appRes3);
+        applicationResourceEntityProducerService.publish(appRes3);
     }
 
 
