@@ -40,6 +40,22 @@ public class ResponseFactory {
         return entity;
     }
 
+    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal principal,
+                                                               String search,
+                                                               List<String> orgUnits,
+                                                               String type,
+                                                               int page,
+                                                               int size) {
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
+                applicationResourceService.getApplicationResourceDTOFrontendList(principal, search,orgUnits);
+
+        ResponseEntity<Map<String, Object>> entity = toResponseEntity(
+                toPage(applicationResourceDTOFrontendLists,
+                        PageRequest.of(page, size))
+        );
+        return entity;
+    }
+
     public ResponseEntity<Object> toResponsEntity(FintJwtEndUserPrincipal principal,
                                                   String id,
                                                   String type){
@@ -58,13 +74,13 @@ public class ResponseFactory {
         );
     }
 
-    private Page<ApplicationResourceDTOFrontendList> toPage(List<ApplicationResourceDTOFrontendList> dtoSimplifiedList, Pageable paging) {
+    private Page<ApplicationResourceDTOFrontendList> toPage(List<ApplicationResourceDTOFrontendList> dtoFrontendList, Pageable paging) {
         int start = (int) paging.getOffset();
-        int end = Math.min((start + paging.getPageSize()), dtoSimplifiedList.size());
+        int end = Math.min((start + paging.getPageSize()), dtoFrontendList.size());
 
-        return start > dtoSimplifiedList.size()
-                ? new PageImpl<>(new ArrayList<>(), paging, dtoSimplifiedList.size())
-                : new PageImpl<>(dtoSimplifiedList.subList(start, end), paging, dtoSimplifiedList.size());
+        return start > dtoFrontendList.size()
+                ? new PageImpl<>(new ArrayList<>(), paging, dtoFrontendList.size())
+                : new PageImpl<>(dtoFrontendList.subList(start, end), paging, dtoFrontendList.size());
     }
 
 

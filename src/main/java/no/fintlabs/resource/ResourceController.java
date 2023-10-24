@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,11 +32,19 @@ public class ResourceController {
     public ResponseEntity<Map<String, Object>> getAllResources(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(value = "search",defaultValue = "%") String search,
+            @RequestParam(value = "orgUnits",required = false) List<String> orgUnits,
             @RequestParam(value="type",defaultValue = "ALLTYPES") String type,
             @RequestParam(value ="page",defaultValue ="0") int page,
             @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
     ){
-        return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,type,page,size);
+        if (orgUnits==null){
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,type,page,size);
+        }
+        else {
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits,type,page,size);
+        }
+
+
     }
 
     @GetMapping("/{id}")

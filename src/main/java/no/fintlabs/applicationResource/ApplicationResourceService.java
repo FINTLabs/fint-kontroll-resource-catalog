@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @Slf4j
@@ -48,14 +49,14 @@ public class ApplicationResourceService {
         };
     }
 
-    @Transactional
-    public List<ApplicationResourceDTOFrontendDetail> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
-        ModelMapper modelMapper = new ModelMapper();
-        List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
-        return applicationResources.stream()
-                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
-                .collect(Collectors.toList());
-    }
+//    @Transactional
+//    public List<ApplicationResourceDTOFrontendDetail> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
+//        ModelMapper modelMapper = new ModelMapper();
+//        List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
+//        return applicationResources.stream()
+//                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
+//                .collect(Collectors.toList());
+//    }
 
     @Transactional
     public Optional <ApplicationResourceDTOFrontendDetail> getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
@@ -67,6 +68,25 @@ public class ApplicationResourceService {
     }
 
 
+
+
+    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
+                                                                                          String search,
+                                                                                          List<String> orgUnits) {
+        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
+        List<ApplicationResource> applicationResources;
+
+        List<String> orgUnitsToQuery = orgUnits.stream()
+                .filter(validOrgUnits::contains)
+                .toList();
+
+        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search,orgUnitsToQuery);
+
+        return applicationResources
+                .stream()
+                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
+                .toList();
+    }
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
                                                                                           String search) {
