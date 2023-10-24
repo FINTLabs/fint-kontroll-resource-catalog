@@ -2,30 +2,30 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.opa.model.Scope;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
+import no.fintlabs.opa.AuthorizationClient;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ApplicationResourceEntityProducerService applicationResourceEntityProducerService;
-    private final ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService;
+    private final AuthorizationClient authorizationClient;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService, ApplicationResourceDTOFrontendListService applicationResourceDTOFrontendListService) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService,AuthorizationClient authorizationClient) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
-        this.applicationResourceDTOFrontendListService = applicationResourceDTOFrontendListService;
+        this.authorizationClient = authorizationClient;
     }
 
     public void save(ApplicationResource applicationResource){
@@ -67,18 +67,30 @@ public class ApplicationResourceService {
     }
 
 
-//applicationResourceOptional.ifPresentOrElse(ar -> modelMapper.map(ar,ApplicationResourceDTO.class),null);
-    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOSimplified(FintJwtEndUserPrincipal principal,
-                                                                                        String search) {
+
+    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
+                                                                                          String search) {
+        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
         List<ApplicationResource> applicationResources;
 
-        applicationResources = applicationResourceRepository.getApplicationResourceBySearch(search);
+        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search,validOrgUnits);
         log.info("Fetching applicationResources. Count: " + applicationResources.size());
 
         return applicationResources
                 .stream()
-                .map(ApplicationResource::toApplicationResourceDTOSimplified)
+                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
+    }
+
+    public List<String> getAllAuthorizedOrgUnitIDs(){
+        List<Scope> scopes = authorizationClient.getUserScopes();
+        List<String> authorizedOrgUnitIDs = scopes.stream()
+                .filter(s -> s.getObjectType().equals("resource"))
+                .map(Scope::getOrgUnits)
+                .flatMap(Collection::stream)
+                .toList();
+        log.info("Authorized orgUnitIDs : " +authorizedOrgUnitIDs);
+        return authorizedOrgUnitIDs;
     }
 
 

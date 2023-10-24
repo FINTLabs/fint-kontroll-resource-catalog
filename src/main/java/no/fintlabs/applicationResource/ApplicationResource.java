@@ -37,7 +37,7 @@ public class ApplicationResource extends Resource {
     private List<ApplicationResourceLocation> validForOrgUnits = new ArrayList<>();
 
 
-    public ApplicationResourceDTOFrontendList toApplicationResourceDTOSimplified(){
+    public ApplicationResourceDTOFrontendList toApplicationResourceDTOFrontendList(){
         return ApplicationResourceDTOFrontendList
                 .builder()
                 .id(id)

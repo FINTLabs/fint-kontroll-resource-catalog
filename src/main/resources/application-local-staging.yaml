@@ -5,6 +5,11 @@ fint:
     bootstrap-servers: localhost:9092
     consumer:
       group-id: ${fint.application-id}
+  kontroll:
+    role-catalog:
+      pagesize: 50
+    opa:
+      url: http://localhost:8181/v1/data/accessmanagement
 spring:
   security:
     oauth2:

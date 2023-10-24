@@ -31,7 +31,7 @@ public class ResponseFactory {
                                                                int page,
                                                                int size) {
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-                applicationResourceService.getApplicationResourceDTOSimplified(principal, search);
+                applicationResourceService.getApplicationResourceDTOFrontendList(principal, search);
 
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
                 toPage(applicationResourceDTOFrontendLists,
