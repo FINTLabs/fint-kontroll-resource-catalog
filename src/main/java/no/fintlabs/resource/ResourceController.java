@@ -50,7 +50,7 @@ public class ResourceController {
     public ResponseEntity<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
         log.info("Fetching applicationResourse by id: " + id);
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceById(FintJwtEndUserPrincipal.from(jwt), id);
+                .getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal.from(jwt), id);
         if (applicationResourceDTOFrontendDetail.isValid()){
             return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
         }

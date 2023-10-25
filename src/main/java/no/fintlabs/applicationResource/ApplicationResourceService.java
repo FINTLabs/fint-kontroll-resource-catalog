@@ -2,9 +2,8 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
-import no.fintlabs.opa.model.Scope;
+import no.fintlabs.authorization.AuthorizationUtil;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
-import no.fintlabs.opa.AuthorizationClient;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +19,12 @@ import java.util.function.Consumer;
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ApplicationResourceEntityProducerService applicationResourceEntityProducerService;
-    private final AuthorizationClient authorizationClient;
+    private final AuthorizationUtil authorizationUtil;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService, AuthorizationClient authorizationClient) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService, AuthorizationUtil authorizationUtil) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
-        this.authorizationClient = authorizationClient;
+        this.authorizationUtil = authorizationUtil;
     }
 
     public void save(ApplicationResource applicationResource) {
@@ -47,8 +46,8 @@ public class ApplicationResourceService {
     }
 
     @Transactional
-    public ApplicationResourceDTOFrontendDetail getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
-        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
+    public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal principal, Long id) {
+        List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
         ModelMapper modelMapper = new ModelMapper();
 
         Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
@@ -76,7 +75,7 @@ public class ApplicationResourceService {
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
                                                                                           String search,
                                                                                           List<String> orgUnits) {
-        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
+        List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
         List<ApplicationResource> applicationResources;
 
         List<String> orgUnitsToQuery = orgUnits.stream()
@@ -93,7 +92,7 @@ public class ApplicationResourceService {
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
                                                                                           String search) {
-        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
+        List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
         List<ApplicationResource> applicationResources;
 
         applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search, validOrgUnits);
@@ -103,17 +102,6 @@ public class ApplicationResourceService {
                 .stream()
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
-    }
-
-    public List<String> getAllAuthorizedOrgUnitIDs() {
-        List<Scope> scopes = authorizationClient.getUserScopes();
-        List<String> authorizedOrgUnitIDs = scopes.stream()
-                .filter(s -> s.getObjectType().equals("resource"))
-                .map(Scope::getOrgUnits)
-                .flatMap(Collection::stream)
-                .toList();
-        log.info("Authorized orgUnitIDs : " + authorizedOrgUnitIDs);
-        return authorizedOrgUnitIDs;
     }
 
 
