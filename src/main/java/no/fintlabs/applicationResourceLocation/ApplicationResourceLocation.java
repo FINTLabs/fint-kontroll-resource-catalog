@@ -1,7 +1,7 @@
 package no.fintlabs.applicationResourceLocation;
 
 import lombok.*;
-import no.fintlabs.applicationResource.ApplicationResource;
+
 
 import jakarta.persistence.*;
 

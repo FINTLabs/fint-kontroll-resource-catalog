@@ -11,19 +11,9 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
 
     Optional<ApplicationResource> findApplicationResourceByResourceIdEqualsIgnoreCase(String resourceId);
 
-    @Query("SELECT DISTINCT ar FROM ApplicationResource ar LEFT JOIN FETCH ar.validForRoles")
-    List<ApplicationResource> findAllApplicationResources();
-
-    @Query("select a from ApplicationResource a where a.id = ?1")
-    Optional<ApplicationResource> getApplicationResourceById(Long id);
-
-
-    @Query("select a from ApplicationResource a where upper(a.resourceName) like upper(concat('%', ?1, '%'))")
-    List<ApplicationResource> getApplicationResourceBySearch(String resourceName);
-
     @Query("""
             select a from ApplicationResource a inner join a.validForOrgUnits validForOrgUnits
-            where 
+            where
             validForOrgUnits.orgunitId in ?2
             and upper(a.resourceName) like upper(concat('%', ?1, '%'))
             """)

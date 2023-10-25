@@ -10,10 +10,9 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 @Slf4j
@@ -23,13 +22,13 @@ public class ApplicationResourceService {
     private final ApplicationResourceEntityProducerService applicationResourceEntityProducerService;
     private final AuthorizationClient authorizationClient;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService,AuthorizationClient authorizationClient) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService, AuthorizationClient authorizationClient) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
         this.authorizationClient = authorizationClient;
     }
 
-    public void save(ApplicationResource applicationResource){
+    public void save(ApplicationResource applicationResource) {
         applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId())
                 .ifPresentOrElse(onSaveExistingApplicationResource(applicationResource),
@@ -37,9 +36,7 @@ public class ApplicationResourceService {
     }
 
     private Runnable onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        return () -> {
-            ApplicationResource newApplicationResource = applicationResourceRepository.save(applicationResource);
-        };
+        return () -> applicationResourceRepository.save(applicationResource);
     }
 
     private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
@@ -49,25 +46,31 @@ public class ApplicationResourceService {
         };
     }
 
-//    @Transactional
-//    public List<ApplicationResourceDTOFrontendDetail> getAllApplicationResources(FintJwtEndUserPrincipal principal) {
-//        ModelMapper modelMapper = new ModelMapper();
-//        List<ApplicationResource> applicationResources = applicationResourceRepository.findAllApplicationResources();
-//        return applicationResources.stream()
-//                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
-//                .collect(Collectors.toList());
-//    }
-
     @Transactional
-    public Optional <ApplicationResourceDTOFrontendDetail> getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
+    public ApplicationResourceDTOFrontendDetail getApplicationResourceById(FintJwtEndUserPrincipal principal, Long id) {
+        List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
         ModelMapper modelMapper = new ModelMapper();
+
         Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
-        return applicationResourceOptional
-                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class));
 
+        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceOptional
+                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
+                .orElse(new ApplicationResourceDTOFrontendDetail());
+
+        List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
+        List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
+        applicationResourceLocations.forEach(applicationResourceLocation -> {
+            orgunitsInApplicationResourceLocations.add(applicationResourceLocation.getOrgunitId());
+        });
+        List<String> validatedOrgUnits = orgunitsInApplicationResourceLocations.stream()
+                .filter(validOrgUnits::contains).toList();
+
+        if (validatedOrgUnits.isEmpty()) {
+            return new ApplicationResourceDTOFrontendDetail();
+        } else {
+            return applicationResourceDTOFrontendDetail;
+        }
     }
-
-
 
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
@@ -80,7 +83,7 @@ public class ApplicationResourceService {
                 .filter(validOrgUnits::contains)
                 .toList();
 
-        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search,orgUnitsToQuery);
+        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search, orgUnitsToQuery);
 
         return applicationResources
                 .stream()
@@ -93,7 +96,7 @@ public class ApplicationResourceService {
         List<String> validOrgUnits = getAllAuthorizedOrgUnitIDs();
         List<ApplicationResource> applicationResources;
 
-        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search,validOrgUnits);
+        applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search, validOrgUnits);
         log.info("Fetching applicationResources. Count: " + applicationResources.size());
 
         return applicationResources
@@ -102,21 +105,20 @@ public class ApplicationResourceService {
                 .toList();
     }
 
-    public List<String> getAllAuthorizedOrgUnitIDs(){
+    public List<String> getAllAuthorizedOrgUnitIDs() {
         List<Scope> scopes = authorizationClient.getUserScopes();
         List<String> authorizedOrgUnitIDs = scopes.stream()
                 .filter(s -> s.getObjectType().equals("resource"))
                 .map(Scope::getOrgUnits)
                 .flatMap(Collection::stream)
                 .toList();
-        log.info("Authorized orgUnitIDs : " +authorizedOrgUnitIDs);
+        log.info("Authorized orgUnitIDs : " + authorizedOrgUnitIDs);
         return authorizedOrgUnitIDs;
     }
 
 
-
     @PostConstruct
-    public void init(){
+    public void init() {
         log.info("Starting applicationResourceService....");
 
 

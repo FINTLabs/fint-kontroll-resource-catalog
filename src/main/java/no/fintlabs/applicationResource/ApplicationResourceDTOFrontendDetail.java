@@ -25,4 +25,8 @@ public class ApplicationResourceDTOFrontendDetail {
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
 
+    public boolean isValid(){
+        return this.id!=null;
+    }
+
 }

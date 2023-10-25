@@ -56,12 +56,6 @@ public class ResponseFactory {
         return entity;
     }
 
-    public ResponseEntity<Object> toResponsEntity(FintJwtEndUserPrincipal principal,
-                                                  String id,
-                                                  String type){
-        //TODO: Hente ett applicationResource object. Pakke inn i ResponseEntity og returnere dette.
-        return null;
-    }
 
     public ResponseEntity<Map<String, Object>> toResponseEntity(Page<ApplicationResourceDTOFrontendList> page) {
         return new ResponseEntity<>(
