@@ -1,5 +1,6 @@
 package no.fintlabs.applicationResource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 
@@ -24,7 +25,9 @@ public class ApplicationResourceDTOFrontendDetail {
     private String resourceOwnerOrgUnitName;
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
+    private List<String> applicationCategory;
 
+    @JsonIgnore
     public boolean isValid(){
         return this.id!=null;
     }

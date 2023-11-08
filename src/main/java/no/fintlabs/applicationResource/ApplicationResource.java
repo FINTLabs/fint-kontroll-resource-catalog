@@ -36,6 +36,10 @@ public class ApplicationResource extends Resource {
     @CollectionTable(name="application_resource_valid_for_org_units")
     private List<ApplicationResourceLocation> validForOrgUnits = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "application_resource_application_category", joinColumns = @JoinColumn(name = "id"))
+    private List<String> applicationCategory;
+
 
     public ApplicationResourceDTOFrontendList toApplicationResourceDTOFrontendList(){
         return ApplicationResourceDTOFrontendList
