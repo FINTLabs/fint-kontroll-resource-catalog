@@ -27,6 +27,11 @@ public class ApplicationResourceService {
         this.authorizationUtil = authorizationUtil;
     }
 
+    public void saveApplicationResource(ApplicationResource applicationResource){
+        System.out.println("resourceId" + applicationResource.getResourceId());
+        System.out.println("resourceName: " + applicationResource.getResourceName());
+    }
+
     public void save(ApplicationResource applicationResource) {
         applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId())
