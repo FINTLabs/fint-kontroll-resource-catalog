@@ -35,14 +35,14 @@ class ApplicationResourceServiceTest {
         ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
-                .orgunitId("1")
+                .orgUnitId("1")
                 .orgUnitName("VGMIDT Midtbyen videregående skole")
                 .resourceLimit(100L)
                 .build();
         ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
-                .orgunitId("2")
+                .orgUnitId("2")
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
@@ -74,14 +74,14 @@ class ApplicationResourceServiceTest {
         ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
-                .orgunitId("1")
+                .orgUnitId("1")
                 .orgUnitName("VGMIDT Midtbyen videregående skole")
                 .resourceLimit(100L)
                 .build();
         ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
-                .orgunitId("2")
+                .orgUnitId("2")
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
