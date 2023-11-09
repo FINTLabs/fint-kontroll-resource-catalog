@@ -1,5 +1,6 @@
-package no.fintlabs.applicationResource;
+package no.fintlabs.resourceGroup;
 
+import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.kafka.entity.EntityProducer;
 import no.fintlabs.kafka.entity.EntityProducerFactory;
 import no.fintlabs.kafka.entity.EntityProducerRecord;
@@ -8,11 +9,11 @@ import no.fintlabs.kafka.entity.topic.EntityTopicService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ApplicationResourceEntityProducerService {
+public class ResourceGroupProducerService {
     private final EntityProducer<ApplicationResource> entityProducer;
     private final EntityTopicNameParameters entityTopicNameParameters;
 
-    public ApplicationResourceEntityProducerService(
+    public ResourceGroupProducerService(
             EntityProducerFactory entityProducerFactory,
             EntityTopicService entityTopicService
     ) {

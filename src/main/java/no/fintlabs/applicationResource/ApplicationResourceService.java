@@ -3,6 +3,7 @@ package no.fintlabs.applicationResource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
+import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,12 @@ import java.util.function.Consumer;
 @Service
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
-    private final ApplicationResourceEntityProducerService applicationResourceEntityProducerService;
+    private final ResourceGroupProducerService resourceGroupProducerService;
     private final AuthorizationUtil authorizationUtil;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ApplicationResourceEntityProducerService applicationResourceEntityProducerService, AuthorizationUtil authorizationUtil) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ResourceGroupProducerService resourceGroupProducerService, AuthorizationUtil authorizationUtil) {
         this.applicationResourceRepository = applicationResourceRepository;
-        this.applicationResourceEntityProducerService = applicationResourceEntityProducerService;
+        this.resourceGroupProducerService = resourceGroupProducerService;
         this.authorizationUtil = authorizationUtil;
     }
 
@@ -168,7 +169,7 @@ public class ApplicationResourceService {
         appRes1.setPlatform(plattformAppres1);
         appRes1.setAccessType("device");
         this.save(appRes1);
-        applicationResourceEntityProducerService.publish(appRes1);
+        resourceGroupProducerService.publish(appRes1);
 
 
         //ApplicationResource2
@@ -205,7 +206,7 @@ public class ApplicationResourceService {
         appRes2.setPlatform(plattformAppres2);
         appRes2.setAccessType("device");
         this.save(appRes2);
-        applicationResourceEntityProducerService.publish(appRes2);
+        resourceGroupProducerService.publish(appRes2);
 
         //ApplicationResource3
         ApplicationResource appRes3 = new ApplicationResource();
@@ -241,7 +242,7 @@ public class ApplicationResourceService {
         appRes3.setPlatform(plattformAppres3);
         appRes3.setAccessType("device");
         this.save(appRes3);
-        applicationResourceEntityProducerService.publish(appRes3);
+        resourceGroupProducerService.publish(appRes3);
     }
 
 
