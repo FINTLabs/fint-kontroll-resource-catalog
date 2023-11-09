@@ -17,7 +17,8 @@ public class ApplicationResourceLocation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String resourceId;
-    private String orgunitId;
+    @Column(name = "orgunit_id")
+    private String orgUnitId;
     private String orgUnitName;
     private Long resourceLimit;
 

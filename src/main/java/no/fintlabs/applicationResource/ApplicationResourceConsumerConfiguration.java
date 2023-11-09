@@ -23,7 +23,7 @@ public class ApplicationResourceConsumerConfiguration {
         return entityConsumerFactoryService.createFactory(
                 ApplicationResource.class,
                 (ConsumerRecord<String,ApplicationResource> consumerRecord)
-                -> applicationResourceService.saveApplicationResource(consumerRecord.value()))
+                -> applicationResourceService.save(consumerRecord.value()))
                 .createContainer(entityTopicNameParameters);
 
     }

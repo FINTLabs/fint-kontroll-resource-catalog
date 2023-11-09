@@ -31,7 +31,7 @@ public class ApplicationResource extends Resource {
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
     private List<String> validForRoles= new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "id")
     @CollectionTable(name="application_resource_valid_for_org_units")
     private List<ApplicationResourceLocation> validForOrgUnits = new ArrayList<>();
