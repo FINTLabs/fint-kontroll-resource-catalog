@@ -41,13 +41,19 @@ public class ApplicationResourceService {
     }
 
     private Runnable onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        return () -> applicationResourceRepository.save(applicationResource);
+        return () -> {
+
+            resourceGroupProducerService.publish(applicationResourceRepository.save(applicationResource));
+
+        };
     }
 
     private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
         return existingApplicationResource -> {
             applicationResource.setId(existingApplicationResource.getId());
+            resourceGroupProducerService.publish(applicationResource);
             applicationResourceRepository.save(applicationResource);
+
         };
     }
 
