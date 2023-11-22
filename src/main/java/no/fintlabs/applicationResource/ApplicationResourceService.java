@@ -52,7 +52,7 @@ public class ApplicationResourceService {
     }
     private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
         return existingApplicationResource -> {
-            Long applicationResourceId = applicationResource.getId();
+            Long applicationResourceId = existingApplicationResource.getId();
             applicationResource.setId(applicationResourceId);
 
             Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId.toString());
