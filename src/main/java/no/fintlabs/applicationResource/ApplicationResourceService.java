@@ -3,12 +3,13 @@ package no.fintlabs.applicationResource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
+import no.fintlabs.cache.FintCache;
+import no.fintlabs.resourceGroup.AzureGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 
 import java.util.*;
@@ -20,11 +21,13 @@ import java.util.function.Consumer;
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ResourceGroupProducerService resourceGroupProducerService;
+    private final FintCache<String, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ResourceGroupProducerService resourceGroupProducerService, AuthorizationUtil authorizationUtil) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ResourceGroupProducerService resourceGroupProducerService, FintCache<String, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.resourceGroupProducerService = resourceGroupProducerService;
+        this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
     }
 
@@ -47,10 +50,16 @@ public class ApplicationResourceService {
 
         };
     }
-
     private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
         return existingApplicationResource -> {
-            applicationResource.setId(existingApplicationResource.getId());
+            Long applicationResourceId = applicationResource.getId();
+            applicationResource.setId(applicationResourceId);
+
+            Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId.toString());
+
+            if (!azureGroup.isEmpty()) {
+                applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
+            }
             resourceGroupProducerService.publish(applicationResource);
             applicationResourceRepository.save(applicationResource);
 

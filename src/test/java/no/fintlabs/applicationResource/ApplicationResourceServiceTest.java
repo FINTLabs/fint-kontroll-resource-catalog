@@ -2,9 +2,12 @@ package no.fintlabs.applicationResource;
 
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
+import no.fintlabs.cache.FintCache;
+import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +20,8 @@ import static org.mockito.Mockito.when;
 class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
     private ApplicationResourceRepository applicationResourceRepository;
+    @Mock
+    private FintCache<String, AzureGroup> azureGroupCache;
     private AuthorizationUtil authorizationUtil;
 
     @BeforeEach
@@ -25,7 +30,7 @@ class ApplicationResourceServiceTest {
         authorizationUtil = mock(AuthorizationUtil.class);
         applicationResourceService = new ApplicationResourceService(applicationResourceRepository,
                 null,
-                authorizationUtil);
+                azureGroupCache, authorizationUtil);
     }
 
     @Test
