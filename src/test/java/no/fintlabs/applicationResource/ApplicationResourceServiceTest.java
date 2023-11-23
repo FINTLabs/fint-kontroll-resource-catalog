@@ -21,7 +21,7 @@ class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
     private ApplicationResourceRepository applicationResourceRepository;
     @Mock
-    private FintCache<String, AzureGroup> azureGroupCache;
+    private FintCache<Long, AzureGroup> azureGroupCache;
     private AuthorizationUtil authorizationUtil;
 
     @BeforeEach

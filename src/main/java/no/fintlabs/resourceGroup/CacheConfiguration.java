@@ -17,13 +17,13 @@ public class CacheConfiguration {
     }
 
     @Bean
-    FintCache<String, AzureGroup> azureGroupCache() {
+    FintCache<Long, AzureGroup> azureGroupCache() {
         return createCache(AzureGroup.class);
     }
-    private <V> FintCache<String, V> createCache(Class<V> resourceClass) {
+    private <V> FintCache<Long, V> createCache(Class<V> resourceClass) {
         return fintCacheManager.createCache(
                 resourceClass.getName().toLowerCase(Locale.ROOT),
-                String.class,
+                Long.class,
                 resourceClass
         );
     }

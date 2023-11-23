@@ -12,7 +12,6 @@ public class AzureGroup {
     protected UUID id;
     protected String displayName;
     protected List<String> members;
-
-    protected String stringresourceGroupID;
+    protected Long resourceGroupID;
 
 }

@@ -8,6 +8,8 @@ import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
 import no.fintlabs.kafka.entity.topic.EntityTopicService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ResourceGroupProducerService {
     private final EntityProducer<ApplicationResource> entityProducer;
@@ -34,4 +36,12 @@ public class ResourceGroupProducerService {
                         .build()
         );
     }
+    public List<ApplicationResource> publishResourceGroups (List<ApplicationResource> applicationResources) {
+        return applicationResources
+                .stream()
+                .peek(this::publish)
+                .toList();
+    }
+
+
 }

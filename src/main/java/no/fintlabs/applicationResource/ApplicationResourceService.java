@@ -21,10 +21,12 @@ import java.util.function.Consumer;
 public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ResourceGroupProducerService resourceGroupProducerService;
-    private final FintCache<String, AzureGroup> azureGroupCache;
+    private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, ResourceGroupProducerService resourceGroupProducerService, FintCache<String, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository,
+                                      ResourceGroupProducerService resourceGroupProducerService,
+                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.resourceGroupProducerService = resourceGroupProducerService;
         this.azureGroupCache = azureGroupCache;
@@ -34,6 +36,12 @@ public class ApplicationResourceService {
     public void saveApplicationResource(ApplicationResource applicationResource){
         System.out.println("resourceId" + applicationResource.getResourceId());
         System.out.println("resourceName: " + applicationResource.getResourceName());
+    }
+
+    public void saveApplicationResources(List<ApplicationResource> applicationResources) {
+        applicationResources
+                .stream()
+                .peek(this::save);
     }
 
     public void save(ApplicationResource applicationResource) {
@@ -55,7 +63,7 @@ public class ApplicationResourceService {
             Long applicationResourceId = existingApplicationResource.getId();
             applicationResource.setId(applicationResourceId);
 
-            Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId.toString());
+            Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
 
             if (!azureGroup.isEmpty()) {
                 applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
@@ -123,6 +131,9 @@ public class ApplicationResourceService {
                 .stream()
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
+    }
+    public Optional<ApplicationResource> getApplicationResourceFromId (Long applicationResourceId) {
+        return applicationResourceRepository.findById(applicationResourceId);
     }
 
 //
