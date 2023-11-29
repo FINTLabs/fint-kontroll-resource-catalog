@@ -2,15 +2,15 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.cache.FintCache;
-import no.fintlabs.kafka.common.ListenerContainerFactory;
 import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
 import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
-import no.fintlabs.kafka.entity.topic.EntityTopicNamePatternParameters;
 import no.fintlabs.resourceGroup.AzureGroup;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+
+import java.util.Optional;
 
 @Slf4j
 @Configuration
@@ -41,17 +41,24 @@ public class ApplicationResourceConsumerConfiguration {
     }
     @Bean
     public ConcurrentMessageListenerContainer<String, AzureGroup> azureGroupConsumer(
-            FintCache<Long, AzureGroup> azureGroupCache
-
+            FintCache<Long, AzureGroup> azureGroupCache,
+            ApplicationResourceService applicationResourceService
     ){
         return entityConsumerFactoryService.createFactory(
                 AzureGroup.class,
                 consumerRecord -> {
                     AzureGroup azureGroup = consumerRecord.value();
                     log.debug("Saving: " + azureGroup.getId() + " to cache");
+                    Optional<ApplicationResource> applicationResourceOptional = applicationResourceService.getApplicationResourceFromId(azureGroup.getResourceGroupID());
 
-                    azureGroupCache.put(azureGroup.getResourceGroupID(),azureGroup);
+                    if (applicationResourceOptional.isPresent()) {
+                        ApplicationResource applicationResource = applicationResourceOptional.get();
+                        applicationResource.setIdentityProviderGroupObjectId(azureGroup.getId());
+                        log.debug("Saving " + applicationResource.getId() + " with Azure groupObjectId " + azureGroup.getId());
+                        applicationResourceService.save(applicationResource);
+                        azureGroupCache.put(azureGroup.getResourceGroupID(),azureGroup);
 
+                    }
                 }
         ).createContainer(EntityTopicNameParameters.builder().resource("azuread-resource-group").build());
         }
