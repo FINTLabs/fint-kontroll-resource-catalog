@@ -135,6 +135,9 @@ public class ApplicationResourceService {
     public Optional<ApplicationResource> getApplicationResourceFromId (Long applicationResourceId) {
         return applicationResourceRepository.findById(applicationResourceId);
     }
+    public List<ApplicationResource> getAllApplicationResources() {
+        return applicationResourceRepository.findAll();
+    }
 
 //
 //    @PostConstruct

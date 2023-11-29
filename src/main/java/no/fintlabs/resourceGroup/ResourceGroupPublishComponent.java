@@ -21,20 +21,40 @@ public class ResourceGroupPublishComponent {
         this.applicationResourceService = applicationResourceService;
         this.resourceGroupProducerService = resourceGroupProducerService;
     }
-    @Scheduled(initialDelayString = "10000",
-    fixedDelayString = "20000")
+    @Scheduled(initialDelayString = "30000",
+    fixedDelayString = "900000")
 
-    public void publishCompleteResourceGroups() {
-        List<ApplicationResource> applicationResources =
+    public void publishCompleteAndInCompleteResourceGroups() {
+        List<ApplicationResource> applicationResourcesWithAzureGroupId =
                 azureGroupService.getAllAzureGroups()
                         .stream()
                         .map(azureGroup -> azureGroup.getResourceGroupID())
                         .map(id->applicationResourceService.getApplicationResourceFromId(id))
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .peek(applicationResource -> {log.info("Found application resource "+ applicationResource.getId());})
+                        .peek(applicationResource -> {
+                            log.info("Found application resource "+ applicationResource.getId()
+                                    + " with Azure groupObjectId" + applicationResource.getIdentityProviderGroupObjectId()
+                                    + ". Complete resource is published") ;
+                        })
                         .toList();
-        applicationResourceService.saveApplicationResources(applicationResources);
-        resourceGroupProducerService.publishResourceGroups(applicationResources);
+        applicationResourceService.saveApplicationResources(applicationResourcesWithAzureGroupId);
+        resourceGroupProducerService.publishResourceGroups(applicationResourcesWithAzureGroupId);
+
+        List<ApplicationResource> applicationResources = applicationResourceService.getAllApplicationResources();
+
+        if (!applicationResources.isEmpty()) {
+            List<ApplicationResource> applicationResourcesWithOutAzureGroupId =
+                    applicationResources
+                            .stream()
+                            .filter(applicationResource -> (applicationResource.getIdentityProviderGroupObjectId() == null))
+                            .peek(applicationResource -> {
+                                log.info("Application resource "+ applicationResource.getId()
+                                        + " is missing Azure groupObjectId. Resource is republished");
+                            })
+                            .toList();
+
+            resourceGroupProducerService.publishResourceGroups(applicationResourcesWithOutAzureGroupId);
+        }
     }
 }
