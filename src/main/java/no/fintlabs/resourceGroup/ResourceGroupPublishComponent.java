@@ -32,6 +32,7 @@ public class ResourceGroupPublishComponent {
                         .map(id->applicationResourceService.getApplicationResourceFromId(id))
                         .filter(Optional::isPresent)
                         .map(Optional::get)
+                        .peek(applicationResource -> {log.info("Found application resource "+ applicationResource.getId());})
                         .toList();
         applicationResourceService.saveApplicationResources(applicationResources);
         resourceGroupProducerService.publishResourceGroups(applicationResources);
