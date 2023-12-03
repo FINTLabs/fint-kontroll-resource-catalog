@@ -25,7 +25,7 @@ public class AuthorizationUtil {
 
 
     public List<String> getAllAuthorizedOrgUnitIDs() {
-        List<Scope> scopes = authorizationClient.getUserScopes();
+        List<Scope> scopes = authorizationClient.getUserScopesList();
         List<String> authorizedOrgUnitIDs = scopes.stream()
                 .filter(s -> s.getObjectType().equals("resource"))
                 .map(Scope::getOrgUnits)
