@@ -58,7 +58,7 @@ dependencies {
     implementation 'net.sf.ehcache:ehcache:2.10.9.2'
     implementation 'no.fintlabs:fint-resource-server-security:1.1.0'
     implementation 'org.modelmapper:modelmapper:2.4.5'
-    implementation 'no.fintlabs:fint-kontroll-authorization:1.1.6'
+    implementation 'no.fintlabs:fint-kontroll-auth:1.2.0'
     implementation 'jakarta.servlet:jakarta.servlet-api'
 
 }
