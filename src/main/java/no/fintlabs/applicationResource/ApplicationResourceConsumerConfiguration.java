@@ -54,6 +54,7 @@ public class ApplicationResourceConsumerConfiguration {
                     if (applicationResourceOptional.isPresent()) {
                         ApplicationResource applicationResource = applicationResourceOptional.get();
                         applicationResource.setIdentityProviderGroupObjectId(azureGroup.getId());
+                        applicationResource.setIdentityProviderGroupName(azureGroup.getDisplayName());
                         log.debug("Saving " + applicationResource.getId() + " with Azure groupObjectId " + azureGroup.getId());
                         applicationResourceService.save(applicationResource);
                         azureGroupCache.put(azureGroup.getResourceGroupID(),azureGroup);

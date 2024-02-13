@@ -67,6 +67,7 @@ public class ApplicationResourceService {
 
             if (!azureGroup.isEmpty()) {
                 applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
+                applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
             resourceGroupProducerService.publish(applicationResource);
             applicationResourceRepository.save(applicationResource);

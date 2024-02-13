@@ -16,6 +16,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private String resourceId;
     private String resourceName;
     private String resourceType;
+    private String identityProviderGroupName;
     private String applicationAccessType;
     private String applicationAccessRole;
     private List<String> platform;

@@ -1,0 +1,1 @@
+alter table application_resource add identity_provider_group_name varchar(255);
