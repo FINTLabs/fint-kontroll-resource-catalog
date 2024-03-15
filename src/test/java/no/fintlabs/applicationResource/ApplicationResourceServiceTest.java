@@ -15,6 +15,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ApplicationResourceServiceTest {
@@ -70,6 +72,8 @@ class ApplicationResourceServiceTest {
 
         assertEquals(resourceIdDTO,resourceIdAppres,"resourceIdDTO should be adobek12");
         System.out.println("resourceId should be adobek12: " + resourceIdDTO);
+
+        verify(applicationResourceRepository, times(1)).findById(1L);
     }
 
 

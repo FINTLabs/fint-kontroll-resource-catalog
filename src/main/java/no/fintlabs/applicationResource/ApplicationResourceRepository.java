@@ -19,5 +19,10 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
             """)
     List<ApplicationResource> findApplicationResourceByOrgUnitIds(String resourceName,Collection<String> orgUnitIDs);
 
+    @Query("""
+            select a from ApplicationResource a
+            where upper(a.resourceName) like upper(concat('%', ?1, '%'))
+            """)
+    List<ApplicationResource> findApplicationResourceByResourceName(String resourceName);
 
 }
