@@ -6,6 +6,7 @@ import no.fintlabs.resource.Resource;
 
 import jakarta.persistence.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -25,6 +26,11 @@ public class ApplicationResource extends Resource {
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;
     private String resourceOwnerOrgUnitName;
+    private String licenseEnforcement;
+    private boolean hasCost;
+    private Long unitCost;
+    private String status;
+    private Date statusChanged;
 
 
     @ElementCollection
