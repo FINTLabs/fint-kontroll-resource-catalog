@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
 import no.fintlabs.applicationResource.ApplicationResourceService;
+import no.fintlabs.kodeverkResources.ApplicationCategoryService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +21,14 @@ import java.util.Map;
 public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
     private final ResponseFactory responseFactory;
+    private final ApplicationCategoryService applicationCategoryService;
 
 
-    public ResourceController(ApplicationResourceService applicationResourceService,ResponseFactory responseFactory) {
+
+    public ResourceController(ApplicationResourceService applicationResourceService, ResponseFactory responseFactory, ApplicationCategoryService applicationCategoryService) {
         this.applicationResourceService = applicationResourceService;
         this.responseFactory = responseFactory;
+        this.applicationCategoryService = applicationCategoryService;
     }
 
     @GetMapping()
@@ -57,5 +61,19 @@ public class ResourceController {
         else {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+    }
+
+    @GetMapping("/applicationcategories")
+    public ResponseEntity<List<String>> getApplicationCategories(){
+        List<String> applicationCategories = applicationCategoryService.getAllApplicationCategories();
+
+        if (!applicationCategories.isEmpty()){
+            return new ResponseEntity<>(applicationCategories, HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+
     }
 }

@@ -25,4 +25,8 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
             """)
     List<ApplicationResource> findApplicationResourceByResourceName(String resourceName);
 
+
+    @Query(value = "SELECT DISTINCT application_category FROM application_resource_application_category", nativeQuery = true)
+    List<String> findAllDistinctApplicationCategories();
+
 }
