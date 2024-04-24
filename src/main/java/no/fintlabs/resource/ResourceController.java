@@ -2,6 +2,7 @@ package no.fintlabs.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
+import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
@@ -22,13 +23,15 @@ public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
     private final ResponseFactory responseFactory;
     private final ApplicationCategoryService applicationCategoryService;
+    private final AccessTypeService accessTypeService;
 
 
 
-    public ResourceController(ApplicationResourceService applicationResourceService, ResponseFactory responseFactory, ApplicationCategoryService applicationCategoryService) {
+    public ResourceController(ApplicationResourceService applicationResourceService, ResponseFactory responseFactory, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService) {
         this.applicationResourceService = applicationResourceService;
         this.responseFactory = responseFactory;
         this.applicationCategoryService = applicationCategoryService;
+        this.accessTypeService = accessTypeService;
     }
 
     @GetMapping()
@@ -73,7 +76,17 @@ public class ResourceController {
         else {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+    }
 
+    @GetMapping("/accesstypes")
+    public ResponseEntity<List<String>> getAccessTypes(){
+        List<String> accessTypes = accessTypeService.getAllAccessTypes();
 
+        if (!accessTypes.isEmpty()){
+            return new ResponseEntity<>(accessTypes, HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
     }
 }

@@ -15,7 +15,7 @@ public class AccessTypeService {
         this.applicationResourceRepository = applicationResourceRepository;
     }
 
-    public List<String> getAccessTypes() {
+    public List<String> getAllAccessTypes() {
 
         return applicationResourceRepository.findAllDistinctAccessTypes();
     }
