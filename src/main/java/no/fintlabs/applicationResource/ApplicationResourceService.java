@@ -122,7 +122,7 @@ public class ApplicationResourceService {
 
         return applicationResources
                 .stream()
-                .filter(applicationResource -> !applicationResources.isEmpty())
+                .filter(applicationResource -> applicationResource.getStatus() != null)
                 .filter(applicationResource -> applicationResource.getStatus().equals("ACTIVE"))
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
@@ -144,7 +144,7 @@ public class ApplicationResourceService {
 
         return applicationResources
                 .stream()
-                .filter(applicationResource -> !applicationResources.isEmpty())
+                .filter(applicationResource -> applicationResource.getStatus() != null)
                 .filter(applicationResource -> applicationResource.getStatus().equals("ACTIVE"))
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
