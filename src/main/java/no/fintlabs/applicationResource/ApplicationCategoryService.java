@@ -1,7 +1,6 @@
-package no.fintlabs.kodeverkResources;
+package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

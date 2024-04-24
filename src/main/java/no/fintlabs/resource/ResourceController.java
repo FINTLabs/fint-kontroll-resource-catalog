@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
 import no.fintlabs.applicationResource.ApplicationResourceService;
-import no.fintlabs.kodeverkResources.ApplicationCategoryService;
+import no.fintlabs.applicationResource.ApplicationCategoryService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
