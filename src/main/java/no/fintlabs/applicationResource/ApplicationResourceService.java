@@ -175,6 +175,10 @@ public class ApplicationResourceService {
                 .toList();
     }
 
+    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal from, List<String> orgUnits, String type, List<String> userType, String accessType, List<String> applicationCategory) {
+        return null;
+    }
+
     //
     //    @PostConstruct
     //    public void init() {

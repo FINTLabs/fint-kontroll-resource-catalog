@@ -35,7 +35,7 @@ public class ResponseFactory {
 
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
                 toPage(applicationResourceDTOFrontendLists,
-                PageRequest.of(page, size))
+                        PageRequest.of(page, size))
         );
         return entity;
     }
@@ -47,12 +47,40 @@ public class ResponseFactory {
                                                                int page,
                                                                int size) {
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-                applicationResourceService.getApplicationResourceDTOFrontendList(principal, search,orgUnits);
+                applicationResourceService.getApplicationResourceDTOFrontendList(principal, search, orgUnits);
 
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
                 toPage(applicationResourceDTOFrontendLists,
                         PageRequest.of(page, size))
         );
+        return entity;
+    }
+
+    // new for V1
+    public ResponseEntity<Map<String, Object>> toResponsEntity(
+            FintJwtEndUserPrincipal from,
+            String search,
+            List<String> orgUnits,
+            String type,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory,
+            int page,
+            int size) {
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
+                applicationResourceService.getApplicationResourceDTOFrontendList(
+                        from,
+                        orgUnits,
+                        type,
+                        userType,
+                        accessType,
+                        applicationCategory
+                );
+
+        ResponseEntity<Map<String, Object>> entity = toResponseEntity(
+                toPage(applicationResourceDTOFrontendLists, PageRequest.of(page, size))
+        );
+
         return entity;
     }
 
@@ -78,11 +106,4 @@ public class ResponseFactory {
     }
 
 
-    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal from, String search, String type, List<String> userType, String accessType, List<String> applicationCategory, int page, int size) {
-        return null;
-    }
-
-    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal from, String search, List<String> orgUnits, String type, List<String> userType, String accessType, List<String> applicationCategory, int page, int size) {
-        return null;
-    }
 }
