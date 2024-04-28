@@ -70,6 +70,7 @@ public class ResponseFactory {
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
                 applicationResourceService.getApplicationResourceDTOFrontendList(
                         from,
+                        search,
                         orgUnits,
                         type,
                         userType,

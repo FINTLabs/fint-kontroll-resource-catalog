@@ -150,6 +150,28 @@ public class ApplicationResourceService {
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
     }
+    // new for V1
+    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
+            FintJwtEndUserPrincipal from,
+            String search,
+            List<String> orgUnits,
+            String type,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory) {
+        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
+                search,orgUnits,type,userType,accessType,applicationCategory
+        );
+        List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
+
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendList = applicationResourseList
+                .stream()
+                .filter(applicationResource -> applicationResource.getStatus() != null)
+                .filter(applicationResource -> applicationResource.getStatus().equals("ACTIVE"))
+                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
+                .toList();
+        return applicationResourceDTOFrontendList;
+    }
 
     public Optional<ApplicationResource> getApplicationResourceFromId(Long applicationResourceId) {
         return applicationResourceRepository.findById(applicationResourceId);
@@ -175,9 +197,7 @@ public class ApplicationResourceService {
                 .toList();
     }
 
-    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal from, List<String> orgUnits, String type, List<String> userType, String accessType, List<String> applicationCategory) {
-        return null;
-    }
+
 
     //
     //    @PostConstruct
