@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -156,6 +157,22 @@ public class ApplicationResourceService {
 
     public List<ApplicationResource> getAllApplicationResources() {
         return applicationResourceRepository.findAll();
+    }
+
+
+    public List<String> getAllAuthorizedOrgUnitIDs() {
+        return authorizationUtil.getAllAuthorizedOrgUnitIDs();
+    }
+
+    public List<String> compareRequestedOrgUnitIDsWithOPA(List<String> requestedOrgUnitIDs) {
+        List<String> orgUnitsFromOPA = getAllAuthorizedOrgUnitIDs();
+        if (orgUnitsFromOPA.contains(OrgUnitType.ALLORGUNITS.name())){
+            return requestedOrgUnitIDs;
+        }
+
+        return orgUnitsFromOPA.stream()
+                .filter(requestedOrgUnitIDs::contains)
+                .toList();
     }
 
     //

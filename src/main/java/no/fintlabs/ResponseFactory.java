@@ -78,4 +78,11 @@ public class ResponseFactory {
     }
 
 
+    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal from, String search, String type, List<String> userType, String accessType, List<String> applicationCategory, int page, int size) {
+        return null;
+    }
+
+    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal from, String search, List<String> orgUnits, String type, List<String> userType, String accessType, List<String> applicationCategory, int page, int size) {
+        return null;
+    }
 }

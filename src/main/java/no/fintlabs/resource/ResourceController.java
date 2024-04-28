@@ -7,6 +7,7 @@ import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -88,5 +89,32 @@ public class ResourceController {
         else {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+    }
+
+    @GetMapping("/v1")
+    public ResponseEntity<Map<String, Object>> getAllResourcesSpesification(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(value = "search",required = false) String search,
+            @RequestParam(value = "orgUnits",required = false) List<String> orgUnits,
+            @RequestParam(value ="type",required = false) String type,
+            @RequestParam(value = "usertype",required = false) List<String> userType,
+            @RequestParam(value = "accesstype",required = false) String accessType,
+            @RequestParam(value = "applicationcategory", required = false) List<String> applicationCategory,
+            @RequestParam(value ="page",defaultValue ="0") int page,
+            @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
+    ){
+
+
+        if (orgUnits==null){
+
+            List<String> allAuthorizedOrgUnitIds = applicationResourceService.getAllAuthorizedOrgUnitIDs();
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, type,userType,accessType,applicationCategory,page,size);
+        }
+        else {
+            List<String> authorizedOrgUnitIds = applicationResourceService.compareRequestedOrgUnitIDsWithOPA(orgUnits);
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds,type,userType,accessType,applicationCategory,page,size);
+        }
+
+
     }
 }
