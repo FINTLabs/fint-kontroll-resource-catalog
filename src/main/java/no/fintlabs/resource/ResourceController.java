@@ -6,6 +6,7 @@ import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
+import no.fintlabs.opa.model.OrgUnitType;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.http.HttpStatus;
@@ -106,12 +107,19 @@ public class ResourceController {
 
 
         if (orgUnits==null){
-
             List<String> allAuthorizedOrgUnitIds = applicationResourceService.getAllAuthorizedOrgUnitIDs();
+            if (allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
+                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits,type,userType,accessType,applicationCategory,page,size);
+            }
+
             return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, type,userType,accessType,applicationCategory,page,size);
         }
         else {
             List<String> authorizedOrgUnitIds = applicationResourceService.compareRequestedOrgUnitIDsWithOPA(orgUnits);
+            if (authorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
+                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits,type,userType,accessType,applicationCategory,page,size);
+            }
+
             return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds,type,userType,accessType,applicationCategory,page,size);
         }
 

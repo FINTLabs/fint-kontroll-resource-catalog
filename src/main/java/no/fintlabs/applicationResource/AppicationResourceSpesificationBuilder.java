@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.opa.model.OrgUnitType;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -30,21 +31,34 @@ public class AppicationResourceSpesificationBuilder {
     }
 
     public Specification<ApplicationResource> build() {
-        Specification<ApplicationResource> applicationResourceSpecification;
-
-        if (orgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())) {
-            applicationResourceSpecification = Specification.where(null);
-        } else {
+        Specification<ApplicationResource> applicationResourceSpecification = null;
+        
+        if (orgUnitIds != null){
             applicationResourceSpecification = allAuthorizedOrgUnitIds(orgUnitIds);
         }
+       
 
         return applicationResourceSpecification;
     }
 
-
     public Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
-        return  (root, query, criteriaBuilder) -> criteriaBuilder
-                .in(root.get("validForOrgUnits")).value(orgUnitIds)
-            ;
+        return (root, query, criteriaBuilder) -> {
+            // Create a join from ApplicationResource to ApplicationResourceLocation
+            Join<ApplicationResource, ApplicationResourceLocation> orgUnitJoin = root.join("validForOrgUnits");
+
+            // Check if the orgUnitId of the joined ApplicationResourceLocation is in the provided list of orgUnitIds
+            return orgUnitJoin.get("orgUnitId").in(orgUnitIds);
         };
     }
+
+
+
+//    public Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
+//
+//        Join<ApplicationResource, ApplicationResourceLocation> orgUnitJoin = root.join("validForOrgUnits");
+//
+//        return  (root, query, criteriaBuilder) -> criteriaBuilder
+//                .in(root.get("validForOrgUnits")).value(orgUnitIds)
+//            ;
+//        };
+}
