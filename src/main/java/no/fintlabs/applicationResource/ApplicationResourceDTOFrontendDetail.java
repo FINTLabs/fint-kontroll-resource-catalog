@@ -27,6 +27,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
     private List<String> applicationCategory;
+    private boolean hasCost;
 
     @JsonIgnore
     public boolean isValid(){
