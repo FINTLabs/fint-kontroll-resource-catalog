@@ -1,13 +1,15 @@
 package no.fintlabs.applicationResource;
 
+import jakarta.persistence.*;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.resource.Resource;
+import org.hibernate.proxy.HibernateProxy;
 
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -59,6 +61,46 @@ public class ApplicationResource extends Resource {
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ApplicationResource that = (ApplicationResource) o;
+        return hasCost == that.hasCost
+                && Objects.equals(applicationAccessType, that.applicationAccessType)
+                && Objects.equals(applicationAccessRole, that.applicationAccessRole)
+                && Objects.equals(platform, that.platform)
+                && Objects.equals(accessType, that.accessType)
+                && Objects.equals(resourceLimit, that.resourceLimit)
+                && Objects.equals(resourceOwnerOrgUnitId, that.resourceOwnerOrgUnitId)
+                && Objects.equals(resourceOwnerOrgUnitName, that.resourceOwnerOrgUnitName)
+                && Objects.equals(licenseEnforcement, that.licenseEnforcement)
+                && Objects.equals(unitCost, that.unitCost)
+                && Objects.equals(status, that.status)
+                && Objects.equals(statusChanged, that.statusChanged)
+                && Objects.equals(validForRoles, that.validForRoles)
+                && Objects.equals(validForOrgUnits, that.validForOrgUnits)
+                && Objects.equals(applicationCategory, that.applicationCategory);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                applicationAccessType,
+                applicationAccessRole,
+                platform,
+                accessType,
+                resourceLimit,
+                resourceOwnerOrgUnitId,
+                resourceOwnerOrgUnitName,
+                licenseEnforcement,
+                hasCost,
+                unitCost,
+                status,
+                statusChanged,
+                validForRoles,
+                validForOrgUnits,
+                applicationCategory);
+    }
 }
 

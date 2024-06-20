@@ -5,6 +5,8 @@ import lombok.*;
 
 import jakarta.persistence.*;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -22,4 +24,20 @@ public class ApplicationResourceLocation {
     private String orgUnitName;
     private Long resourceLimit;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ApplicationResourceLocation that = (ApplicationResourceLocation) o;
+        return Objects.equals(id, that.id)
+                && Objects.equals(resourceId, that.resourceId)
+                && Objects.equals(orgUnitId, that.orgUnitId)
+                && Objects.equals(orgUnitName, that.orgUnitName)
+                && Objects.equals(resourceLimit, that.resourceLimit);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash( id, resourceId, orgUnitId, orgUnitName, resourceLimit);
+    }
 }

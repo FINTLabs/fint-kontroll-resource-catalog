@@ -7,54 +7,40 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
 public class ResourceGroupPublishComponent {
-    private final AzureGroupService azureGroupService;
     private final ApplicationResourceService applicationResourceService;
     private final ResourceGroupProducerService resourceGroupProducerService;
 
-    public ResourceGroupPublishComponent(AzureGroupService azureGroupService, ApplicationResourceService applicationResourceService, ResourceGroupProducerService resourceGroupProducerService) {
-        this.azureGroupService = azureGroupService;
+    public ResourceGroupPublishComponent(ApplicationResourceService applicationResourceService, ResourceGroupProducerService resourceGroupProducerService) {
         this.applicationResourceService = applicationResourceService;
         this.resourceGroupProducerService = resourceGroupProducerService;
     }
     @Scheduled(initialDelayString = "30000",
-    fixedDelayString = "900000")
+            fixedDelayString = "900000")
 
     public void publishCompleteAndInCompleteResourceGroups() {
-        List<ApplicationResource> applicationResourcesWithAzureGroupId =
-                azureGroupService.getAllAzureGroups()
-                        .stream()
-                        .map(azureGroup -> azureGroup.getResourceGroupID())
-                        .map(id->applicationResourceService.getApplicationResourceFromId(id))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .peek(applicationResource -> {
-                            log.info("Found application resource "+ applicationResource.getId()
-                                    + " with Azure groupObjectId" + applicationResource.getIdentityProviderGroupObjectId()
-                                    + ". Complete resource is published") ;
-                        })
-                        .toList();
-        applicationResourceService.saveApplicationResources(applicationResourcesWithAzureGroupId);
-        resourceGroupProducerService.publishResourceGroups(applicationResourcesWithAzureGroupId);
 
-        List<ApplicationResource> applicationResources = applicationResourceService.getAllApplicationResources();
-
-        if (!applicationResources.isEmpty()) {
-            List<ApplicationResource> applicationResourcesWithOutAzureGroupId =
-                    applicationResources
+        List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
+        if (!allApplicationResourcesInDB.isEmpty()) {
+            List<ApplicationResource> applicationResourcesReadyToBePublished =
+                    allApplicationResourcesInDB
                             .stream()
-                            .filter(applicationResource -> (applicationResource.getIdentityProviderGroupObjectId() == null))
                             .peek(applicationResource -> {
-                                log.info("Application resource "+ applicationResource.getId()
-                                        + " is missing Azure groupObjectId. Resource is republished");
+                                log.debug("Application resource {} from database added to list for publishing as resource-group", applicationResource.getId());
                             })
                             .toList();
 
-            resourceGroupProducerService.publishResourceGroups(applicationResourcesWithOutAzureGroupId);
+            log.info("{} application resources added to list for publishing as resource-group", applicationResourcesReadyToBePublished.size());
+            List<ApplicationResource> publishedResourceGroups = resourceGroupProducerService
+                    .publishResourceGroups(applicationResourcesReadyToBePublished);
+            log.info("Published {} resource groups of total {} applicationResource objects found in database",
+                    publishedResourceGroups.size(),
+                    applicationResourcesReadyToBePublished.size());
+
+
         }
     }
 }

@@ -58,7 +58,8 @@ public class ApplicationResourceService {
     private Runnable onSaveNewApplicationResource(ApplicationResource applicationResource) {
         return () -> {
 
-            resourceGroupProducerService.publish(applicationResourceRepository.save(applicationResource));
+            //resourceGroupProducerService.publish(applicationResourceRepository.save(applicationResource));
+            applicationResourceRepository.save(applicationResource);
 
         };
     }
@@ -74,7 +75,7 @@ public class ApplicationResourceService {
                 applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
-            resourceGroupProducerService.publish(applicationResource);
+            //resourceGroupProducerService.publish(applicationResource);
             applicationResourceRepository.save(applicationResource);
 
         };
