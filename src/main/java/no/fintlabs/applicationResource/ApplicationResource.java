@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.resource.Resource;
-import org.hibernate.proxy.HibernateProxy;
+
 
 import java.util.ArrayList;
 import java.util.Date;
