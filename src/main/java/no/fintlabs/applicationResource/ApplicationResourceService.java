@@ -40,6 +40,7 @@ public class ApplicationResourceService {
     public void saveApplicationResource(ApplicationResource applicationResource) {
         System.out.println("resourceId" + applicationResource.getResourceId());
         System.out.println("resourceName: " + applicationResource.getResourceName());
+
     }
 
     public void saveApplicationResources(List<ApplicationResource> applicationResources) {

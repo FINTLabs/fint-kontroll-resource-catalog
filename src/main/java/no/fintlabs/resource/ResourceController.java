@@ -1,11 +1,9 @@
 package no.fintlabs.resource;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
-import no.fintlabs.applicationResource.AccessTypeService;
-import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
-import no.fintlabs.applicationResource.ApplicationResourceService;
-import no.fintlabs.applicationResource.ApplicationCategoryService;
+import no.fintlabs.applicationResource.*;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.http.HttpStatus;
@@ -92,7 +90,7 @@ public class ResourceController {
     }
 
     @GetMapping("/v1")
-    public ResponseEntity<Map<String, Object>> getAllResourcesSpesification(
+    public ResponseEntity<Map<String, Object>> getAllResourcesUsingSpesification(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(value = "search",required = false) String search,
             @RequestParam(value = "orgunits",required = false) List<String> orgUnits,
@@ -120,4 +118,31 @@ public class ResourceController {
             return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,page,size);
         }
     }
+
+
+    @PostMapping("v1")
+    public ResponseEntity<HttpStatus> createApplicationResource(@Valid @RequestBody ApplicationResource request){
+        ApplicationResource applicationResource = ApplicationResource.builder()
+                .resourceId(request.resourceId)
+                .resourceName(request.resourceName)
+                .resourceType(request.resourceType)
+                .platform(request.getPlatform())
+                .accessType(request.getAccessType())
+                .resourceLimit(request.getResourceLimit())
+                .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
+                .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
+                .validForRoles(request.getValidForRoles())
+                .applicationCategory(request.getApplicationCategory())
+                .hasCost(request.isHasCost())
+                .validForOrgUnits(request.getValidForOrgUnits())
+                .build();
+
+        //ApplicationResource newApplicationResource = applicationResourceService.saveApplicationResource(applicationResource);
+
+
+
+        return null;
+    }
+
+
 }
