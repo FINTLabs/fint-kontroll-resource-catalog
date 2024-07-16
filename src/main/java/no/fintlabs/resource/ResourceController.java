@@ -121,7 +121,7 @@ public class ResourceController {
 
 
     @PostMapping("v1")
-    public ResponseEntity<HttpStatus> createApplicationResource(@Valid @RequestBody ApplicationResource request){
+    public ResponseEntity<HttpStatus> createApplicationResource( @RequestBody ApplicationResource request){
         ApplicationResource applicationResource = ApplicationResource.builder()
                 .resourceId(request.resourceId)
                 .resourceName(request.resourceName)
@@ -133,15 +133,23 @@ public class ResourceController {
                 .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
                 .validForRoles(request.getValidForRoles())
                 .applicationCategory(request.getApplicationCategory())
+                .licenseEnforcement(request.getLicenseEnforcement())
+                .unitCost(request.getUnitCost())
+                .status(request.getStatus())
+                .statusChanged(request.getStatusChanged())
                 .hasCost(request.isHasCost())
                 .validForOrgUnits(request.getValidForOrgUnits())
                 .build();
 
-        //ApplicationResource newApplicationResource = applicationResourceService.saveApplicationResource(applicationResource);
+        ApplicationResource newApplicationResource = applicationResourceService.createApplicationResource(applicationResource);
+        if (newApplicationResource != null){
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
 
 
-
-        return null;
     }
 
 
