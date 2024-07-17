@@ -34,6 +34,8 @@ public class ApplicationResource extends Resource {
     private Long unitCost;
     private String status;
     private Date statusChanged;
+    private String createdBy;
+    private Date dateCreated;
 
 
     @ElementCollection
