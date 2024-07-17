@@ -1,6 +1,5 @@
 package no.fintlabs.resource;
 
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResource.*;
@@ -12,6 +11,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +137,7 @@ public class ResourceController {
                 .licenseEnforcement(request.getLicenseEnforcement())
                 .unitCost(request.getUnitCost())
                 .status(request.getStatus())
-                .statusChanged(request.getStatusChanged())
+                .statusChanged(Date.from(Instant.now()))
                 .hasCost(request.isHasCost())
                 .validForOrgUnits(request.getValidForOrgUnits())
                 .build();
@@ -146,7 +147,7 @@ public class ResourceController {
             return new ResponseEntity<>(HttpStatus.CREATED);
         }
         else {
-            return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
 
