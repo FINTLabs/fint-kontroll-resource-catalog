@@ -32,7 +32,7 @@ public class ResourceGroupProducerService {
     }
     public void publish(ApplicationResource applicationResource) {
         String key = applicationResource.getId().toString();
-        log.info("Publishing resourceGroup with id: {}", key);
+        log.debug("Publishing resourceGroup with id: {}", key);
         entityProducer.send(
                 EntityProducerRecord.<ApplicationResource>builder()
                         .topicNameParameters(entityTopicNameParameters)

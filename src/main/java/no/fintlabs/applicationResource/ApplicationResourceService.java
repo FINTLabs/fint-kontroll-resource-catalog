@@ -171,8 +171,6 @@ public class ApplicationResourceService {
 
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendList = applicationResourseList
                 .stream()
-                .filter(applicationResource -> applicationResource.getStatus() != null)
-                .filter(applicationResource -> applicationResource.getStatus().equals("ACTIVE"))
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
         return applicationResourceDTOFrontendList;
@@ -208,8 +206,8 @@ public class ApplicationResourceService {
     public ApplicationResource createApplicationResource(ApplicationResource applicationResource) {
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
         log.info("Created new application resource: {}", newApplicationResource.getResourceId());
-        return newApplicationResource;
 
+        return newApplicationResource;
     }
 
 

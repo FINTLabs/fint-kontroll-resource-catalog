@@ -18,7 +18,13 @@ public class AppicationResourceSpesificationBuilder {
     private final List<String> applicationCategory;
 
 
-    public AppicationResourceSpesificationBuilder(String search, List<String> orgUnitIds, String resourceType, List<String> userType, String accessType, List<String> applicationCategory) {
+    public AppicationResourceSpesificationBuilder(
+            String search,
+            List<String> orgUnitIds,
+            String resourceType,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory) {
         this.search = search;
         this.orgUnitIds = orgUnitIds;
         this.resourceType = resourceType;
@@ -56,6 +62,8 @@ public class AppicationResourceSpesificationBuilder {
         if (applicationCategory != null){
             applicationResourceSpecification= applicationResourceSpecification.and(applicationCategoryLike(applicationCategory));
         }
+
+        applicationResourceSpecification = applicationResourceSpecification.and(isActive());
 
         return applicationResourceSpecification;
     }
@@ -97,6 +105,11 @@ public class AppicationResourceSpesificationBuilder {
 
             return applicationCategoryJoin.in(applicationCategory);
         };
+    }
+
+    public Specification<ApplicationResource> isActive() {
+        return (root, query, criteriaBuilder) ->
+            criteriaBuilder.equal(root.get("status"),"ACTIVE");
     }
 
 
