@@ -93,9 +93,9 @@ jobs:
         with:
           creds: "${{ secrets[format('AKS_{0}_FINT_GITHUB', steps.environment.outputs.result)] }}"
 
-      - uses: azure/use-kubelogin@v1.1
+      - uses: azure/use-kubelogin@v1.2
         with:
-          kubelogin-version: 'v0.0.26'
+          kubelogin-version: 'v0.0.32'
 
       - name: Set the target cluster
         uses: azure/aks-set-context@v4
