@@ -122,7 +122,9 @@ public class ResourceController {
 
 
     @PostMapping("v1")
-    public ResponseEntity<HttpStatus> createApplicationResource( @RequestBody ApplicationResource request){
+    public ResponseEntity<HttpStatus> createApplicationResource( @AuthenticationPrincipal Jwt jwt, @RequestBody ApplicationResource request){
+        FintJwtEndUserPrincipal principal = FintJwtEndUserPrincipal.from(jwt);
+
         ApplicationResource applicationResource = ApplicationResource.builder()
                 .resourceId(request.resourceId)
                 .resourceName(request.resourceName)
@@ -138,6 +140,8 @@ public class ResourceController {
                 .unitCost(request.getUnitCost())
                 .status(request.getStatus())
                 .statusChanged(Date.from(Instant.now()))
+                .dateCreated(Date.from(Instant.now()))
+                .createdBy(principal.getMail())
                 .hasCost(request.isHasCost())
                 .validForOrgUnits(request.getValidForOrgUnits())
                 .build();
