@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -37,32 +38,16 @@ public class ApplicationResourceService {
         this.authorizationUtil = authorizationUtil;
     }
 
-//    public void saveApplicationResource(ApplicationResource applicationResource) {
-//        System.out.println("resourceId" + applicationResource.getResourceId());
-//        System.out.println("resourceName: " + applicationResource.getResourceName());
-//
-//    }
-//
-//    public void saveApplicationResources(List<ApplicationResource> applicationResources) {
-//        applicationResources
-//                .stream()
-//                .peek(this::save);
-//    }
 
     public void save(ApplicationResource applicationResource) {
         applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId())
                 .ifPresentOrElse(onSaveExistingApplicationResource(applicationResource),
-                                 onSaveNewApplicationResource(applicationResource));
+                        onSaveNewApplicationResource(applicationResource));
     }
 
     private Runnable onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        return () -> {
-
-            //resourceGroupProducerService.publish(applicationResourceRepository.save(applicationResource));
-            applicationResourceRepository.save(applicationResource);
-
-        };
+        return () -> applicationResourceRepository.save(applicationResource);
     }
 
     private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
@@ -76,7 +61,6 @@ public class ApplicationResourceService {
                 applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
-            //resourceGroupProducerService.publish(applicationResource);
             applicationResourceRepository.save(applicationResource);
 
         };
@@ -153,6 +137,7 @@ public class ApplicationResourceService {
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
     }
+
     // new for V1
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
             FintJwtEndUserPrincipal from,
@@ -163,37 +148,39 @@ public class ApplicationResourceService {
             String accessType,
             List<String> applicationCategory) {
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search,orgUnits,type,userType,accessType,applicationCategory
+                search, orgUnits, type, userType, accessType, applicationCategory
         );
 
-        //TODO: refactor to use native sql og jpl instead of findAll->stream
         List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
 
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendList = applicationResourseList
+        return applicationResourseList
                 .stream()
                 .map(ApplicationResource::toApplicationResourceDTOFrontendList)
                 .toList();
-        return applicationResourceDTOFrontendList;
     }
 
 
     public Optional<ApplicationResource> getApplicationResourceFromId(Long applicationResourceId) {
+
         return applicationResourceRepository.findById(applicationResourceId);
     }
 
     public List<ApplicationResource> getAllApplicationResources() {
+
         return applicationResourceRepository.findAll();
     }
 
 
     public List<String> getAllAuthorizedOrgUnitIDs() {
+
         return authorizationUtil.getAllAuthorizedOrgUnitIDs();
     }
 
 
     public List<String> compareRequestedOrgUnitIDsWithOPA(List<String> requestedOrgUnitIDs) {
         List<String> orgUnitsFromOPA = getAllAuthorizedOrgUnitIDs();
-        if (orgUnitsFromOPA.contains(OrgUnitType.ALLORGUNITS.name())){
+        if (orgUnitsFromOPA.contains(OrgUnitType.ALLORGUNITS.name())) {
+
             return requestedOrgUnitIDs;
         }
 
@@ -211,4 +198,29 @@ public class ApplicationResourceService {
     }
 
 
+    public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) {
+        Optional<ApplicationResource> applicationResourceSaved = applicationResourceRepository.findById(applicationResource.getId());
+
+        if (applicationResourceSaved.isPresent()) {
+            applicationResource.setCreatedBy(applicationResourceSaved.get().getCreatedBy());
+            applicationResource.setDateCreated(applicationResourceSaved.get().getDateCreated());
+        }
+
+        ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
+
+        log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
+
+        return updatedApplicationResource;
+    }
+
+    public void deleteApplicationResource(Long id) throws ApplicationResourceNotFoundExeption {
+        ApplicationResource applicationResource = applicationResourceRepository.findById(id)
+                .orElseThrow(() -> new ApplicationResourceNotFoundExeption(id));
+
+        applicationResource.setStatus("DELETED");
+        applicationResource.setStatusChanged(Date.from(Instant.now()));
+        applicationResourceRepository.saveAndFlush(applicationResource);
+
+
+    }
 }

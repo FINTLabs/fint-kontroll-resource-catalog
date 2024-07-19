@@ -55,7 +55,7 @@ public class ResourceController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
-        log.info("Fetching applicationResourse by id: " + id);
+        log.info("Fetching applicationResourse by id: {}", id);
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
                 .getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal.from(jwt), id);
         if (applicationResourceDTOFrontendDetail.isValid()){
@@ -151,8 +151,54 @@ public class ResourceController {
             return new ResponseEntity<>(HttpStatus.CREATED);
         }
         else {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
         }
+    }
+
+    @PutMapping("v1")
+    public ResponseEntity<HttpStatus> updateApplicationResource(@RequestBody ApplicationResource request){
+        ApplicationResource applicationResource = ApplicationResource.builder()
+                .id(request.id)
+                .resourceId(request.resourceId)
+                .resourceName(request.resourceName)
+                .resourceType(request.resourceType)
+                .platform(request.getPlatform())
+                .accessType(request.getAccessType())
+                .resourceLimit(request.getResourceLimit())
+                .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
+                .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
+                .validForRoles(request.getValidForRoles())
+                .applicationCategory(request.getApplicationCategory())
+                .licenseEnforcement(request.getLicenseEnforcement())
+                .unitCost(request.getUnitCost())
+                .status(request.getStatus())
+                .statusChanged(Date.from(Instant.now()))
+                .hasCost(request.isHasCost())
+                .validForOrgUnits(request.getValidForOrgUnits())
+                .build();
+
+        ApplicationResource updateApplicationResource = applicationResourceService.updateApplicationResource(applicationResource);
+
+        if (updateApplicationResource != null){
+            return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+        }
+    }
+
+
+    @DeleteMapping("v1/{id}")
+    public ResponseEntity<HttpStatus> deleteApplicationResource(@PathVariable Long id){
+        try {
+            applicationResourceService.deleteApplicationResource(id);
+        } catch (ApplicationResourceNotFoundExeption applicationResourceNotFoundExeption) {
+            log.error("Application resource not found", applicationResourceNotFoundExeption);
+
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(HttpStatus.GONE);
     }
 
 
