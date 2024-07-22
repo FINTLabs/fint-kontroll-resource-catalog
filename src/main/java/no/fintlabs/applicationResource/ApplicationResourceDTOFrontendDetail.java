@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -27,7 +28,13 @@ public class ApplicationResourceDTOFrontendDetail {
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
     private List<String> applicationCategory;
+    private String licenseEnforcement;
     private boolean hasCost;
+    private Long unitCost;
+    private String status;
+    private Date statusChanged;
+    private String createdBy;
+    private Date dateCreated;
 
     @JsonIgnore
     public boolean isValid(){
