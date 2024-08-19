@@ -41,16 +41,16 @@ patches:
         path: "/spec/resources"
         value:
           limits:
-            cpu: "2000m"
-            memory: "6000Mi"
-          requests:
             cpu: "1000m"
-            memory: "5000Mi"
+            memory: "2000Mi"
+          requests:
+            cpu: "500m"
+            memory: "500Mi"
       - op: add
         path: "/spec/env/3"
         value:
           name: "JAVA_TOOL_OPTIONS"
-          value: "-XX:+ExitOnOutOfMemoryError -Xmx5870m"
+          value: "-XX:+ExitOnOutOfMemoryError -Xmx1950m"
     target:
       kind: Application
       name: fint-kontroll-resource-catalog
