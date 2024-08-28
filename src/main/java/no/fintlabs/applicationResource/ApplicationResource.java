@@ -60,6 +60,7 @@ public class ApplicationResource extends Resource {
                 .resourceName(resourceName)
                 .resourceType(resourceType)
                 .resourceLimit(resourceLimit)
+                .identityProviderGroupObjectId(identityProviderGroupObjectId)
                 .build();
     }
 
