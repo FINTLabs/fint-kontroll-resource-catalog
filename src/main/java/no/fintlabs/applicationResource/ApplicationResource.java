@@ -64,6 +64,19 @@ public class ApplicationResource extends Resource {
                 .build();
     }
 
+    public ApplicationResourceDTOFrontendListForAdmin toApplicationResourceDTOFrontendListForAdmin(){
+        return ApplicationResourceDTOFrontendListForAdmin
+                .builder()
+                .id(id)
+                .resourceId(resourceId)
+                .resourceName(resourceName)
+                .resourceType(resourceType)
+                .resourceLimit(resourceLimit)
+                .identityProviderGroupObjectId(identityProviderGroupObjectId)
+                .status(status)
+                .build();
+    }
+
 
     @Override
     public boolean equals(Object o) {
