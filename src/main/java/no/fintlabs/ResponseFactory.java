@@ -81,8 +81,12 @@ public class ResponseFactory {
                         status
                 );
 
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendListFiltered = applicationResourceDTOFrontendLists
+                .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
+                .toList();
+
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
-                toPage(applicationResourceDTOFrontendLists, PageRequest.of(page, size))
+                toPage(applicationResourceDTOFrontendListFiltered, PageRequest.of(page, size))
         );
 
         return entity;

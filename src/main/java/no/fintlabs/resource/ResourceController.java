@@ -144,7 +144,10 @@ public class ResourceController {
                         resourceType,
                         userType,
                         accessType,
-                        applicationCategory,status);
+                        applicationCategory,
+                        status,
+                        page,
+                        size);
 
                 return allApplicationResourcesForAdmins;
             }
@@ -155,7 +158,9 @@ public class ResourceController {
                     userType,
                     accessType,
                     applicationCategory,
-                    status);
+                    status,
+                    page,
+                    size);
 
             return allApplicationResourcesForAdmins;
         }
@@ -169,7 +174,9 @@ public class ResourceController {
                         userType,
                         accessType,
                         applicationCategory,
-                        status);
+                        status,
+                        page,
+                        size);
                 return allApplicationsResourcesForAdmins;
             }else {
                 ResponseEntity<Map<String,Object>> allApplicationResourcesForAdmins = applicationResourceService.getAllApplicationResourcesForAdmins(
@@ -179,7 +186,9 @@ public class ResourceController {
                         userType,
                         accessType,
                         applicationCategory,
-                        status);
+                        status,
+                        page,
+                        size);
                 return allApplicationResourcesForAdmins;
             }
         }

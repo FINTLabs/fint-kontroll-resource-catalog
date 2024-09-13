@@ -233,7 +233,9 @@ public class ApplicationResourceService {
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
-            List<String> status) {
+            List<String> status,
+            int page,
+            int size) {
 
         return null;
     }
