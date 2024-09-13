@@ -102,21 +102,22 @@ public class ResourceController {
             @RequestParam(value ="page",defaultValue ="0") int page,
             @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
     ){
+        List<String> status = List.of("ACTIVE");
         if (orgUnits==null){
             List<String> allAuthorizedOrgUnitIds = applicationResourceService.getAllAuthorizedOrgUnitIDs();
             if (allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
-                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,page,size);
+                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
             }
 
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,page,size);
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
         }
         else {
             List<String> authorizedOrgUnitIds = applicationResourceService.compareRequestedOrgUnitIDsWithOPA(orgUnits);
             if (authorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
-                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,page,size);
+                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
             }
 
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,page,size);
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
         }
     }
 

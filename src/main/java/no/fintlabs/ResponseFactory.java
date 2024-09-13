@@ -66,6 +66,7 @@ public class ResponseFactory {
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
+            List<String> status,
             int page,
             int size) {
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
@@ -76,7 +77,8 @@ public class ResponseFactory {
                         type,
                         userType,
                         accessType,
-                        applicationCategory
+                        applicationCategory,
+                        status
                 );
 
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
@@ -118,5 +120,6 @@ public class ResponseFactory {
 
 
     public ResponseEntity<Map<String, Object>> toResponseEntity(List<ApplicationResource> allApplicationResourcesForAdmins, int page, int size) {
+        return null;
     }
 }

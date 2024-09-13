@@ -25,7 +25,8 @@ public class AppicationResourceSpesificationBuilder {
             String resourceType,
             List<String> userType,
             String accessType,
-            List<String> applicationCategory, List<String> status) {
+            List<String> applicationCategory,
+            List<String> status) {
         this.search = search;
         this.orgUnitIds = orgUnitIds;
         this.resourceType = resourceType;
@@ -114,9 +115,16 @@ public class AppicationResourceSpesificationBuilder {
     }
 
     public Specification<ApplicationResource> statuslike(List<String> status) {
-        return ((root, query, criteriaBuilder) ->
-                criteriaBuilder.in(root.get("status")));
+        return ((root, query, criteriaBuilder) -> {
+            CriteriaBuilder.In<String> inClause = criteriaBuilder.in(root.get("status"));
+            for (String statu : status) {
+                inClause.value(statu);
+            }
+            return inClause;
+        });
+
     }
+
 
     public Specification<ApplicationResource> isActive() {
         return (root, query, criteriaBuilder) ->

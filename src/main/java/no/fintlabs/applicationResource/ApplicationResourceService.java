@@ -147,9 +147,10 @@ public class ApplicationResourceService {
             String type,
             List<String> userType,
             String accessType,
-            List<String> applicationCategory) {
+            List<String> applicationCategory,
+            List<String> status) {
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, orgUnits, type, userType, accessType, applicationCategory
+                search, orgUnits, type, userType, accessType, applicationCategory, status
         );
 
         List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
@@ -225,7 +226,7 @@ public class ApplicationResourceService {
 
     }
 
-    public ResponseEntity<Map<String,Object>> getAllApplicationResourcesForAdmins(
+    public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
             String search,
             List<String> orgUnits,
             String resourceType,
@@ -234,6 +235,6 @@ public class ApplicationResourceService {
             List<String> applicationCategory,
             List<String> status) {
 
-    return null;
+        return null;
     }
 }
