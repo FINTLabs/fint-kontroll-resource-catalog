@@ -120,6 +120,7 @@ public class ResourceController {
         }
     }
 
+    //TODO: refactor to one methode and just passing orgunits
     @GetMapping("/admin/v1")
     public ResponseEntity<Map<String,Object>> getAllResourcesForAdmins(
             @AuthenticationPrincipal Jwt jwt,
