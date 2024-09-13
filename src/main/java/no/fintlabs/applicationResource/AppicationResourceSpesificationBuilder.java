@@ -16,6 +16,7 @@ public class AppicationResourceSpesificationBuilder {
     private final List<String> userType;
     private final String accessType;
     private final List<String> applicationCategory;
+    private final List<String> status;
 
 
     public AppicationResourceSpesificationBuilder(
@@ -24,13 +25,15 @@ public class AppicationResourceSpesificationBuilder {
             String resourceType,
             List<String> userType,
             String accessType,
-            List<String> applicationCategory) {
+            List<String> applicationCategory,
+            List<String> status) {
         this.search = search;
         this.orgUnitIds = orgUnitIds;
         this.resourceType = resourceType;
         this.userType = userType;
         this.accessType = accessType;
         this.applicationCategory = applicationCategory;
+        this.status = status;
     }
 
     public Specification<ApplicationResource> build() {
@@ -63,7 +66,11 @@ public class AppicationResourceSpesificationBuilder {
             applicationResourceSpecification= applicationResourceSpecification.and(applicationCategoryLike(applicationCategory));
         }
 
-        applicationResourceSpecification = applicationResourceSpecification.and(isActive());
+        if (status != null) {
+            applicationResourceSpecification = applicationResourceSpecification.and(statuslike(status));
+        }
+
+        //applicationResourceSpecification = applicationResourceSpecification.and(isActive());
 
         return applicationResourceSpecification;
     }
@@ -106,6 +113,18 @@ public class AppicationResourceSpesificationBuilder {
             return applicationCategoryJoin.in(applicationCategory);
         };
     }
+
+    public Specification<ApplicationResource> statuslike(List<String> status) {
+        return ((root, query, criteriaBuilder) -> {
+            CriteriaBuilder.In<String> inClause = criteriaBuilder.in(root.get("status"));
+            for (String statu : status) {
+                inClause.value(statu);
+            }
+            return inClause;
+        });
+
+    }
+
 
     public Specification<ApplicationResource> isActive() {
         return (root, query, criteriaBuilder) ->

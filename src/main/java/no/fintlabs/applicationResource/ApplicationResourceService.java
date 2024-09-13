@@ -9,6 +9,7 @@ import no.fintlabs.resourceGroup.AzureGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -146,9 +147,10 @@ public class ApplicationResourceService {
             String type,
             List<String> userType,
             String accessType,
-            List<String> applicationCategory) {
+            List<String> applicationCategory,
+            List<String> status) {
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, orgUnits, type, userType, accessType, applicationCategory
+                search, orgUnits, type, userType, accessType, applicationCategory, status
         );
 
         List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
@@ -222,5 +224,19 @@ public class ApplicationResourceService {
         applicationResourceRepository.saveAndFlush(applicationResource);
 
 
+    }
+
+    public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
+            String search,
+            List<String> orgUnits,
+            String resourceType,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory,
+            List<String> status,
+            int page,
+            int size) {
+
+        return null;
     }
 }

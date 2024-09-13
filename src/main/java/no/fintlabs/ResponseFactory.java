@@ -1,6 +1,7 @@
 package no.fintlabs;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendList;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -65,6 +66,7 @@ public class ResponseFactory {
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
+            List<String> status,
             int page,
             int size) {
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
@@ -75,11 +77,16 @@ public class ResponseFactory {
                         type,
                         userType,
                         accessType,
-                        applicationCategory
+                        applicationCategory,
+                        status
                 );
 
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendListFiltered = applicationResourceDTOFrontendLists
+                .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
+                .toList();
+
         ResponseEntity<Map<String, Object>> entity = toResponseEntity(
-                toPage(applicationResourceDTOFrontendLists, PageRequest.of(page, size))
+                toPage(applicationResourceDTOFrontendListFiltered, PageRequest.of(page, size))
         );
 
         return entity;
@@ -106,5 +113,17 @@ public class ResponseFactory {
                 : new PageImpl<>(dtoFrontendList.subList(start, end), paging, dtoFrontendList.size());
     }
 
+    private Page<Object> toPageGeneric(List<Object> dtoList, Pageable paging) {
+        int start = (int) paging.getOffset();
+        int end = Math.min((start + paging.getPageSize()), dtoList.size());
 
+        return start > dtoList.size()
+                ? new PageImpl<>(new ArrayList<>(), paging, dtoList.size())
+                : new PageImpl<>(dtoList.subList(start, end), paging, dtoList.size());
+    }
+
+
+    public ResponseEntity<Map<String, Object>> toResponseEntity(List<ApplicationResource> allApplicationResourcesForAdmins, int page, int size) {
+        return null;
+    }
 }

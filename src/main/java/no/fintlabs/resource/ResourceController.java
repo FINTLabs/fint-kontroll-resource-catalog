@@ -102,21 +102,95 @@ public class ResourceController {
             @RequestParam(value ="page",defaultValue ="0") int page,
             @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
     ){
+        List<String> status = List.of("ACTIVE");
         if (orgUnits==null){
             List<String> allAuthorizedOrgUnitIds = applicationResourceService.getAllAuthorizedOrgUnitIDs();
             if (allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
-                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,page,size);
+                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
             }
 
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,page,size);
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
         }
         else {
             List<String> authorizedOrgUnitIds = applicationResourceService.compareRequestedOrgUnitIDsWithOPA(orgUnits);
             if (authorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
-                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,page,size);
+                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
             }
 
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,page,size);
+            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
+        }
+    }
+
+    //TODO: refactor to one methode and just passing orgunits
+    @GetMapping("/admin/v1")
+    public ResponseEntity<Map<String,Object>> getAllResourcesForAdmins(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(value = "search",required = false) String search,
+            @RequestParam(value = "orgunits",required = false) List<String> orgUnits,
+            @RequestParam(value = "resourceType",required = false) String resourceType,
+            @RequestParam(value = "usertype",required = false) List<String> userType,
+            @RequestParam(value = "accesstype",required = false) String accessType,
+            @RequestParam(value = "applicationcategory", required = false) List<String> applicationCategory,
+            @RequestParam(value = "status",required = false) List<String> status,
+            @RequestParam(value ="page",defaultValue ="0") int page,
+            @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
+    ){
+        if (orgUnits==null){
+            List<String> allAuthOrgunits = applicationResourceService.getAllAuthorizedOrgUnitIDs();
+            if (allAuthOrgunits.contains(OrgUnitType.ALLORGUNITS.name())){
+                ResponseEntity<Map<String,Object>> allApplicationResourcesForAdmins = applicationResourceService.getAllApplicationResourcesForAdmins(
+                        search,
+                        null,
+                        resourceType,
+                        userType,
+                        accessType,
+                        applicationCategory,
+                        status,
+                        page,
+                        size);
+
+                return allApplicationResourcesForAdmins;
+            }
+            ResponseEntity<Map<String,Object>> allApplicationResourcesForAdmins = applicationResourceService.getAllApplicationResourcesForAdmins(
+                    search,
+                    allAuthOrgunits,
+                    resourceType,
+                    userType,
+                    accessType,
+                    applicationCategory,
+                    status,
+                    page,
+                    size);
+
+            return allApplicationResourcesForAdmins;
+        }
+        else {
+            List<String> allAuthorizedOrgUnitIds = applicationResourceService.compareRequestedOrgUnitIDsWithOPA(orgUnits);
+            if (allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
+                ResponseEntity<Map<String,Object>> allApplicationsResourcesForAdmins = applicationResourceService.getAllApplicationResourcesForAdmins(
+                        search,
+                        orgUnits,
+                        resourceType,
+                        userType,
+                        accessType,
+                        applicationCategory,
+                        status,
+                        page,
+                        size);
+                return allApplicationsResourcesForAdmins;
+            }else {
+                ResponseEntity<Map<String,Object>> allApplicationResourcesForAdmins = applicationResourceService.getAllApplicationResourcesForAdmins(
+                        search,
+                        allAuthorizedOrgUnitIds,
+                        resourceType,
+                        userType,
+                        accessType,
+                        applicationCategory,
+                        status,
+                        page,
+                        size);
+                return allApplicationResourcesForAdmins;
+            }
         }
     }
 
