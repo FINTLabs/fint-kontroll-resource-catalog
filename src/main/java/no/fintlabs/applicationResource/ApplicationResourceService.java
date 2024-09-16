@@ -1,6 +1,8 @@
 package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.ResponseFactory;
+import no.fintlabs.ResponseFactoryAdmin;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
@@ -26,17 +28,17 @@ import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
 public class ApplicationResourceService {
 
     private final ApplicationResourceRepository applicationResourceRepository;
-    private final ResourceGroupProducerService resourceGroupProducerService;
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
+    private final ResponseFactoryAdmin responseFactoryAdmin;
 
     public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository,
                                       ResourceGroupProducerService resourceGroupProducerService,
-                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil) {
+                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil,ResponseFactoryAdmin responseFactoryAdmin) {
         this.applicationResourceRepository = applicationResourceRepository;
-        this.resourceGroupProducerService = resourceGroupProducerService;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
+        this.responseFactoryAdmin = responseFactoryAdmin;
     }
 
 
@@ -96,50 +98,6 @@ public class ApplicationResourceService {
     }
 
 
-    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
-                                                                                          String search,
-                                                                                          List<String> orgUnits) {
-        List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
-
-        List<String> orgUnitsToQuery = orgUnits.stream()
-                .filter(orgUnit -> orgUnit.contains(ALLORGUNITS.name()) || validOrgUnits.contains(orgUnit))
-                .toList();
-
-        List<ApplicationResource> applicationResources =
-                applicationResourceRepository.findApplicationResourceByOrgUnitIds(search, orgUnitsToQuery);
-
-        return applicationResources
-                .stream()
-                .filter(applicationResource -> applicationResource.getStatus() != null)
-                .filter(applicationResource -> applicationResource.getStatus().equals("ACTIVE"))
-                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
-                .toList();
-    }
-
-    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(FintJwtEndUserPrincipal principal,
-                                                                                          String search) {
-        List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
-
-        List<ApplicationResource> applicationResources;
-
-        //TODO: refactor to use native sql og jpl instead of findAll->stream
-        if (validOrgUnits.contains(ALLORGUNITS.name())) {
-            applicationResources = applicationResourceRepository.findApplicationResourceByResourceName(search);
-        } else {
-            applicationResources = applicationResourceRepository.findApplicationResourceByOrgUnitIds(search, validOrgUnits);
-        }
-
-        log.info("Fetching applicationResources. Count: " + applicationResources.size());
-
-        return applicationResources
-                .stream()
-                .filter(applicationResource -> applicationResource.getStatus() != null)
-                .filter(applicationResource -> applicationResource.getStatus().equals("ACTIVE"))
-                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
-                .toList();
-    }
-
-    // new for V1
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
             FintJwtEndUserPrincipal from,
             String search,
@@ -237,6 +195,20 @@ public class ApplicationResourceService {
             int page,
             int size) {
 
-        return null;
+        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
+                search, orgUnits, resourceType, userType, accessType, applicationCategory, status);
+
+        List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
+
+        List<ApplicationResourceDTOFrontendListForAdmin> applicationResourceDTOFrontendListForAdmins = applicationResourceList
+                .stream()
+                .map(ApplicationResource::toApplicationResourceDTOFrontendListForAdmin)
+                .toList();
+
+        ResponseEntity<Map<String,Object>> responseEntity = responseFactoryAdmin.toResponseEntityAdmin(applicationResourceDTOFrontendListForAdmins,page,size);
+
+
+
+        return responseEntity;
     }
 }

@@ -1,5 +1,7 @@
 package no.fintlabs.applicationResource;
 
+import no.fintlabs.ResponseFactory;
+import no.fintlabs.ResponseFactoryAdmin;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
@@ -22,6 +24,7 @@ import static org.mockito.Mockito.when;
 class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
     private ApplicationResourceRepository applicationResourceRepository;
+    private ResponseFactoryAdmin responseFactoryAdmin;
     @Mock
     private FintCache<Long, AzureGroup> azureGroupCache;
     private AuthorizationUtil authorizationUtil;
@@ -32,7 +35,8 @@ class ApplicationResourceServiceTest {
         authorizationUtil = mock(AuthorizationUtil.class);
         applicationResourceService = new ApplicationResourceService(applicationResourceRepository,
                 null,
-                azureGroupCache, authorizationUtil);
+                azureGroupCache, authorizationUtil,responseFactoryAdmin)
+        ;
     }
 
     @Test
