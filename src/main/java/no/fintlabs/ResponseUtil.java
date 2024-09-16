@@ -1,10 +1,9 @@
 package no.fintlabs;
 
-
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,14 @@ import java.util.Map;
 @Component
 @Slf4j
 public class ResponseUtil {
+
+
+    public <T> ResponseEntity<Map<String, Object>> createResponsAndPaging(List<T> allResources, int page, int size) {
+
+        return this.toResponseEntity( this.toPage(allResources, PageRequest.of(page, size))
+        );
+    }
+
 
     public  <T> Page<T> toPage(List<T> list, Pageable paging) {
         int start = (int) paging.getOffset();
@@ -39,6 +46,7 @@ public class ResponseUtil {
                 HttpStatus.OK
         );
     }
+
 
 
 

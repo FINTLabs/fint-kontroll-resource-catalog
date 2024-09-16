@@ -3,6 +3,7 @@ package no.fintlabs.applicationResource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.ResponseFactoryAdmin;
+import no.fintlabs.ResponseUtil;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
@@ -31,14 +32,16 @@ public class ApplicationResourceService {
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
     private final ResponseFactoryAdmin responseFactoryAdmin;
+    private final ResponseUtil responseUtil;
 
     public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository,
                                       ResourceGroupProducerService resourceGroupProducerService,
-                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil,ResponseFactoryAdmin responseFactoryAdmin) {
+                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil, ResponseFactoryAdmin responseFactoryAdmin, ResponseUtil responseUtil) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
         this.responseFactoryAdmin = responseFactoryAdmin;
+        this.responseUtil = responseUtil;
     }
 
 
@@ -205,7 +208,7 @@ public class ApplicationResourceService {
                 .map(ApplicationResource::toApplicationResourceDTOFrontendListForAdmin)
                 .toList();
 
-        ResponseEntity<Map<String,Object>> responseEntity = responseFactoryAdmin.toResponseEntityAdmin(applicationResourceDTOFrontendListForAdmins,page,size);
+        ResponseEntity<Map<String,Object>> responseEntity = responseUtil.createResponsAndPaging(applicationResourceDTOFrontendListForAdmins,page,size);
 
 
 

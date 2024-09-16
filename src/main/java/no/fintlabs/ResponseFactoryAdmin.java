@@ -26,12 +26,12 @@ public class ResponseFactoryAdmin {
     }
 
 
-    public ResponseEntity<Map<String, Object>> toResponseEntityAdmin(List<ApplicationResourceDTOFrontendListForAdmin> allApplicationResourceDTOsForAdmins, int page, int size) {
-
-        ResponseEntity<Map<String, Object>> responseEntityForAdmin = responseUtil.toResponseEntity(
-                responseUtil.toPage (allApplicationResourceDTOsForAdmins, PageRequest.of(page, size))
-        );
-
-        return responseEntityForAdmin;
-    }
+//    public ResponseEntity<Map<String, Object>> toResponseEntityAdmin(List<ApplicationResourceDTOFrontendListForAdmin> allApplicationResourceDTOsForAdmins, int page, int size) {
+//
+//        ResponseEntity<Map<String, Object>> responseEntityForAdmin = responseUtil.toResponseEntity(
+//                responseUtil.toPage (allApplicationResourceDTOsForAdmins, PageRequest.of(page, size))
+//        );
+//
+//        return responseEntityForAdmin;
+//    }
 }
