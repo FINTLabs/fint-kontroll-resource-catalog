@@ -26,38 +26,6 @@ public class ResponseFactory {
         this.applicationResourceService = applicationResourceService;
     }
 
-    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal principal,
-                                                               String search,
-                                                               String type,
-                                                               int page,
-                                                               int size) {
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-                applicationResourceService.getApplicationResourceDTOFrontendList(principal, search);
-
-        ResponseEntity<Map<String, Object>> entity = toResponseEntity(
-                toPage(applicationResourceDTOFrontendLists,
-                        PageRequest.of(page, size))
-        );
-        return entity;
-    }
-
-    public ResponseEntity<Map<String, Object>> toResponsEntity(FintJwtEndUserPrincipal principal,
-                                                               String search,
-                                                               List<String> orgUnits,
-                                                               String type,
-                                                               int page,
-                                                               int size) {
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-                applicationResourceService.getApplicationResourceDTOFrontendList(principal, search, orgUnits);
-
-        ResponseEntity<Map<String, Object>> entity = toResponseEntity(
-                toPage(applicationResourceDTOFrontendLists,
-                        PageRequest.of(page, size))
-        );
-        return entity;
-    }
-
-    // new for V1
     public ResponseEntity<Map<String, Object>> toResponsEntity(
             FintJwtEndUserPrincipal from,
             String search,
@@ -126,4 +94,6 @@ public class ResponseFactory {
     public ResponseEntity<Map<String, Object>> toResponseEntity(List<ApplicationResource> allApplicationResourcesForAdmins, int page, int size) {
         return null;
     }
+
+
 }

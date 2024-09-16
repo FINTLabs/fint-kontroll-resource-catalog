@@ -34,24 +34,6 @@ public class ResourceController {
         this.accessTypeService = accessTypeService;
     }
 
-    @GetMapping()
-    public ResponseEntity<Map<String, Object>> getAllResources(
-            @AuthenticationPrincipal Jwt jwt,
-            @RequestParam(value = "search",defaultValue = "%") String search,
-            @RequestParam(value = "orgUnits",required = false) List<String> orgUnits,
-            @RequestParam(value="type",defaultValue = "ALLTYPES") String type,
-            @RequestParam(value ="page",defaultValue ="0") int page,
-            @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
-    ){
-        if (orgUnits==null){
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,type,page,size);
-        }
-        else {
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits,type,page,size);
-        }
-
-
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
