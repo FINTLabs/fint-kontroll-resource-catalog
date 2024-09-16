@@ -1,7 +1,6 @@
 package no.fintlabs;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendList;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -21,9 +20,11 @@ import java.util.Map;
 @Slf4j
 public class ResponseFactory {
     private final ApplicationResourceService applicationResourceService;
+    private final ResponseUtil responseUtil;
 
-    public ResponseFactory(ApplicationResourceService applicationResourceService) {
+    public ResponseFactory(ApplicationResourceService applicationResourceService, ResponseUtil responseUtil) {
         this.applicationResourceService = applicationResourceService;
+        this.responseUtil = responseUtil;
     }
 
     public ResponseEntity<Map<String, Object>> toResponsEntity(
@@ -53,47 +54,8 @@ public class ResponseFactory {
                 .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
                 .toList();
 
-        ResponseEntity<Map<String, Object>> entity = toResponseEntity(
-                toPage(applicationResourceDTOFrontendListFiltered, PageRequest.of(page, size))
-        );
-
-        return entity;
-    }
-
-
-    public ResponseEntity<Map<String, Object>> toResponseEntity(Page<ApplicationResourceDTOFrontendList> page) {
-        return new ResponseEntity<>(
-                Map.of("totalItems", page.getTotalElements(),
-                        "resources", page.getContent(),
-                        "currentPage", page.getNumber(),
-                        "totalPages", page.getTotalPages()
-                ),
-                HttpStatus.OK
+        return responseUtil.toResponseEntity(
+                responseUtil.toPage(applicationResourceDTOFrontendListFiltered, PageRequest.of(page, size))
         );
     }
-
-    private Page<ApplicationResourceDTOFrontendList> toPage(List<ApplicationResourceDTOFrontendList> dtoFrontendList, Pageable paging) {
-        int start = (int) paging.getOffset();
-        int end = Math.min((start + paging.getPageSize()), dtoFrontendList.size());
-
-        return start > dtoFrontendList.size()
-                ? new PageImpl<>(new ArrayList<>(), paging, dtoFrontendList.size())
-                : new PageImpl<>(dtoFrontendList.subList(start, end), paging, dtoFrontendList.size());
-    }
-
-    private Page<Object> toPageGeneric(List<Object> dtoList, Pageable paging) {
-        int start = (int) paging.getOffset();
-        int end = Math.min((start + paging.getPageSize()), dtoList.size());
-
-        return start > dtoList.size()
-                ? new PageImpl<>(new ArrayList<>(), paging, dtoList.size())
-                : new PageImpl<>(dtoList.subList(start, end), paging, dtoList.size());
-    }
-
-
-    public ResponseEntity<Map<String, Object>> toResponseEntity(List<ApplicationResource> allApplicationResourcesForAdmins, int page, int size) {
-        return null;
-    }
-
-
 }

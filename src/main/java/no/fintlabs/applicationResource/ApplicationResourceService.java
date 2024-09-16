@@ -1,6 +1,8 @@
 package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.ResponseFactory;
+import no.fintlabs.ResponseFactoryAdmin;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
@@ -26,17 +28,17 @@ import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
 public class ApplicationResourceService {
 
     private final ApplicationResourceRepository applicationResourceRepository;
-    private final ResourceGroupProducerService resourceGroupProducerService;
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
+    private final ResponseFactoryAdmin responseFactoryAdmin;
 
     public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository,
                                       ResourceGroupProducerService resourceGroupProducerService,
-                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil) {
+                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil,ResponseFactoryAdmin responseFactoryAdmin) {
         this.applicationResourceRepository = applicationResourceRepository;
-        this.resourceGroupProducerService = resourceGroupProducerService;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
+        this.responseFactoryAdmin = responseFactoryAdmin;
     }
 
 
@@ -193,6 +195,20 @@ public class ApplicationResourceService {
             int page,
             int size) {
 
-        return null;
+        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
+                search, orgUnits, resourceType, userType, accessType, applicationCategory, status);
+
+        List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
+
+        List<ApplicationResourceDTOFrontendListForAdmin> applicationResourceDTOFrontendListForAdmins = applicationResourceList
+                .stream()
+                .map(ApplicationResource::toApplicationResourceDTOFrontendListForAdmin)
+                .toList();
+
+        ResponseEntity<Map<String,Object>> responseEntity = responseFactoryAdmin.toResponseEntityAdmin(applicationResourceDTOFrontendListForAdmins,page,size);
+
+
+
+        return responseEntity;
     }
 }
