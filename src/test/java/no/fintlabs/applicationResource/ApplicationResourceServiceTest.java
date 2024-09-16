@@ -1,7 +1,6 @@
 package no.fintlabs.applicationResource;
 
 import no.fintlabs.ResponseFactory;
-import no.fintlabs.ResponseFactoryAdmin;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
@@ -24,20 +23,24 @@ import static org.mockito.Mockito.when;
 class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
     private ApplicationResourceRepository applicationResourceRepository;
-    private ResponseFactoryAdmin responseFactoryAdmin;
     @Mock
     private FintCache<Long, AzureGroup> azureGroupCache;
     private AuthorizationUtil authorizationUtil;
+    private ResponseFactory responseFactory;
 
     @BeforeEach
     public void setup(){
         applicationResourceRepository = mock(ApplicationResourceRepository.class);
         authorizationUtil = mock(AuthorizationUtil.class);
-        applicationResourceService = new ApplicationResourceService(applicationResourceRepository,
-                null,
-                azureGroupCache, authorizationUtil,responseFactoryAdmin)
+        applicationResourceService = new ApplicationResourceService(
+                applicationResourceRepository,
+                azureGroupCache,
+                authorizationUtil,
+                responseFactory)
         ;
     }
+
+
 
     @Test
     public void getApplicationResourceByIdShouldReturnDTOIfAuthorized(){
