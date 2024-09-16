@@ -2,13 +2,11 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
-import no.fintlabs.ResponseFactoryAdmin;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
-import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
@@ -30,15 +28,15 @@ public class ApplicationResourceService {
     private final ApplicationResourceRepository applicationResourceRepository;
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
-    private final ResponseFactoryAdmin responseFactoryAdmin;
+    private final ResponseFactory responseFactory;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository,
-                                      ResourceGroupProducerService resourceGroupProducerService,
-                                      FintCache<Long, AzureGroup> azureGroupCache, AuthorizationUtil authorizationUtil,ResponseFactoryAdmin responseFactoryAdmin) {
+    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, FintCache<Long, AzureGroup> azureGroupCache,
+                                      AuthorizationUtil authorizationUtil,
+                                      ResponseFactory responseFactory) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
-        this.responseFactoryAdmin = responseFactoryAdmin;
+        this.responseFactory = responseFactory;
     }
 
 
@@ -99,7 +97,6 @@ public class ApplicationResourceService {
 
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
-            FintJwtEndUserPrincipal from,
             String search,
             List<String> orgUnits,
             String type,
@@ -205,9 +202,39 @@ public class ApplicationResourceService {
                 .map(ApplicationResource::toApplicationResourceDTOFrontendListForAdmin)
                 .toList();
 
-        ResponseEntity<Map<String,Object>> responseEntity = responseFactoryAdmin.toResponseEntityAdmin(applicationResourceDTOFrontendListForAdmins,page,size);
+        ResponseEntity<Map<String,Object>> responseEntity = responseFactory.createResponsAndPaging(applicationResourceDTOFrontendListForAdmins,page,size);
 
 
+        return responseEntity;
+    }
+
+    public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(
+            String search,
+            List<String> orgUnits,
+            String resourceType,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory,
+            List<String> status,
+            int page,
+            int size) {
+
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
+                this.getApplicationResourceDTOFrontendList(
+                        search,
+                        orgUnits,
+                        resourceType,
+                        userType,
+                        accessType,
+                        applicationCategory,
+                        status
+                );
+
+        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendListFiltered = applicationResourceDTOFrontendLists
+                .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
+                .toList();
+
+        ResponseEntity<Map<String,Object>> responseEntity = responseFactory.createResponsAndPaging(applicationResourceDTOFrontendListFiltered,page,size);
 
         return responseEntity;
     }

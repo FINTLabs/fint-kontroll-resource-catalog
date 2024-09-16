@@ -1,9 +1,6 @@
 package no.fintlabs;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendList;
-import no.fintlabs.applicationResource.ApplicationResourceService;
-import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -19,43 +16,41 @@ import java.util.Map;
 @Component
 @Slf4j
 public class ResponseFactory {
-    private final ApplicationResourceService applicationResourceService;
-    private final ResponseUtil responseUtil;
 
-    public ResponseFactory(ApplicationResourceService applicationResourceService, ResponseUtil responseUtil) {
-        this.applicationResourceService = applicationResourceService;
-        this.responseUtil = responseUtil;
-    }
 
-    public ResponseEntity<Map<String, Object>> toResponsEntity(
-            FintJwtEndUserPrincipal from,
-            String search,
-            List<String> orgUnits,
-            String type,
-            List<String> userType,
-            String accessType,
-            List<String> applicationCategory,
-            List<String> status,
-            int page,
-            int size) {
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-                applicationResourceService.getApplicationResourceDTOFrontendList(
-                        from,
-                        search,
-                        orgUnits,
-                        type,
-                        userType,
-                        accessType,
-                        applicationCategory,
-                        status
-                );
+    public <T> ResponseEntity<Map<String, Object>> createResponsAndPaging(List<T> allResources, int page, int size) {
 
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendListFiltered = applicationResourceDTOFrontendLists
-                .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
-                .toList();
-
-        return responseUtil.toResponseEntity(
-                responseUtil.toPage(applicationResourceDTOFrontendListFiltered, PageRequest.of(page, size))
+        return this.toResponseEntity( this.toPage(allResources, PageRequest.of(page, size))
         );
     }
+
+
+    public  <T> Page<T> toPage(List<T> list, Pageable paging) {
+        int start = (int) paging.getOffset();
+        int end = Math.min((start + paging.getPageSize()), list.size());
+
+        return start > list.size()
+                ? new PageImpl<>(new ArrayList<>(), paging, list.size())
+                : new PageImpl<>(list.subList(start, end), paging, list.size());
+    }
+
+
+    public <T> ResponseEntity<Map<String, Object>> toResponseEntity(Page<T> page) {
+        return new ResponseEntity<>(
+                Map.of(
+                        "totalItems", page.getTotalElements(),
+                        "resources", page.getContent(),
+                        "currentPage", page.getNumber(),
+                        "totalPages", page.getTotalPages()
+                ),
+                HttpStatus.OK
+        );
+    }
+
+
+
+
+
+
+
 }

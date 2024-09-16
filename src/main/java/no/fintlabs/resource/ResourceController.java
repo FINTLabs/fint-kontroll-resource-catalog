@@ -1,7 +1,6 @@
 package no.fintlabs.resource;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -21,15 +20,13 @@ import java.util.Map;
 @RequestMapping("/api/resources")
 public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
-    private final ResponseFactory responseFactory;
     private final ApplicationCategoryService applicationCategoryService;
     private final AccessTypeService accessTypeService;
 
 
 
-    public ResourceController(ApplicationResourceService applicationResourceService, ResponseFactory responseFactory, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService) {
+    public ResourceController(ApplicationResourceService applicationResourceService, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService) {
         this.applicationResourceService = applicationResourceService;
-        this.responseFactory = responseFactory;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
     }
@@ -73,7 +70,7 @@ public class ResourceController {
     }
 
     @GetMapping("/v1")
-    public ResponseEntity<Map<String, Object>> getAllResourcesUsingSpesification(
+    public ResponseEntity<Map<String, Object>> getAllActiveResources(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(value = "search",required = false) String search,
             @RequestParam(value = "orgunits",required = false) List<String> orgUnits,
@@ -88,18 +85,18 @@ public class ResourceController {
         if (orgUnits==null){
             List<String> allAuthorizedOrgUnitIds = applicationResourceService.getAllAuthorizedOrgUnitIDs();
             if (allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
-                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
+                return applicationResourceService.getAllActiveAndValidApplicationResources(search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
             }
 
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search, allAuthorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
+            return applicationResourceService.getAllActiveAndValidApplicationResources(search, allAuthorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
         }
         else {
             List<String> authorizedOrgUnitIds = applicationResourceService.compareRequestedOrgUnitIDsWithOPA(orgUnits);
             if (authorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
-                return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
+                return applicationResourceService.getAllActiveAndValidApplicationResources(search,orgUnits, resourceType,userType,accessType,applicationCategory,status,page,size);
             }
 
-            return responseFactory.toResponsEntity(FintJwtEndUserPrincipal.from(jwt),search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
+            return applicationResourceService.getAllActiveAndValidApplicationResources(search,authorizedOrgUnitIds, resourceType,userType,accessType,applicationCategory,status,page,size);
         }
     }
 
