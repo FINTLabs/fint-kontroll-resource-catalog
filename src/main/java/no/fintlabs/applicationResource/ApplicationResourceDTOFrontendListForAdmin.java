@@ -17,5 +17,6 @@ public class ApplicationResourceDTOFrontendListForAdmin {
     private Long resourceLimit;
     private String status;
     private UUID identityProviderGroupObjectId;
+    private boolean needApproval;
 
 }

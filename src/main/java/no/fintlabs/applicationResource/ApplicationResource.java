@@ -36,6 +36,7 @@ public class ApplicationResource extends Resource {
     private Date statusChanged;
     private String createdBy;
     private Date dateCreated;
+    private boolean needApproval;
 
 
     @ElementCollection
@@ -74,6 +75,7 @@ public class ApplicationResource extends Resource {
                 .resourceLimit(resourceLimit)
                 .identityProviderGroupObjectId(identityProviderGroupObjectId)
                 .status(status)
+                .needApproval(needApproval)
                 .build();
     }
 
@@ -97,7 +99,10 @@ public class ApplicationResource extends Resource {
                 && Objects.equals(statusChanged, that.statusChanged)
                 && Objects.equals(validForRoles, that.validForRoles)
                 && Objects.equals(validForOrgUnits, that.validForOrgUnits)
-                && Objects.equals(applicationCategory, that.applicationCategory);
+                && Objects.equals(applicationCategory, that.applicationCategory)
+                && Objects.equals(createdBy, that.createdBy)
+                && Objects.equals(dateCreated, that.dateCreated)
+                && Objects.equals(needApproval, that.needApproval);
     }
 
     @Override
@@ -117,7 +122,10 @@ public class ApplicationResource extends Resource {
                 statusChanged,
                 validForRoles,
                 validForOrgUnits,
-                applicationCategory);
+                applicationCategory,
+                createdBy,
+                dateCreated,
+                needApproval);
     }
 }
 
