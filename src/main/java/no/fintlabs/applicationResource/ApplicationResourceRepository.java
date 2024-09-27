@@ -33,4 +33,8 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
     @Query(value = "SELECT distinct access_type from application_resource",nativeQuery = true)
     List<String> findAllDistinctAccessTypes();
 
+
+
+
+
 }
