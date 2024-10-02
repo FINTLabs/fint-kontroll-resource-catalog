@@ -2,6 +2,8 @@ package no.fintlabs.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.*;
+import no.fintlabs.kodeverk.brukertype.Brukertype;
+import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.http.HttpStatus;
@@ -25,7 +27,7 @@ public class ResourceController {
 
 
 
-    public ResourceController(ApplicationResourceService applicationResourceService, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService) {
+    public ResourceController(ApplicationResourceService applicationResourceService, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService, BrukertypeService brukertypeService) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
@@ -173,7 +175,6 @@ public class ResourceController {
         }
     }
 
-
     @PostMapping("v1")
     public ResponseEntity<HttpStatus> createApplicationResource( @AuthenticationPrincipal Jwt jwt, @RequestBody ApplicationResource request){
         FintJwtEndUserPrincipal principal = FintJwtEndUserPrincipal.from(jwt);
@@ -240,7 +241,6 @@ public class ResourceController {
         }
     }
 
-
     @DeleteMapping("v1/{id}")
     public ResponseEntity<HttpStatus> deleteApplicationResource(@PathVariable Long id){
         try {
@@ -253,6 +253,5 @@ public class ResourceController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
 
 }
