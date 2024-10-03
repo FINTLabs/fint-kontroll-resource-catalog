@@ -14,20 +14,24 @@ public class BrukertypeService {
         this.brukertypeRepository = brukertypeRepository;
     }
 
+
     public List<Brukertype> getAllBrukertypes() {
         return brukertypeRepository.findAll();
     }
 
+
     public Brukertype getBrukertypeById(Long id) {
         return brukertypeRepository.findById(id).orElse(null);
     }
+
 
     public Brukertype updateBrukertype(Brukertype brukertype) {
         Brukertype currentBrukertype = brukertypeRepository.findById(brukertype.getId()).orElse(null);
 
         if (currentBrukertype != null) {
             log.info("Brukertype updated: {} - {} - {}", brukertype.getId(),brukertype.getFkLabel(),brukertype.getLabel());
-            return brukertypeRepository.saveAndFlush(brukertype);
+            currentBrukertype.setFkLabel(brukertype.getFkLabel());
+            return brukertypeRepository.saveAndFlush(currentBrukertype);
         }
         return null;
     }
