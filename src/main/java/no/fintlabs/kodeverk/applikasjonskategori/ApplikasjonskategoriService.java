@@ -23,18 +23,16 @@ public class ApplikasjonskategoriService {
         return applikasjonskategoriRepository.findById(id).orElse(null);
     }
 
-    //TODO: sjekk om create eller update og logge (sjekk på id)
     public Applikasjonskategori saveApplikasjonskategori(Applikasjonskategori applikasjonskategori) {
-        //Applikasjonskategori currentApplikasjonskategori = applikasjonskategoriRepository.findById(applikasjonskategori.getId()).orElse(null);
-
+        boolean toBeCreated = applikasjonskategori.getId() != null;
         Applikasjonskategori newOrUpdatedApplikasjonskategori = applikasjonskategoriRepository.saveAndFlush(applikasjonskategori);
-//
-//        if (currentApplikasjonskategori != null) {
-//            log.info("updated applikasjonskategori: {}", currentApplikasjonskategori.getName());
-//        }
-//        else {
-            log.info("created applikasjonskategori: {}", newOrUpdatedApplikasjonskategori.getName());
-        //}
+
+        if (toBeCreated) {
+            log.info("Updated applikasjonskategori: {} - {}", newOrUpdatedApplikasjonskategori.getId(),newOrUpdatedApplikasjonskategori.getName());
+        }
+        else {
+            log.info("Created applikasjonskategori: {} - {}", newOrUpdatedApplikasjonskategori.getId(),newOrUpdatedApplikasjonskategori.getName());
+        }
 
         return newOrUpdatedApplikasjonskategori;
     }
@@ -44,7 +42,4 @@ public class ApplikasjonskategoriService {
         applikasjonskategoriRepository.deleteById(id);
         log.info("deleted applikasjonskategori: {}", id);
     }
-
-
-
 }

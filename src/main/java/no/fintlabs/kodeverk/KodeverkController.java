@@ -37,7 +37,7 @@ public class KodeverkController {
         if (brukertype != null) {
             return new ResponseEntity<>(brukertype, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
 
@@ -61,7 +61,14 @@ public class KodeverkController {
 
     @GetMapping("/applikasjonskategori/v1/{id}")
     public ResponseEntity<Applikasjonskategori> getApplikasjonskategoriById(@PathVariable Long id) {
-        return new ResponseEntity<>(applikasjonskategoriService.getApplikasjonskategori(id), HttpStatus.OK);
+        Applikasjonskategori applikasjonskategori =applikasjonskategoriService.getApplikasjonskategori(id);
+        if (applikasjonskategori != null) {
+            return new ResponseEntity<>(applikasjonskategori, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+
+
     }
 
 
