@@ -5,6 +5,7 @@ import no.fintlabs.applicationResource.ApplicationResourceNotFoundExeption;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.brukertype.Brukertype;
+import no.fintlabs.kodeverk.brukertype.BrukertypePatchDTO;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +43,16 @@ public class KodeverkController {
     }
 
 
-    //TODO: vurdere om kun oppdatering av fkLabel og ikke hele objectet.
+    @PatchMapping("/brukertype/v1/{id}")
+    public ResponseEntity<Brukertype> updateBrukertype(@PathVariable Long id, @RequestBody BrukertypePatchDTO brukertypePatchDTO) {
+        Brukertype updatedBrukertype = brukertypeService.updateBrukertype(id, brukertypePatchDTO.getFkLabel());
+        if (updatedBrukertype != null) {
+            return new ResponseEntity<>(updatedBrukertype, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
     @PutMapping("/brukertype/v1")
     public ResponseEntity<HttpStatus> updateBrukerType(@RequestBody Brukertype brukertype) {
         Brukertype updatedBrukertype = brukertypeService.updateBrukertype(brukertype);

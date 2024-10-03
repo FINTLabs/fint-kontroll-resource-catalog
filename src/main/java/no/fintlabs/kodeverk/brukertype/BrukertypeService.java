@@ -35,4 +35,17 @@ public class BrukertypeService {
         }
         return null;
     }
+
+    public Brukertype updateBrukertype(Long id, String fkLabel) {
+        Brukertype currentBrukertype = brukertypeRepository.findById(id).orElse(null);
+
+        if (currentBrukertype != null) {
+            currentBrukertype.setFkLabel(fkLabel);
+            log.info("Brukertype updated: {} - {} - {}", currentBrukertype.getId(),currentBrukertype.getFkLabel(),currentBrukertype.getLabel());
+
+            return brukertypeRepository.saveAndFlush(currentBrukertype);
+        }
+
+        return null;
+    }
 }
