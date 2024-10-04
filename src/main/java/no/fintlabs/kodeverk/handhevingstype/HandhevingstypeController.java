@@ -26,7 +26,7 @@ public class HandhevingstypeController {
 
 
     @GetMapping("/v1/{id}")
-    public ResponseEntity<Handhevingstype> getHandhevingstype(Long id) {
+    public ResponseEntity<Handhevingstype> getHandhevingstype(@PathVariable Long id) {
         Handhevingstype handhevingstype = handhevingstypeService.getHandhevingstypeById(id);
         if (handhevingstype == null) {
             return ResponseEntity.notFound().build();
