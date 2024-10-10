@@ -88,11 +88,12 @@ public class ApplicationResourceService {
                 .filter(orgUnit -> validOrgUnits.contains(ALLORGUNITS.name()) || validOrgUnits.contains(orgUnit))
                 .toList();
 
-        if (validatedOrgUnits.isEmpty()) {
-            return new ApplicationResourceDTOFrontendDetail();
-        } else {
-            return applicationResourceDTOFrontendDetail;
-        }
+//        if (validatedOrgUnits.isEmpty()) {
+//            return new ApplicationResourceDTOFrontendDetail();
+//        } else {
+//            return applicationResourceDTOFrontendDetail;
+//        }
+        return applicationResourceDTOFrontendDetail;
     }
 
 
