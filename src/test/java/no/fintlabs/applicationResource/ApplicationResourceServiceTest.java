@@ -88,6 +88,7 @@ class ApplicationResourceServiceTest {
     public void getApplicationResourceByIdShouldReturnEmptyDTOIfNOTAuthorized(){
         ApplicationResource appRes1 = new ApplicationResource();
         appRes1.setResourceId("adobek12");
+        appRes1.setResourceOwnerOrgUnitId("3");
         ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
@@ -120,6 +121,46 @@ class ApplicationResourceServiceTest {
 
         assertNotEquals(resourceIdDTO,resourceIdAppres,"resourceIdDTO should be null");
         System.out.println("resourceId should be null : " + resourceIdDTO);
+    }
+
+
+    @Test
+    public void getApplicationResourceByIdShouldReturnDTOIfAuthorizedForResourceOwnerOrgUnitId(){
+        ApplicationResource appRes1 = new ApplicationResource();
+        appRes1.setResourceId("adobek12");
+        appRes1.setResourceOwnerOrgUnitId("3");
+        ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
+                .builder()
+                .resourceId("adobek12")
+                .orgUnitId("1")
+                .orgUnitName("VGMIDT Midtbyen videregående skole")
+                .resourceLimit(100L)
+                .build();
+        ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
+                .builder()
+                .resourceId("adobek12")
+                .orgUnitId("2")
+                .orgUnitName("VGSTOR Storskog videregående skole")
+                .resourceLimit(200L)
+                .build();
+        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
+        locationsAppRes1.add(applicationResourceLocation1);
+        locationsAppRes1.add(applicationResourceLocation2);
+        appRes1.setValidForOrgUnits(locationsAppRes1);
+
+        FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
+        fintJwtEndUserPrincipal.setMail("titten@tei.no");
+        when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("3","4","5","6"));
+        when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
+
+        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
+                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
+
+        String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
+        String resourceIdAppres = appRes1.getResourceId();
+
+        assertEquals(resourceIdDTO,resourceIdAppres,"resourceIdDTO should be adobek12");
+        System.out.println("resourceId should be: " + resourceIdDTO);
     }
 }
 
