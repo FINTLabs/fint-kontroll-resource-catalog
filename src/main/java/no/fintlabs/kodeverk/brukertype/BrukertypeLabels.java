@@ -4,5 +4,5 @@ public enum BrukertypeLabels {
     EMPLOYEESTAFF,
     EMPLOYEEFACULTY,
     STUDENT,
-    AFFILIATE
+    EXTERNAL
 }

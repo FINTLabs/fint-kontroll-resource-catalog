@@ -17,42 +17,11 @@ import java.util.List;
 @Slf4j
 @RequestMapping("/api/resources/kodeverk")
 public class KodeverkController {
-    private final BrukertypeService brukertypeService;
     private final ApplikasjonskategoriService applikasjonskategoriService;
 
-    public KodeverkController(BrukertypeService brukertypeService, ApplikasjonskategoriService applikasjonskategoriService) {
-        this.brukertypeService = brukertypeService;
+    public KodeverkController(ApplikasjonskategoriService applikasjonskategoriService) {
         this.applikasjonskategoriService = applikasjonskategoriService;
     }
-
-
-    @GetMapping("/brukertype/v1")
-    public List<Brukertype> getAllBrukerType() {
-        return brukertypeService.getAllBrukertypes();
-    }
-
-
-    @GetMapping("/brukertype/v1/{id}")
-    public ResponseEntity<Brukertype> getBrukertypeById(@PathVariable Long id) {
-        Brukertype brukertype = brukertypeService.getBrukertypeById(id);
-        if (brukertype != null) {
-            return new ResponseEntity<>(brukertype, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-    }
-
-
-    @PatchMapping("/brukertype/v1/{id}")
-    public ResponseEntity<Brukertype> updateBrukertype(@PathVariable Long id, @RequestBody BrukertypePatchDTO brukertypePatchDTO) {
-        Brukertype updatedBrukertype = brukertypeService.updateBrukertype(id, brukertypePatchDTO.getFkLabel());
-        if (updatedBrukertype != null) {
-            return new ResponseEntity<>(updatedBrukertype, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-    }
-
 
     @GetMapping("/applikasjonskategori/v1")
     public List<Applikasjonskategori> getAllApplikasjonskategori() {
