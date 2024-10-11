@@ -85,7 +85,8 @@ public class ApplicationResourceService {
         });
 
         List<String> validatedOrgUnits = orgunitsInApplicationResourceLocations.stream()
-                .filter(orgUnit -> validOrgUnits.contains(ALLORGUNITS.name()) || validOrgUnits.contains(orgUnit))
+                .filter(orgUnit -> validOrgUnits.contains(ALLORGUNITS.name()) ||
+                        (validOrgUnits.contains(orgUnit)) || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId()))
                 .toList();
 
         if (validatedOrgUnits.isEmpty()) {
@@ -93,6 +94,7 @@ public class ApplicationResourceService {
         } else {
             return applicationResourceDTOFrontendDetail;
         }
+
     }
 
 
