@@ -53,16 +53,6 @@ public class KodeverkController {
         }
     }
 
-    @PutMapping("/brukertype/v1")
-    public ResponseEntity<HttpStatus> updateBrukerType(@RequestBody Brukertype brukertype) {
-        Brukertype updatedBrukertype = brukertypeService.updateBrukertype(brukertype);
-        if (updatedBrukertype != null) {
-            return new ResponseEntity<>(HttpStatus.ACCEPTED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
-        }
-    }
-
 
     @GetMapping("/applikasjonskategori/v1")
     public List<Applikasjonskategori> getAllApplikasjonskategori() {
