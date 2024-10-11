@@ -10,19 +10,37 @@ import java.util.List;
 @Service
 @Slf4j
 public class LisensmodellService {
+    private final LisensmodellRepository lisensmodellRepository;
+
+    public LisensmodellService(LisensmodellRepository lisensmodellRepository) {
+        this.lisensmodellRepository = lisensmodellRepository;
+    }
+
     public List<Lisensmodell> getAllLisensmodell() {
-        return null;
+
+        return lisensmodellRepository.findAll();
     }
 
     public Lisensmodell getlisensmodellById(Long id) {
-        return null;
+
+        return lisensmodellRepository.findById(id).orElse(null);
     }
 
     public Lisensmodell saveLisensmodell(Lisensmodell newLisensmodell) {
-        return null;
+        boolean toBeCreated = newLisensmodell.getId() == null;
+        Lisensmodell newOrUpdatedLisensmodell = lisensmodellRepository.saveAndFlush(newLisensmodell);
+        if (toBeCreated) {
+            log.info("Created Lisensmodell: {} - {}", newOrUpdatedLisensmodell.getId(),newOrUpdatedLisensmodell.getName());
+        } else {
+            log.info("Updated Lisensmodell: {} - {}", newOrUpdatedLisensmodell.getId(),newOrUpdatedLisensmodell.getName());
+        }
+        return newOrUpdatedLisensmodell;
     }
+
 
     public void deleteLisensmodell(Long id) throws ApplicationResourceNotFoundExeption {
-
+        lisensmodellRepository.deleteById(id);
+        log.info("Deleted Lisensmodell: {}", id);
     }
+
 }
