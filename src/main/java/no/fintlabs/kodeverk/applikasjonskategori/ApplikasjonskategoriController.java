@@ -1,47 +1,46 @@
-package no.fintlabs.kodeverk;
+package no.fintlabs.kodeverk.applikasjonskategori;
+
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResourceNotFoundExeption;
-import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
-import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
-import no.fintlabs.kodeverk.brukertype.Brukertype;
-import no.fintlabs.kodeverk.brukertype.BrukertypePatchDTO;
-import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
 @Slf4j
-@RequestMapping("/api/resources/kodeverk")
-public class KodeverkController {
+@RestController
+@RequestMapping("/api/resources/kodeverk/applikasjonskategori")
+public class ApplikasjonskategoriController {
     private final ApplikasjonskategoriService applikasjonskategoriService;
 
-    public KodeverkController(ApplikasjonskategoriService applikasjonskategoriService) {
+    public ApplikasjonskategoriController(ApplikasjonskategoriService applikasjonskategoriService) {
         this.applikasjonskategoriService = applikasjonskategoriService;
     }
 
-    @GetMapping("/applikasjonskategori/v1")
+
+    @GetMapping("/v1")
     public List<Applikasjonskategori> getAllApplikasjonskategori() {
+
         return applikasjonskategoriService.getAllApplikasjonskategori();
     }
 
-    @GetMapping("/applikasjonskategori/v1/{id}")
+
+    @GetMapping("/v1/{id}")
     public ResponseEntity<Applikasjonskategori> getApplikasjonskategoriById(@PathVariable Long id) {
         Applikasjonskategori applikasjonskategori =applikasjonskategoriService.getApplikasjonskategori(id);
         if (applikasjonskategori != null) {
+
             return new ResponseEntity<>(applikasjonskategori, HttpStatus.OK);
         } else {
+
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-
-
     }
 
 
-    @PostMapping("/applikasjonskategori/v1")
+    @PostMapping("/v1")
     public ResponseEntity<Applikasjonskategori> createApplikasjonskategori(@RequestBody Applikasjonskategori applikasjonskategori) {
         Applikasjonskategori newApplikasjonskategori = Applikasjonskategori
                 .builder()
@@ -52,13 +51,16 @@ public class KodeverkController {
         Applikasjonskategori createdApplikasjonskategori = applikasjonskategoriService.saveApplikasjonskategori(newApplikasjonskategori);
 
         if (createdApplikasjonskategori != null) {
+
             return new ResponseEntity<>(createdApplikasjonskategori, HttpStatus.CREATED);
         } else {
+
             return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 
-    @PutMapping("/applikasjonskategori/v1")
+
+    @PutMapping("/v1")
     public ResponseEntity<Applikasjonskategori> updateApplikasjonskategori(@RequestBody Applikasjonskategori applikasjonskategori) {
         Applikasjonskategori newApplikasjonskategori = Applikasjonskategori
                 .builder()
@@ -71,14 +73,16 @@ public class KodeverkController {
         Applikasjonskategori updatedApplikasjonskategori = applikasjonskategoriService.saveApplikasjonskategori(newApplikasjonskategori);
 
         if (updatedApplikasjonskategori != null) {
+
             return new ResponseEntity<>(updatedApplikasjonskategori, HttpStatus.ACCEPTED);
         } else {
+
             return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 
 
-    @DeleteMapping("/applikasjonskategori/v1/{id}")
+    @DeleteMapping("/v1/{id}")
     public ResponseEntity<HttpStatus> deleteApplikasjonskategori(@PathVariable Long id) {
         try {
             applikasjonskategoriService.deleteApplikasjonskategori(id);
@@ -90,6 +94,4 @@ public class KodeverkController {
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
-
 }
