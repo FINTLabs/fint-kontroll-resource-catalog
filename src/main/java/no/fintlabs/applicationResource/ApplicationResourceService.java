@@ -84,9 +84,12 @@ public class ApplicationResourceService {
             orgunitsInApplicationResourceLocations.add(applicationResourceLocation.getOrgUnitId());
         });
 
+        if (validOrgUnits.contains(ALLORGUNITS.name()) || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())){
+            return applicationResourceDTOFrontendDetail;
+        }
+
         List<String> validatedOrgUnits = orgunitsInApplicationResourceLocations.stream()
-                .filter(orgUnit -> validOrgUnits.contains(ALLORGUNITS.name()) ||
-                        (validOrgUnits.contains(orgUnit)) || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId()))
+                .filter(orgUnit -> validOrgUnits.contains(orgUnit))
                 .toList();
 
         if (validatedOrgUnits.isEmpty()) {
@@ -96,7 +99,7 @@ public class ApplicationResourceService {
         }
 
     }
-
+    //validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
             String search,
