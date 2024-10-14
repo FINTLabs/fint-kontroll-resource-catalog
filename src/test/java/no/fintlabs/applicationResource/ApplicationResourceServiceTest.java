@@ -46,6 +46,7 @@ class ApplicationResourceServiceTest {
     public void getApplicationResourceByIdShouldReturnDTOIfAuthorized(){
         ApplicationResource appRes1 = new ApplicationResource();
         appRes1.setResourceId("adobek12");
+        appRes1.setResourceOwnerOrgUnitId("3");
         appRes1.setIdentityProviderGroupName("fint-app-adobe-k12-agg-kon");
         ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
                 .builder()
