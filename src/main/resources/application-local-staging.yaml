@@ -8,6 +8,7 @@ fint:
   kontroll:
     role-catalog:
       pagesize: 50
+      source: gui
     opa:
       url: http://localhost:8181/v1/data/accessmanagement
 spring:
