@@ -24,7 +24,7 @@ patches:
         value: "fintlabs.no"
       - op: replace
         path: "/spec/env/2/value"
-        value: "fintlabs-no-fint-kontroll-resource-catalog"
+        value: "fint-kontroll-resource-catalog"
       - op: replace
         path: "/spec/env/3/value"
         value: "-XX:+ExitOnOutOfMemoryError -Xmx1950m"
