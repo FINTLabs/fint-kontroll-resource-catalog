@@ -34,7 +34,7 @@ public class ApplicationResourceConsumerConfiguration {
                 .resource("applicationresource")
                 .build();
 
-        log.info("Creating application resource consumer for {}", entityTopicNameParameters);
+        log.info("Source is FINT. Creating application resource consumer for {}", entityTopicNameParameters);
 
         return entityConsumerFactoryService.createFactory(
                 ApplicationResource.class,
