@@ -24,7 +24,7 @@ public class ApplicationResourceConsumerConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "fint.kontroll.role-catalog.source", havingValue = "fint")
+    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     public ConcurrentMessageListenerContainer<String,ApplicationResource> applicationResourceConsumer(
             ApplicationResourceService applicationResourceService,
             EntityConsumerFactoryService entityConsumerFactoryService

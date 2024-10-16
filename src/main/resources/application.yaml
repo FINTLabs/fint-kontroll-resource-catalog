@@ -9,6 +9,7 @@ fint:
   kontroll:
     resource-catalog:
       pagesize: 50
+      source: gui
     opa:
       url: http://fint-kontroll-opa:8181/v1/data/accessmanagement
     authorization:
@@ -24,7 +25,3 @@ spring:
     include:
       - kafka
       - db
-logging:
-  level:
-    root: INFO
-    org.apache.kafka: INFO
