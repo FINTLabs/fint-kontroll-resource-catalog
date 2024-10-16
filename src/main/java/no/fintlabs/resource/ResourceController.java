@@ -1,8 +1,8 @@
 package no.fintlabs.resource;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
-import no.fintlabs.kodeverk.brukertype.Brukertype;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -24,13 +24,14 @@ public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
     private final ApplicationCategoryService applicationCategoryService;
     private final AccessTypeService accessTypeService;
+    private final ServiceConfiguration serviceConfiguration;
 
 
-
-    public ResourceController(ApplicationResourceService applicationResourceService, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService, BrukertypeService brukertypeService) {
+    public ResourceController(ApplicationResourceService applicationResourceService, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService, BrukertypeService brukertypeService, ServiceConfiguration serviceConfiguration) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
+        this.serviceConfiguration = serviceConfiguration;
     }
 
 
@@ -252,6 +253,13 @@ public class ResourceController {
         }
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("admin/source/v1")
+    public ResponseEntity<String> getSourceConfig() {
+        String source = serviceConfiguration.getSource();
+
+        return new ResponseEntity<>(source,HttpStatus.OK);
     }
 
 }

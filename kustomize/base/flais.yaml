@@ -31,6 +31,10 @@ spec:
       value: "vigo.no"
     - name: spring.kafka.consumer.group-id
       value: 'fint-kontroll-resource-catalog'
+    - name: JAVA_TOOL_OPTIONS
+      value: "-XX:+ExitOnOutOfMemoryError -Xmx1950m"
+    - name: fint.kontroll.resource-catalog.source
+      value: gui
   envFrom:
     - configMapRef:
         name: fint-kontroll-access-management-config

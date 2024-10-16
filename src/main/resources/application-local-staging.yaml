@@ -6,8 +6,9 @@ fint:
     consumer:
       group-id: ${fint.application-id}
   kontroll:
-    role-catalog:
+    resource-catalog:
       pagesize: 50
+      source: fint
     opa:
       url: http://localhost:8181/v1/data/accessmanagement
 spring:

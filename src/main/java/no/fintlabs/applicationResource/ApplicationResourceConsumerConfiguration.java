@@ -6,6 +6,7 @@ import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
 import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
 import no.fintlabs.resourceGroup.AzureGroup;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -23,6 +24,7 @@ public class ApplicationResourceConsumerConfiguration {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     public ConcurrentMessageListenerContainer<String,ApplicationResource> applicationResourceConsumer(
             ApplicationResourceService applicationResourceService,
             EntityConsumerFactoryService entityConsumerFactoryService
@@ -31,6 +33,8 @@ public class ApplicationResourceConsumerConfiguration {
                 .builder()
                 .resource("applicationresource")
                 .build();
+
+        log.info("Source is FINT. Creating application resource consumer for {}", entityTopicNameParameters);
 
         return entityConsumerFactoryService.createFactory(
                 ApplicationResource.class,
