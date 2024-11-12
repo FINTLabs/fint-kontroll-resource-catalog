@@ -7,6 +7,7 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class AppicationResourceSpesificationBuilder {
@@ -47,7 +48,8 @@ public class AppicationResourceSpesificationBuilder {
         }
 
         if (orgUnitIds != null){
-            applicationResourceSpecification = applicationResourceSpecification.and(allAuthorizedOrgUnitIds(orgUnitIds));
+            applicationResourceSpecification =
+                    applicationResourceSpecification.and(allAuthorizedOrgUnitIds(orgUnitIds).or(resourceAccessIsUnlimited()));
         }
 
         if (resourceType != null) {
@@ -75,7 +77,8 @@ public class AppicationResourceSpesificationBuilder {
         return applicationResourceSpecification;
     }
 
-    public Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
+    public static Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
+
         return (root, query, criteriaBuilder) -> {
             Join<ApplicationResource, ApplicationResourceLocation> orgUnitJoin = root.join("validForOrgUnits");
 
@@ -131,6 +134,10 @@ public class AppicationResourceSpesificationBuilder {
             criteriaBuilder.equal(root.get("status"),"ACTIVE");
     }
 
-
+    public Specification<ApplicationResource> resourceAccessIsUnlimited() {
+        Set<String > unlimitedLicenceEnforcementTypes = Set.of("FREE-ALL","FREE-STUDENT","FREE-EDU");
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.in(root.get("licenseEnforcement")).value(unlimitedLicenceEnforcementTypes);
+    }
 
 }
