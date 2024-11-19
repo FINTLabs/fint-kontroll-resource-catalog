@@ -1,0 +1,32 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          lob:
+            non_contextual_creation: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        enable_lazy_load_no_trans: true
+
+  datasource:
+    hikari:
+      schema: resources
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+
+  flyway:
+    locations: classpath:db/migration/
+    lock-retry-count: 300
+    enabled: false
+
+logging:
+  level:
+    org.flywaydb.core.internal.command.DbMigrate: INFO
+    org.springframework.security: INFO
+    org.testcontainers: INFO
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+

@@ -25,3 +25,7 @@ spring:
     include:
       - kafka
       - db
+logging:
+  level:
+    root: INFO
+    org.apache.kafka: WARN
