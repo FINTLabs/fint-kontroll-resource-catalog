@@ -23,7 +23,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     @Autowired
     private ApplicationResourceRepository applicationResourceRepository;
 
-    ApplicationResourceLocation restrictedResourceLocation = ApplicationResourceLocation.builder()
+    ApplicationResourceLocation res1_orgUnitId1 = ApplicationResourceLocation.builder()
             .orgUnitId("orgUnitId1")
             .resourceId("res1")
             .build();
@@ -53,7 +53,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .resourceId("res1")
             .licenseEnforcement("HARDSTOP")
             .validForRoles(List.of("Student"))
-            .validForOrgUnits(List.of(restrictedResourceLocation))
+            .validForOrgUnits(List.of(res1_orgUnitId1))
             .build();
 
     ApplicationResource unrestrictedResourceForAll = ApplicationResource.builder()
@@ -78,16 +78,29 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     @Test
     void shouldGetAllResourcesWhenAuthorizedToRestrictedResource() {
         applicationResourceRepository.save(unrestrictedResourceForAll);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"), null,
+        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"),null, null,
                 null, null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
         assertEquals(2, resources.size());
     }
     @Test
+    void shouldGetOnlyFilteredOrgUnitResourcesWhenAuthorizedToRestrictedResourceAndFilterOrgUnitsIsSet() {
+        applicationResourceRepository.save(unrestrictedResourceForAll);
+        applicationResourceRepository.save(unRestrictedResourceForStudents);
+
+        Specification<ApplicationResource> specification =
+                new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId2"),List.of("orgUnitId1"), null,
+                null, null, null, null).build();
+
+        List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
+        assertEquals(2, resources.size());
+        assertEquals(Set.of("res2", "res3"), Set.of(resources.get(0).getResourceId(), resources.get(1).getResourceId()));
+    }
+    @Test
     void shouldGetResourceWithUserTypeEmployeeWhenFilteredByEmployeeUserType() {
         applicationResourceRepository.save(unrestrictedResourceForAll);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"), null,
+        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"), null,null,
                 List.of("Employee"), null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
@@ -98,7 +111,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     void shouldGetAllResourcesWithUserTypeStudentWhenFilteredByStudentUserType() {
         applicationResourceRepository.save(unrestrictedResourceForAll);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"), null,
+        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"), null,null,
                 List.of("Student"), null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
@@ -108,7 +121,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     void shouldGetTwoFreeResourcesWhenNotAuthorizedToRestrictedResource() {
         applicationResourceRepository.save(unrestrictedResourceForAll);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId2"), null,
+        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId2"),null, null,
                 null, null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
@@ -119,7 +132,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     void shouldGetOneFreeResourcesWhenNotAuthorizedToRestrictedResourceAndFilteredByUserTypeEmployee() {
         applicationResourceRepository.save(unrestrictedResourceForAll);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId2"), null,
+        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder( null,List.of("orgUnitId2"), null,null,
                 List.of("Employee"), null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
@@ -129,7 +142,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     @Test
     void shouldGetNoResourcesWhenFilteredByUserTypeEmployeeAndNotAuthorizedToRestrictedResource() {
         applicationResourceRepository.save(unRestrictedResourceForStudents);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId2"), null,
+        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId2"),null, null,
                 List.of("Employee"), null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);

@@ -103,14 +103,17 @@ public class ApplicationResourceService {
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
             String search,
-            List<String> orgUnits,
+            List<String> filteredOrgUnitIds,
             String type,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
-            List<String> status) {
+            List<String> status
+    ) {
+        List<String> scopedOrgUnitIds = authorizationUtil.getAllAuthorizedOrgUnitIDs();
+
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, orgUnits, type, userType, accessType, applicationCategory, status
+                search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
         );
 
         List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
@@ -188,17 +191,19 @@ public class ApplicationResourceService {
 
     public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
             String search,
-            List<String> orgUnits,
+            List<String> filteredOrgUnitIds,
             String resourceType,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
             List<String> status,
             int page,
-            int size) {
+            int size
+    ) {
+        List<String> scopedOrgUnitIds = authorizationUtil.getAllAuthorizedOrgUnitIDs();
 
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, orgUnits, resourceType, userType, accessType, applicationCategory, status);
+                search, scopedOrgUnitIds, filteredOrgUnitIds, resourceType, userType, accessType, applicationCategory, status);
 
         List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
 
