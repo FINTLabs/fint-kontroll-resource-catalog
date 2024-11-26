@@ -110,7 +110,9 @@ public class ApplicationResourceService {
             List<String> applicationCategory,
             List<String> status
     ) {
-        List<String> scopedOrgUnitIds = authorizationUtil.getAllAuthorizedOrgUnitIDs();
+        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
+        List<String> scopedOrgUnitIds =
+                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
 
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
                 search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
@@ -225,10 +227,10 @@ public class ApplicationResourceService {
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
-            List<String> status,
             int page,
-            int size) {
-
+            int size
+    ) {
+        List<String> status = List.of("ACTIVE");
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
                 this.getApplicationResourceDTOFrontendList(
                         search,

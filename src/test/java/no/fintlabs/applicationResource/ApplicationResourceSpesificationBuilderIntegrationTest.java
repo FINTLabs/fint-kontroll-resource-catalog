@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 @Testcontainers
 @ActiveProfiles("test")
-//@Import({ApplicationResource.class, ApplicationResourceLocation.class})
 class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseIntegrationTest {
 
     @Autowired
@@ -49,6 +48,11 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .build();
     List<ApplicationResourceLocation> resourceLocationsRes3 = List.of(res3_OrgUnitId1, res3_OrgUnitId2);
 
+    ApplicationResourceLocation res4_OrgUnitId1 = ApplicationResourceLocation.builder()
+            .resourceId("res4")
+            .orgUnitId("orgUnitId1")
+            .build();
+
     ApplicationResource restrictedResource = ApplicationResource.builder()
             .resourceId("res1")
             .licenseEnforcement("HARDSTOP")
@@ -70,6 +74,13 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .validForOrgUnits(resourceLocationsRes3)
             .build();
 
+    ApplicationResource restrictedResourceFloating = ApplicationResource.builder()
+            .resourceId("res4")
+            .licenseEnforcement("FLOATING")
+            .validForRoles(List.of("Employee"))
+            .validForOrgUnits(List.of(res4_OrgUnitId1))
+            .build();
+
     @BeforeEach
     public void setUp() {
         applicationResourceRepository.deleteAll();
@@ -78,7 +89,9 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     @Test
     void shouldGetAllResourcesWhenAuthorizedToRestrictedResource() {
         applicationResourceRepository.save(unrestrictedResourceForAll);
-        Specification<ApplicationResource> specification = new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"),null, null,
+
+        Specification<ApplicationResource> specification =
+                new AppicationResourceSpesificationBuilder(null, List.of("orgUnitId1"),null, null,
                 null, null, null, null).build();
 
         List<ApplicationResource> resources = applicationResourceRepository.findAll(specification);
@@ -86,6 +99,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
     }
     @Test
     void shouldGetOnlyFilteredOrgUnitResourcesWhenAuthorizedToRestrictedResourceAndFilterOrgUnitsIsSet() {
+        applicationResourceRepository.save(restrictedResourceFloating);
         applicationResourceRepository.save(unrestrictedResourceForAll);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
 
