@@ -63,7 +63,6 @@ public class ApplicationResourceService {
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
             applicationResourceRepository.save(applicationResource);
-
         };
     }
 
@@ -230,6 +229,9 @@ public class ApplicationResourceService {
             int page,
             int size
     ) {
+        //TODO finne rolle til bruker. Hvis bruker er tildeler, hente kun aktive ressurser. Ellers hente alle ressurser.
+        // Da vil admin-endepunktene også kunne benytte getApplicationResourceDTOFrontendList
+
         List<String> status = List.of("ACTIVE");
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
                 this.getApplicationResourceDTOFrontendList(

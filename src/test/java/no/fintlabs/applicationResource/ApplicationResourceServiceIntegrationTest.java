@@ -1,14 +1,16 @@
 package no.fintlabs.applicationResource;
 
+import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
+import no.fintlabs.cache.FintCache;
+import no.fintlabs.resourceGroup.AzureGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -21,72 +23,79 @@ import static org.mockito.BDDMockito.given;
 @DataJpaTest
 @Testcontainers
 @ActiveProfiles("test")
+@Import({ApplicationResourceService.class})
 class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest {
 
     @Autowired
     private ApplicationResourceRepository applicationResourceRepository;
     @Autowired
     private ApplicationResourceService applicationResourceService;
-    @Autowired
+    @MockBean
+    private FintCache<Long, AzureGroup> azureGroupCache;
+    @MockBean
+    private ResponseFactory responseFactory;
+    @MockBean
     private AuthorizationUtil authorizationUtil;
+    
+    private final String varfk = "varfk";
+    private final String kompavd = "kompavd";
+    
+    private final String zip = "zip";
+    private final String kabal = "kabal";
+    private final String adobek12 = "adobek12";
+    private final String m365 = "m365";
 
-    ApplicationResourceLocation res1_orgUnitId1 = ApplicationResourceLocation.builder()
-            .orgUnitId("orgUnitId1")
-            .resourceId("res1")
+    private final String student = "Student";
+    private final String employee = "Employee";
+    private final String freeAll = "FREE-ALL";
+    private final String freeStudent = "FREE-STUDENT";
+    private final String hardStop = "HARDSTOP";
+
+    ApplicationResourceLocation zip_varfk = ApplicationResourceLocation.builder()
+            .resourceId(zip)
+            .orgUnitId(varfk)
             .build();
 
-    ApplicationResourceLocation res2_OrgUnitId1 = ApplicationResourceLocation.builder()
-            .resourceId("res2")
-            .orgUnitId("orgUnitId1")
+    ApplicationResourceLocation kabal_varfk = ApplicationResourceLocation.builder()
+            .resourceId(kabal)
+            .orgUnitId(varfk)
             .build();
-    ApplicationResourceLocation res2_OrgUnitId2 = ApplicationResourceLocation.builder()
-            .resourceId("res2")
-            .orgUnitId("orgUnitId2")
-            .build();
-    List<ApplicationResourceLocation> resourceLocationsRes2 = List.of(res2_OrgUnitId1, res2_OrgUnitId2);
 
-
-    ApplicationResourceLocation res3_OrgUnitId1 = ApplicationResourceLocation.builder()
-            .resourceId("res3")
-            .orgUnitId("orgUnitId1")
+    ApplicationResourceLocation adobek12_kompavd = ApplicationResourceLocation.builder()
+            .resourceId(adobek12)
+            .orgUnitId(kompavd)
             .build();
-    ApplicationResourceLocation res3_OrgUnitId2 = ApplicationResourceLocation.builder()
-            .resourceId("res3")
-            .orgUnitId("orgUnitId2")
-            .build();
-    List<ApplicationResourceLocation> resourceLocationsRes3 = List.of(res3_OrgUnitId1, res3_OrgUnitId2);
 
-    ApplicationResourceLocation res4_OrgUnitId1 = ApplicationResourceLocation.builder()
-            .resourceId("res4")
-            .orgUnitId("orgUnitId1")
+    ApplicationResourceLocation m365_varfk = ApplicationResourceLocation.builder()
+            .resourceId(m365)
+            .orgUnitId(varfk)
             .build();
 
     ApplicationResource restrictedResource = ApplicationResource.builder()
-            .resourceId("res1")
-            .licenseEnforcement("HARDSTOP")
-            .validForRoles(List.of("Student"))
-            .validForOrgUnits(List.of(res1_orgUnitId1))
+            .resourceId(adobek12)
+            .licenseEnforcement(hardStop)
+            .validForRoles(List.of(student))
+            .validForOrgUnits(List.of(adobek12_kompavd))
             .build();
 
-    ApplicationResource unrestrictedResourceForAll = ApplicationResource.builder()
-            .resourceId("res2")
-            .licenseEnforcement("FREE-ALL")
-            .validForRoles(List.of("Student", "Employee"))
-            .validForOrgUnits(resourceLocationsRes2)
+    ApplicationResource unrestrictedResourceForAllKabal = ApplicationResource.builder()
+            .resourceId(kabal)
+            .licenseEnforcement(freeAll)
+            .validForRoles(List.of(student, employee))
+            .validForOrgUnits(List.of(kabal_varfk))
+            .build();
+    ApplicationResource unrestrictedResourceForAllZip = ApplicationResource.builder()
+            .resourceId(zip)
+            .licenseEnforcement(freeAll)
+            .validForRoles(List.of(student, employee))
+            .validForOrgUnits(List.of(zip_varfk))
             .build();
 
     ApplicationResource unRestrictedResourceForStudents = ApplicationResource.builder()
-            .resourceId("res3")
-            .licenseEnforcement("FREE-STUDENT")
-            .validForRoles(List.of("Student"))
-            .validForOrgUnits(resourceLocationsRes3)
-            .build();
-
-    ApplicationResource restrictedResourceFloating = ApplicationResource.builder()
-            .resourceId("res4")
-            .licenseEnforcement("FLOATING")
-            .validForRoles(List.of("Employee"))
-            .validForOrgUnits(List.of(res4_OrgUnitId1))
+            .resourceId(m365)
+            .licenseEnforcement(freeStudent)
+            .validForRoles(List.of(student))
+            .validForOrgUnits(List.of(m365_varfk))
             .build();
 
     @BeforeEach
@@ -96,10 +105,11 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @Test
     public void getApplicationResourceDTOFrontendListWithRestrictedScopeShouldReturnRestrictedResourceInScopeAndAllFreeResources() {
         applicationResourceRepository.save(restrictedResource);
-        applicationResourceRepository.save(unrestrictedResourceForAll);
+        applicationResourceRepository.save(unrestrictedResourceForAllKabal);
+        applicationResourceRepository.save(unrestrictedResourceForAllZip);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
 
-        given(authorizationUtil.getAllAuthorizedOrgUnitIDs()).willReturn(List.of("orgUnitId1"));
+        given(authorizationUtil.getAllAuthorizedOrgUnitIDs()).willReturn(List.of(kompavd));
 
         List<ApplicationResourceDTOFrontendList> resourceDTOFrontendList =
                 applicationResourceService.getApplicationResourceDTOFrontendList(
@@ -110,13 +120,35 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                         null,
                         null,
                         null);
-        assertEquals(3, resourceDTOFrontendList.size());
-        assertEquals(Set.of("res1","res2", "res3"),
+        assertEquals(4, resourceDTOFrontendList.size());
+        assertEquals(Set.of(zip, kabal, adobek12, m365),
                 Set.of(
                     resourceDTOFrontendList.get(0).getResourceId(),
-                    resourceDTOFrontendList.get(1).getResourceId()),
-                    resourceDTOFrontendList.get(2).getResourceId()
+                    resourceDTOFrontendList.get(1).getResourceId(),
+                    resourceDTOFrontendList.get(2).getResourceId(),
+                    resourceDTOFrontendList.get(3).getResourceId())
                 );
+    }
+    @Test
+    public void getApplicationResourceDTOFrontendListWithRestrictedScopeAndFilteredOrgUnitShouldReturnResourceInScope() {
+        applicationResourceRepository.save(restrictedResource);
+        applicationResourceRepository.save(unrestrictedResourceForAllKabal);
+        applicationResourceRepository.save(unRestrictedResourceForStudents);
 
+        given(authorizationUtil.getAllAuthorizedOrgUnitIDs()).willReturn(List.of(kompavd));
+
+        List<ApplicationResourceDTOFrontendList> resourceDTOFrontendList =
+                applicationResourceService.getApplicationResourceDTOFrontendList(
+                        null,
+                        List.of(kompavd),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null);
+        assertEquals(1, resourceDTOFrontendList.size());
+        assertEquals(Set.of(adobek12),
+                Set.of(resourceDTOFrontendList.getFirst().getResourceId())
+        );
     }
 }
