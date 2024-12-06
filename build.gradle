@@ -52,6 +52,11 @@ dependencies {
     testImplementation 'cglib:cglib-nodep:3.3.0'
 
 
+    testImplementation 'com.h2database:h2'
+    implementation platform('org.testcontainers:testcontainers-bom:1.20.1')
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
 
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'no.fintlabs:fint-kafka:3.0.0-rc-1'

@@ -7,11 +7,13 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class AppicationResourceSpesificationBuilder {
     private final String search;
-    private final List<String> orgUnitIds;
+    private final List<String> scopedOrgUnitIds;
+    private final List<String> filteredOrgUnitIds;
     private final String resourceType;
     private final List<String> userType;
     private final String accessType;
@@ -21,14 +23,16 @@ public class AppicationResourceSpesificationBuilder {
 
     public AppicationResourceSpesificationBuilder(
             String search,
-            List<String> orgUnitIds,
+            List<String> scopedOrgUnitIds,
+            List<String> filteredOrgUnitIds,
             String resourceType,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
             List<String> status) {
         this.search = search;
-        this.orgUnitIds = orgUnitIds;
+        this.scopedOrgUnitIds = scopedOrgUnitIds;
+        this.filteredOrgUnitIds = filteredOrgUnitIds;
         this.resourceType = resourceType;
         this.userType = userType;
         this.accessType = accessType;
@@ -46,8 +50,13 @@ public class AppicationResourceSpesificationBuilder {
             applicationResourceSpecification = Specification.where(null);
         }
 
-        if (orgUnitIds != null){
-            applicationResourceSpecification = applicationResourceSpecification.and(allAuthorizedOrgUnitIds(orgUnitIds));
+        if (scopedOrgUnitIds != null){
+            applicationResourceSpecification =
+                    applicationResourceSpecification.and(allAuthorizedOrgUnitIds(scopedOrgUnitIds).or(resourceAccessIsUnlimited()));
+        }
+        if (filteredOrgUnitIds != null){
+            applicationResourceSpecification =
+                    applicationResourceSpecification.and(allAuthorizedOrgUnitIds(filteredOrgUnitIds));
         }
 
         if (resourceType != null) {
@@ -75,7 +84,8 @@ public class AppicationResourceSpesificationBuilder {
         return applicationResourceSpecification;
     }
 
-    public Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
+    public static Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
+
         return (root, query, criteriaBuilder) -> {
             Join<ApplicationResource, ApplicationResourceLocation> orgUnitJoin = root.join("validForOrgUnits");
 
@@ -131,6 +141,10 @@ public class AppicationResourceSpesificationBuilder {
             criteriaBuilder.equal(root.get("status"),"ACTIVE");
     }
 
-
+    public Specification<ApplicationResource> resourceAccessIsUnlimited() {
+        Set<String > unlimitedLicenceEnforcementTypes = Set.of("FREEALL","FREESTUDENT","FREEEDU");
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.in(root.get("licenseEnforcement")).value(unlimitedLicenceEnforcementTypes);
+    }
 
 }

@@ -63,7 +63,6 @@ public class ApplicationResourceService {
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
             applicationResourceRepository.save(applicationResource);
-
         };
     }
 
@@ -103,14 +102,19 @@ public class ApplicationResourceService {
 
     public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
             String search,
-            List<String> orgUnits,
+            List<String> filteredOrgUnitIds,
             String type,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
-            List<String> status) {
+            List<String> status
+    ) {
+        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
+        List<String> scopedOrgUnitIds =
+                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
+
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, orgUnits, type, userType, accessType, applicationCategory, status
+                search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
         );
 
         List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
@@ -188,17 +192,22 @@ public class ApplicationResourceService {
 
     public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
             String search,
-            List<String> orgUnits,
+            List<String> orgunits,
             String resourceType,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
             List<String> status,
             int page,
-            int size) {
+            int size
+    ) {
+        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
+        List<String> scopedOrgUnitIds =
+                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
+
 
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, orgUnits, resourceType, userType, accessType, applicationCategory, status);
+                search, scopedOrgUnitIds, orgunits, resourceType, userType, accessType, applicationCategory, status);
 
         List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
 
@@ -220,10 +229,13 @@ public class ApplicationResourceService {
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
-            List<String> status,
             int page,
-            int size) {
+            int size
+    ) {
+        //TODO finne rolle til bruker. Hvis bruker er tildeler, hente kun aktive ressurser. Ellers hente alle ressurser.
+        // Da vil admin-endepunktene også kunne benytte getApplicationResourceDTOFrontendList
 
+        List<String> status = List.of("ACTIVE");
         List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
                 this.getApplicationResourceDTOFrontendList(
                         search,
