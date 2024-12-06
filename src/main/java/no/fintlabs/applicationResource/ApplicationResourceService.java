@@ -192,7 +192,7 @@ public class ApplicationResourceService {
 
     public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
             String search,
-            List<String> filteredOrgUnitIds,
+            List<String> orgunits,
             String resourceType,
             List<String> userType,
             String accessType,
@@ -201,10 +201,13 @@ public class ApplicationResourceService {
             int page,
             int size
     ) {
-        List<String> scopedOrgUnitIds = authorizationUtil.getAllAuthorizedOrgUnitIDs();
+        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
+        List<String> scopedOrgUnitIds =
+                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
+
 
         AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, scopedOrgUnitIds, filteredOrgUnitIds, resourceType, userType, accessType, applicationCategory, status);
+                search, scopedOrgUnitIds, orgunits, resourceType, userType, accessType, applicationCategory, status);
 
         List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
 

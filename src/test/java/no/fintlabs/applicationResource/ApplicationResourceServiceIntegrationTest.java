@@ -47,8 +47,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
     private final String student = "Student";
     private final String employee = "Employee";
-    private final String freeAll = "FREE-ALL";
-    private final String freeStudent = "FREE-STUDENT";
+    private final String freeAll = "FREEALL";
+    private final String freeStudent = "FREESTUDENT";
     private final String hardStop = "HARDSTOP";
 
     ApplicationResourceLocation zip_varfk = ApplicationResourceLocation.builder()
