@@ -142,7 +142,7 @@ public class AppicationResourceSpesificationBuilder {
     }
 
     public Specification<ApplicationResource> resourceAccessIsUnlimited() {
-        Set<String > unlimitedLicenceEnforcementTypes = Set.of("FREE-ALL","FREE-STUDENT","FREE-EDU");
+        Set<String > unlimitedLicenceEnforcementTypes = Set.of("FREEALL","FREESTUDENT","FREEEDU");
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.in(root.get("licenseEnforcement")).value(unlimitedLicenceEnforcementTypes);
     }
