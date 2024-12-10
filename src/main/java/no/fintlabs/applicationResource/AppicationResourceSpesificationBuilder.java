@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.*;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import org.springframework.data.jpa.domain.Specification;
+import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 
 import java.util.List;
 import java.util.Set;
@@ -142,7 +143,11 @@ public class AppicationResourceSpesificationBuilder {
     }
 
     public Specification<ApplicationResource> resourceAccessIsUnlimited() {
-        Set<String > unlimitedLicenceEnforcementTypes = Set.of("FREEALL","FREESTUDENT","FREEEDU");
+        Set<String > unlimitedLicenceEnforcementTypes = Set.of(
+                HandhevingstypeLabels.NOTSET.name(),
+                HandhevingstypeLabels.FREEALL.name(),
+                HandhevingstypeLabels.FREEEDU.name(),
+                HandhevingstypeLabels.FREESTUDENT.name());
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.in(root.get("licenseEnforcement")).value(unlimitedLicenceEnforcementTypes);
     }

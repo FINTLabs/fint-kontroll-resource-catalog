@@ -5,6 +5,7 @@ public enum HandhevingstypeLabels {
     FLOATING,
     FREEALL,
     FREESTUDENT,
-    FREEEDU;
+    FREEEDU,
+    NOTSET;
 
 }
