@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -126,7 +127,7 @@ public ResponseEntity<HttpStatus> createApplicationResource(@AuthenticationPrinc
     FintJwtEndUserPrincipal principal = FintJwtEndUserPrincipal.from(jwt);
 
     ApplicationResource applicationResource = ApplicationResource.builder()
-            .resourceId(request.resourceId)
+            .resourceId(UUID.randomUUID().toString())
             .resourceName(request.resourceName)
             .resourceType(request.resourceType)
             .platform(request.getPlatform())
