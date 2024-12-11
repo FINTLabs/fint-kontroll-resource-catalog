@@ -56,5 +56,7 @@ logging:
     com.azure: WARN
     com.microsoft: WARN
     org.apache: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
 
 
