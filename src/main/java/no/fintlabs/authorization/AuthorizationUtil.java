@@ -14,16 +14,11 @@ import java.util.List;
 @Component
 public class AuthorizationUtil {
 
-
-
     private final AuthorizationClient authorizationClient;
-
 
     public AuthorizationUtil(AuthorizationClient authorizationClient) {
         this.authorizationClient = authorizationClient;
     }
-
-
     public List<String> getAllAuthorizedOrgUnitIDs() {
         List<Scope> scopes = authorizationClient.getUserScopesList();
         List<String> authorizedOrgUnitIDs = scopes.stream()
@@ -34,5 +29,4 @@ public class AuthorizationUtil {
         log.info("Authorized orgUnitIDs : " + authorizedOrgUnitIDs);
         return authorizedOrgUnitIDs;
     }
-
 }
