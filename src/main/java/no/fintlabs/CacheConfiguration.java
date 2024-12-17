@@ -1,8 +1,10 @@
-package no.fintlabs.resourceGroup;
+package no.fintlabs;
 
 import no.fintlabs.applicationResource.ApplicationResource;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationExtended;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.cache.FintCacheManager;
+import no.fintlabs.resourceGroup.AzureGroup;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,13 +30,13 @@ public class CacheConfiguration {
         return createCache(AzureGroup.class);
     }
 
+    @Bean
+    FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocation() {
+        return createCache(ApplicationResourceLocationExtended.class);
+    }
 
 
     private <V> FintCache<Long, V> createCache(Class<V> resourceClass) {
-        return fintCacheManager.createCache(
-                resourceClass.getName().toLowerCase(Locale.ROOT),
-                Long.class,
-                resourceClass
-        );
+        return fintCacheManager.createCache(resourceClass.getName().toLowerCase(Locale.ROOT), Long.class, resourceClass);
     }
 }
