@@ -3,7 +3,7 @@ package no.fintlabs.resourceGroup;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResource.ApplicationResourceService;
-import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationPublishingComponent;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +14,12 @@ import java.util.List;
 public class ResourceGroupPublishComponent {
     private final ApplicationResourceService applicationResourceService;
     private final ResourceGroupProducerService resourceGroupProducerService;
-    private final ApplicationResourceLocationPublishingComponent applicationResourceLocationPublishingComponent;
+    private final ApplicationResourceLocationService applicationResourceLocationService;
 
-    public ResourceGroupPublishComponent(ApplicationResourceService applicationResourceService, ResourceGroupProducerService resourceGroupProducerService, ApplicationResourceLocationPublishingComponent applicationResourceLocationPublishingComponent) {
+    public ResourceGroupPublishComponent(ApplicationResourceService applicationResourceService, ResourceGroupProducerService resourceGroupProducerService, ApplicationResourceLocationService applicationResourceLocationService) {
         this.applicationResourceService = applicationResourceService;
         this.resourceGroupProducerService = resourceGroupProducerService;
-        this.applicationResourceLocationPublishingComponent = applicationResourceLocationPublishingComponent;
+        this.applicationResourceLocationService = applicationResourceLocationService;
     }
     @Scheduled(initialDelayString = "30000",
             fixedDelayString = "900000")
@@ -33,7 +33,7 @@ public class ResourceGroupPublishComponent {
                             .stream()
                             .peek(applicationResource -> {
                                 log.debug("Application resource {} from database added to list for publishing as resource-group", applicationResource.getId());
-                                applicationResourceLocationPublishingComponent.extractAndSendToPublish(applicationResource);
+                                applicationResourceLocationService.extractAndSendToPublish(applicationResource);
                             })
                             .toList();
 

@@ -1,7 +1,6 @@
 package no.fintlabs.applicationResourceLocation;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.kafka.entity.EntityProducer;
 import no.fintlabs.kafka.entity.EntityProducerFactory;
 import no.fintlabs.kafka.entity.EntityProducerRecord;
@@ -9,7 +8,6 @@ import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
 import no.fintlabs.kafka.entity.topic.EntityTopicService;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,31 +20,46 @@ public class ApplicationResourceLocationProduserService {
             EntityProducerFactory entityProducerFactory,
             EntityTopicService entityTopicService
     ) {
-        entityProducer = entityProducerFactory.createProducer(ApplicationResourceLocation.class);
+        entityProducer = entityProducerFactory.createProducer(ApplicationResourceLocationExtended.class);
         entityTopicNameParameters = EntityTopicNameParameters
                 .builder()
-                .resource("applicationresourcelocation")
+                .resource("applicationresourcelocation-extended")
                 .build();
         entityTopicService.ensureTopic(entityTopicNameParameters, 0);
     }
 
-    public void publish(ApplicationResourceLocation applicationResourceLocation) {
-        String key = applicationResourceLocation.getId().toString();
-        log.info("Publishing applicationResourceLocation entity with id: {}", key);
+    public void publish(ApplicationResourceLocationExtended applicationResourceLocationExtended) {
+        String key = applicationResourceLocationExtended.id().toString();
+        log.info("Publishing applicationResourceLocationDTO entity with id: {}", key);
         entityProducer.send(
-                EntityProducerRecord.<ApplicationResourceLocation>builder()
+                EntityProducerRecord.<ApplicationResourceLocationExtended>builder()
                         .topicNameParameters(entityTopicNameParameters)
                         .key(key)
-                        .value(applicationResourceLocation)
+                        .value(applicationResourceLocationExtended)
                         .build()
         );
     }
 
-    public List<ApplicationResourceLocation> publish(List<ApplicationResourceLocation> applicationResourceLocations) {
-        List<ApplicationResourceLocation> publishedApplicationRessourceLocations = applicationResourceLocations
+    public List<ApplicationResourceLocationExtended> publish(Long applicationResourceId, List<ApplicationResourceLocation> applicationResourceLocations) {
+        List<ApplicationResourceLocationExtended> publishedApplicationRessourceLocationsExtended = applicationResourceLocations
                 .stream()
+                .map(applicationResourceLocation -> createExtendedApplicationResourceLocation(applicationResourceId,applicationResourceLocation))
                 .peek(this::publish)
                 .toList();
-        return publishedApplicationRessourceLocations;
+        log.info("Published applicationResourceLocations: {}", publishedApplicationRessourceLocationsExtended.size());
+        return publishedApplicationRessourceLocationsExtended;
+    }
+
+
+    public ApplicationResourceLocationExtended createExtendedApplicationResourceLocation(
+            Long applicationResourceId,ApplicationResourceLocation applicationResourceLocation) {
+        return new ApplicationResourceLocationExtended(
+                applicationResourceLocation.getId(),
+                applicationResourceId,
+                applicationResourceLocation.getResourceId(),
+                applicationResourceLocation.getOrgUnitId(),
+                applicationResourceLocation.getOrgUnitName(),
+                applicationResourceLocation.getResourceLimit());
+
     }
 }
