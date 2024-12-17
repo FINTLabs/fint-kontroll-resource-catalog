@@ -11,10 +11,10 @@ import java.util.List;
 @Service
 @Slf4j
 public class ApplicationResourceLocationService {
-    private final ApplicationResourceLocationProduserService applicationResourceLocationProduserService;
+    private final ApplicationResourceLocationExtendedProduserService applicationResourceLocationExtendedProduserService;
 
-    public ApplicationResourceLocationService(ApplicationResourceLocationProduserService applicationResourceLocationProduserService) {
-        this.applicationResourceLocationProduserService = applicationResourceLocationProduserService;
+    public ApplicationResourceLocationService(ApplicationResourceLocationExtendedProduserService applicationResourceLocationExtendedProduserService) {
+        this.applicationResourceLocationExtendedProduserService = applicationResourceLocationExtendedProduserService;
     }
 
     public void extractAndSendToPublish(ApplicationResource applicationResource) {
@@ -23,9 +23,13 @@ public class ApplicationResourceLocationService {
                 new ArrayList<>(applicationResource.getValidForOrgUnits());
 
         List<ApplicationResourceLocationExtended> publishedApplicationResourceLocationsExtended =
-                applicationResourceLocationProduserService.publish(applicationResource.getId(),applicationResourceLocationsToPublishing);
+                applicationResourceLocationExtendedProduserService.publish(applicationResource.getId(),applicationResourceLocationsToPublishing);
 
         log.info("Published extended applicationResourceLocations: {}", publishedApplicationResourceLocationsExtended.size());
+
+    }
+
+    public void save(ApplicationResourceLocationExtended applicationResourceLocationExtended) {
 
     }
 }
