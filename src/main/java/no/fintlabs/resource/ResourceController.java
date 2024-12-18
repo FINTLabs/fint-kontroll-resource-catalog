@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
-import no.fintlabs.opa.model.OrgUnitType;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +27,12 @@ public class ResourceController {
     private final ServiceConfiguration serviceConfiguration;
 
 
-    public ResourceController(ApplicationResourceService applicationResourceService, ApplicationCategoryService applicationCategoryService, AccessTypeService accessTypeService, BrukertypeService brukertypeService, ServiceConfiguration serviceConfiguration) {
+    public ResourceController(
+            ApplicationResourceService applicationResourceService,
+            ApplicationCategoryService applicationCategoryService,
+            AccessTypeService accessTypeService,
+            BrukertypeService brukertypeService,
+            ServiceConfiguration serviceConfiguration) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;

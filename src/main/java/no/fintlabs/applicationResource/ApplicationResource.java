@@ -62,6 +62,7 @@ public class ApplicationResource extends Resource {
                 .resourceType(resourceType)
                 .resourceLimit(resourceLimit)
                 .identityProviderGroupObjectId(identityProviderGroupObjectId)
+                .applicationCategory(applicationCategory)
                 .build();
     }
 
@@ -74,6 +75,7 @@ public class ApplicationResource extends Resource {
                 .resourceType(resourceType)
                 .resourceLimit(resourceLimit)
                 .identityProviderGroupObjectId(identityProviderGroupObjectId)
+                .applicationCategory(applicationCategory)
                 .status(status)
                 .needApproval(needApproval)
                 .build();

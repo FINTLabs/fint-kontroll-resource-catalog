@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -18,5 +19,6 @@ public class ApplicationResourceDTOFrontendListForAdmin {
     private String status;
     private UUID identityProviderGroupObjectId;
     private boolean needApproval;
+    private List<String> applicationCategory;
 
 }
