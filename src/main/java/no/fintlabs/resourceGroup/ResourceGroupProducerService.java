@@ -20,7 +20,8 @@ public class ResourceGroupProducerService {
 
     public ResourceGroupProducerService(
             EntityProducerFactory entityProducerFactory,
-            EntityTopicService entityTopicService, FintCache<Long, ApplicationResource> publishedApplicationResourceCache
+            EntityTopicService entityTopicService,
+            FintCache<Long, ApplicationResource> publishedApplicationResourceCache
     ) {
         entityProducer = entityProducerFactory.createProducer(ApplicationResource.class);
         this.publishedApplicationResourceCache = publishedApplicationResourceCache;
