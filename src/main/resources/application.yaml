@@ -29,3 +29,9 @@ logging:
   level:
     root: INFO
     org.apache.kafka: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health,info"
