@@ -1,10 +1,7 @@
 package no.fintlabs.resourceAvailability;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
@@ -12,13 +9,14 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "resource_availability")
 public class ResourceAvailability {
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "resource_id")
+    @Column(name = "resource_id",unique = true)
     private String resourceId;
     @Column(name = "assigned_resources")
     private Long assignedResources;
