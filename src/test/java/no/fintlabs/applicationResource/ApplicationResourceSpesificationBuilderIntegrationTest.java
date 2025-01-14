@@ -1,5 +1,6 @@
 package no.fintlabs.applicationResource;
 
+import no.fintlabs.DatabaseIntegrationTest;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
