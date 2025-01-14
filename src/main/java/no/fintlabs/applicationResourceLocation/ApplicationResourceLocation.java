@@ -24,6 +24,17 @@ public class ApplicationResourceLocation {
     private String orgUnitName;
     private Long resourceLimit;
 
+
+    public boolean equalsIgnoringId(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ApplicationResourceLocation that = (ApplicationResourceLocation) o;
+        return Objects.equals(resourceId, that.resourceId)
+                && Objects.equals(orgUnitId, that.orgUnitId)
+                && Objects.equals(orgUnitName, that.orgUnitName)
+                && Objects.equals(resourceLimit, that.resourceLimit);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -29,7 +29,5 @@ public class ApplicationResourceLocationService {
 
     }
 
-    public void save(ApplicationResourceLocationExtended applicationResourceLocationExtended) {
 
-    }
 }
