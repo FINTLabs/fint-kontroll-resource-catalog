@@ -43,6 +43,7 @@ public class ApplicationResource extends Resource {
     @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     private Set<ApplicationResourceLocation> validForOrgUnits;
 
+
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
     private List<String> validForRoles= new ArrayList<>();
