@@ -39,6 +39,7 @@ public class ApplicationResource extends Resource {
     private boolean needApproval;
 
 
+
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
     private List<String> validForRoles= new ArrayList<>();
