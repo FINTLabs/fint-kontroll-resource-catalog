@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -16,4 +17,5 @@ public class ApplicationResourceDTOFrontendList {
     private String resourceType;
     private Long resourceLimit;
     private UUID identityProviderGroupObjectId;
+    private List<String> applicationCategory;
 }
