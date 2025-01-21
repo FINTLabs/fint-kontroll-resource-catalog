@@ -50,13 +50,13 @@ server:
 logging:
   level:
     root: INFO
-    org.apache.kafka: WARN
-    net.sf.ehcache: WARN
-    no.fintlabs.cache.ehcache: WARN
-    com.azure: WARN
-    com.microsoft: WARN
-    org.apache: WARN
-    org.hibernate.SQL: INFO
-    org.hibernate.orm.jdbc.bind: INFO
+#    org.apache.kafka: WARN
+#    net.sf.ehcache: WARN
+#    no.fintlabs.cache.ehcache: WARN
+#    com.azure: WARN
+#    com.microsoft: WARN
+#    org.apache: WARN
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE
 
 
