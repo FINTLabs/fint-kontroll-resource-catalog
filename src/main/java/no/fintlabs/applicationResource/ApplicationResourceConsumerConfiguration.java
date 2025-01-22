@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
 import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
+import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,6 +44,23 @@ public class ApplicationResourceConsumerConfiguration {
                 .createContainer(entityTopicNameParameters);
     }
     @Bean
+    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
+    ConcurrentMessageListenerContainer<String, ApplicationResourceUserType> userTypeConsumer(
+            BrukertypeService brukertypeService,
+            EntityConsumerFactoryService entityConsumerFactoryService
+    ){
+        EntityTopicNameParameters entityTopicNameParameters = EntityTopicNameParameters
+                .builder()
+                .resource("applicationresource-usertype")
+                .build();
+
+        return entityConsumerFactoryService.createFactory(
+                ApplicationResourceUserType.class,
+                (ConsumerRecord<String, ApplicationResourceUserType> consumerRecord)
+                -> brukertypeService.save(consumerRecord.value()))
+                .createContainer(entityTopicNameParameters);
+    }
+    @Bean
     public ConcurrentMessageListenerContainer<String, AzureGroup> azureGroupConsumer(
             FintCache<Long, AzureGroup> azureGroupCache,
             ApplicationResourceService applicationResourceService
@@ -61,7 +79,6 @@ public class ApplicationResourceConsumerConfiguration {
                         log.debug("Saving " + applicationResource.getId() + " with Azure groupObjectId " + azureGroup.getId());
                         applicationResourceService.save(applicationResource);
                         azureGroupCache.put(azureGroup.getResourceGroupID(),azureGroup);
-
                     }
                 }
         ).createContainer(EntityTopicNameParameters.builder().resource("azuread-resource-group").build());

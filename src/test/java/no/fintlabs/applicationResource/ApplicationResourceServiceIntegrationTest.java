@@ -1,5 +1,6 @@
 package no.fintlabs.applicationResource;
 
+import no.fintlabs.DatabaseIntegrationTest;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;

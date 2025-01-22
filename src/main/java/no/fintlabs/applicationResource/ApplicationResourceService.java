@@ -38,8 +38,6 @@ public class ApplicationResourceService {
         this.authorizationUtil = authorizationUtil;
         this.responseFactory = responseFactory;
     }
-
-
     public void save(ApplicationResource applicationResource) {
         applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId())
