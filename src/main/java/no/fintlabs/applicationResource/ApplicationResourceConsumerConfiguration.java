@@ -41,7 +41,6 @@ public class ApplicationResourceConsumerConfiguration {
                 (ConsumerRecord<String,ApplicationResource> consumerRecord)
                 -> applicationResourceService.save(consumerRecord.value()))
                 .createContainer(entityTopicNameParameters);
-
     }
     @Bean
     public ConcurrentMessageListenerContainer<String, AzureGroup> azureGroupConsumer(

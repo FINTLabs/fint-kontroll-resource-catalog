@@ -56,13 +56,17 @@ public class ApplicationResourceService {
 
             Long applicationResourceId = existingApplicationResource.getId();
             List<ApplicationResourceLocation> existingValidForOrgUnits = existingApplicationResource.getValidForOrgUnits();
-
-
             applicationResource.setId(applicationResourceId);
 
+            if (applicationResource.getIdentityProviderGroupObjectId() != null ) {
+                applicationResource.setIdentityProviderGroupObjectId(existingApplicationResource.getIdentityProviderGroupObjectId());
+            }
+            if (applicationResource.getIdentityProviderGroupName() != null ) {
+                applicationResource.setIdentityProviderGroupName(existingApplicationResource.getIdentityProviderGroupName());
+            }
             Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
 
-            if (!azureGroup.isEmpty()) {
+            if (azureGroup.isPresent()) {
                 applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }

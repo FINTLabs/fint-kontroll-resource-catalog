@@ -15,7 +15,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
@@ -150,5 +152,34 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         assertEquals(Set.of(adobek12),
                 Set.of(resourceDTOFrontendList.getFirst().getResourceId())
         );
+    }
+
+    @Test
+    public void savingExistingApplicationResource_WithExistingAzureInfoAndAzureCacheIsEmpty_ThenReturnUpdatedApplicationResourceWithAzureInfoIntact() {
+
+        UUID idpGroupObjectId = UUID.randomUUID();
+        ApplicationResource appResNew = ApplicationResource.builder()
+                .resourceId(m365)
+                .identityProviderGroupObjectId(idpGroupObjectId)
+                .identityProviderGroupName("app-varfk-m365-kon")
+                .build();
+
+        ApplicationResource appResUpdated  = ApplicationResource.builder()
+                .resourceId(m365)
+                .resourceName("Microsoft 365 Student")
+                .build();
+
+        ApplicationResource savedAppRes1 = applicationResourceRepository.saveAndFlush(appResNew);
+
+        given(azureGroupCache.getOptional(savedAppRes1.getId())).willReturn(Optional.empty());
+
+        applicationResourceService.save(appResUpdated);
+        ApplicationResource savedAppResUpdated = applicationResourceRepository.findById(savedAppRes1.getId()).get();
+
+        assertEquals(savedAppRes1.getId(), savedAppResUpdated.getId());
+        assertEquals("Microsoft 365 Student", savedAppResUpdated.getResourceName());
+        assertEquals(savedAppRes1.getIdentityProviderGroupObjectId(), savedAppResUpdated.getIdentityProviderGroupObjectId());
+        assertEquals(savedAppRes1.getIdentityProviderGroupName(), savedAppResUpdated.getIdentityProviderGroupName());
+
     }
 }
