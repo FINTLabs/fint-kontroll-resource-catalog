@@ -16,7 +16,6 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
 
@@ -39,27 +38,33 @@ public class ApplicationResourceService {
         this.responseFactory = responseFactory;
     }
     public void save(ApplicationResource applicationResource) {
-        applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId())
-                .ifPresentOrElse(onSaveExistingApplicationResource(applicationResource),
-                        onSaveNewApplicationResource(applicationResource));
+        Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
+
+        if (returnedApplicationResource.isPresent()) {
+            onSaveExistingApplicationResource(applicationResource);
+            return;
+        }
+        onSaveNewApplicationResource(applicationResource);
     }
 
-    private Runnable onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        return () -> applicationResourceRepository.save(applicationResource);
+    private void onSaveNewApplicationResource(ApplicationResource applicationResource) {
+        applicationResourceRepository.save(applicationResource);
     }
 
-    private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
-        return existingApplicationResource -> {
+    private void onSaveExistingApplicationResource(ApplicationResource applicationResource) {
+
+            ApplicationResource existingApplicationResource = applicationResourceRepository
+                    .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).get();
 
             Long applicationResourceId = existingApplicationResource.getId();
-            List<ApplicationResourceLocation> existingValidForOrgUnits = existingApplicationResource.getValidForOrgUnits();
+
             applicationResource.setId(applicationResourceId);
 
-            if (applicationResource.getIdentityProviderGroupObjectId() != null ) {
+            if (existingApplicationResource.getIdentityProviderGroupObjectId() != null) {
                 applicationResource.setIdentityProviderGroupObjectId(existingApplicationResource.getIdentityProviderGroupObjectId());
             }
-            if (applicationResource.getIdentityProviderGroupName() != null ) {
+            if (existingApplicationResource.getIdentityProviderGroupName() != null) {
                 applicationResource.setIdentityProviderGroupName(existingApplicationResource.getIdentityProviderGroupName());
             }
             Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
@@ -69,7 +74,6 @@ public class ApplicationResourceService {
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
             applicationResourceRepository.save(applicationResource);
-        };
     }
 
     @Transactional
