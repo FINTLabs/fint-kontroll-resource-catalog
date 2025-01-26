@@ -5,9 +5,11 @@ import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -39,6 +41,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     private ResponseFactory responseFactory;
     @MockBean
     private AuthorizationUtil authorizationUtil;
+    @MockBean
+    private OpaService opaService;
     
     private final String varfk = "varfk";
     private final String kompavd = "kompavd";

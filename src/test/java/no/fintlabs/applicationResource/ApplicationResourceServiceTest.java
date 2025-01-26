@@ -4,6 +4,7 @@ import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,8 @@ class ApplicationResourceServiceTest {
     private ApplicationResourceRepository applicationResourceRepository;
     @Mock
     private FintCache<Long, AzureGroup> azureGroupCache;
+    @Mock
+    private OpaService opaService;
     private AuthorizationUtil authorizationUtil;
     private ResponseFactory responseFactory;
 
@@ -36,7 +39,8 @@ class ApplicationResourceServiceTest {
                 applicationResourceRepository,
                 azureGroupCache,
                 authorizationUtil,
-                responseFactory)
+                responseFactory,
+                opaService)
         ;
     }
 

@@ -5,10 +5,13 @@ import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.opa.OpaService;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +31,16 @@ public class ApplicationResourceService {
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
     private final ResponseFactory responseFactory;
+    private final OpaService opaService;
 
     public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, FintCache<Long, AzureGroup> azureGroupCache,
                                       AuthorizationUtil authorizationUtil,
-                                      ResponseFactory responseFactory) {
+                                      ResponseFactory responseFactory, OpaService opaService) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
         this.responseFactory = responseFactory;
+        this.opaService = opaService;
     }
     public void save(ApplicationResource applicationResource) {
         Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
@@ -230,6 +235,33 @@ public class ApplicationResourceService {
 
 
         return responseEntity;
+    }
+
+    public Page<ApplicationResource> findBySearchCriteria(
+            String searchString,
+            List<String> orgUnits,
+            String resourceType,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory,
+            Pageable pageable
+    ) {
+        List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
+        log.info("Org units returned from scope: {}", orgUnitsInScope);
+
+        AppicationResourceSpesificationBuilder appicationResourceSpesification
+                = new AppicationResourceSpesificationBuilder(
+                    searchString,
+                    orgUnits,
+                    orgUnitsInScope,
+                    resourceType,
+                    userType,
+                    accessType,
+                    applicationCategory,
+                    List.of("ACTIVE")
+        );
+
+        return applicationResourceRepository.findAll(appicationResourceSpesification.build(), pageable);
     }
 
     public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(
