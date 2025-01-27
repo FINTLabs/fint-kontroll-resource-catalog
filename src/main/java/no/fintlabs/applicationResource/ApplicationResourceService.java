@@ -43,13 +43,16 @@ public class ApplicationResourceService {
         this.opaService = opaService;
     }
     public void save(ApplicationResource applicationResource) {
+        log.info("Trying to save application resource {} with resourceId {}", applicationResource.getResourceName(), applicationResource.getResourceId());
         Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
 
         if (returnedApplicationResource.isPresent()) {
+            log.info("Application resource with resourceId {} already exists. Updating existing resource", applicationResource.getResourceId());
             onSaveExistingApplicationResource(applicationResource);
             return;
         }
+        log.info("Application resource with resourceId {} does not exist. Saving new resource", applicationResource.getResourceId());
         onSaveNewApplicationResource(applicationResource);
     }
 
@@ -249,7 +252,7 @@ public class ApplicationResourceService {
         List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
         log.info("Org units returned from scope: {}", orgUnitsInScope);
 
-        AppicationResourceSpesificationBuilder appicationResourceSpesification
+        AppicationResourceSpesificationBuilder applicationResourceSpecification
                 = new AppicationResourceSpesificationBuilder(
                     searchString,
                     orgUnits,
@@ -261,7 +264,7 @@ public class ApplicationResourceService {
                     List.of("ACTIVE")
         );
 
-        return applicationResourceRepository.findAll(appicationResourceSpesification.build(), pageable);
+        return applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
     }
 
     public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(
