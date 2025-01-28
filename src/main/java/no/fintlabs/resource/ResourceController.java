@@ -90,7 +90,7 @@ public class ResourceController {
             @RequestParam(value = "usertype", required = false) List<String> userType,
             @RequestParam(value = "accesstype", required = false) String accessType,
             @RequestParam(value = "applicationcategory", required = false) List<String> applicationCategory,
-            @SortDefault(sort = {"roleName"}, direction = Sort.Direction.ASC)
+            @SortDefault(sort = {"resourceName"}, direction = Sort.Direction.ASC)
             @ParameterObject @PageableDefault(size = 100) Pageable pageable
 
     ) {
@@ -105,6 +105,9 @@ public class ResourceController {
                         applicationCategory,
                         pageable
             );
+            if (allApplicationResources == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
+            }
             return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
         }
         catch (Exception e) {
