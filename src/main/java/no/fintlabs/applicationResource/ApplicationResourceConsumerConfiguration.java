@@ -42,7 +42,6 @@ public class ApplicationResourceConsumerConfiguration {
                 (ConsumerRecord<String,ApplicationResource> consumerRecord)
                 -> applicationResourceService.save(consumerRecord.value()))
                 .createContainer(entityTopicNameParameters);
-
     }
     @Bean
     @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")

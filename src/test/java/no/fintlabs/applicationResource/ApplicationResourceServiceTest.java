@@ -40,8 +40,6 @@ class ApplicationResourceServiceTest {
         ;
     }
 
-
-
     @Test
     public void getApplicationResourceByIdShouldReturnDTOIfAuthorized(){
         ApplicationResource appRes1 = new ApplicationResource();
