@@ -103,7 +103,7 @@ public class ApplicationResourceService {
         String licenseEnforcement = applicationResourceDTOFrontendDetail.getLicenseEnforcement();
         if (validOrgUnits.contains(ALLORGUNITS.name())
                 || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
-                || isLicenseEnforcementIsUnRestricted(licenseEnforcement)
+                || licenseEnforcement != null && isLicenseEnforcementIsUnRestricted(licenseEnforcement)
         ){
             return applicationResourceDTOFrontendDetail;
         }
