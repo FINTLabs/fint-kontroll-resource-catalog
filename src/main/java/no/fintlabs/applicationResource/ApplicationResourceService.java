@@ -195,13 +195,6 @@ public class ApplicationResourceService {
 
 
     public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) {
-        Optional<ApplicationResource> applicationResourceSaved = applicationResourceRepository.findById(applicationResource.getId());
-
-        if (applicationResourceSaved.isPresent()) {
-            applicationResource.setCreatedBy(applicationResourceSaved.get().getCreatedBy());
-            applicationResource.setDateCreated(applicationResourceSaved.get().getDateCreated());
-        }
-
         ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());

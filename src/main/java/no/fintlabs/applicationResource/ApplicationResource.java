@@ -14,8 +14,6 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @SuperBuilder
 @Entity
 @Table(name="application_resource")
@@ -34,10 +32,10 @@ public class ApplicationResource extends Resource {
     private Long unitCost;
     private String status;
     private Date statusChanged;
-    private String createdBy;
-    private Date dateCreated;
     private boolean needApproval;
 
+    public ApplicationResource() {
+    }
 
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
@@ -102,8 +100,6 @@ public class ApplicationResource extends Resource {
                 && Objects.equals(validForRoles, that.validForRoles)
                 && Objects.equals(validForOrgUnits, that.validForOrgUnits)
                 && Objects.equals(applicationCategory, that.applicationCategory)
-                && Objects.equals(createdBy, that.createdBy)
-                && Objects.equals(dateCreated, that.dateCreated)
                 && Objects.equals(needApproval, that.needApproval);
     }
 
@@ -125,8 +121,6 @@ public class ApplicationResource extends Resource {
                 validForRoles,
                 validForOrgUnits,
                 applicationCategory,
-                createdBy,
-                dateCreated,
                 needApproval);
     }
 }

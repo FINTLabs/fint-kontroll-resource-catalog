@@ -145,8 +145,6 @@ public ResponseEntity<HttpStatus> createApplicationResource(@AuthenticationPrinc
             .unitCost(request.getUnitCost())
             .status(request.getStatus())
             .statusChanged(Date.from(Instant.now()))
-            .dateCreated(Date.from(Instant.now()))
-            .createdBy(principal.getMail())
             .hasCost(request.isHasCost())
             .validForOrgUnits(request.getValidForOrgUnits())
             .build();
