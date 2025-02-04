@@ -3,6 +3,7 @@ package no.fintlabs.applicationResource;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
+import no.fintlabs.authorization.ForbiddenException;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
@@ -11,6 +12,7 @@ import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.security.web.authentication.www.NonceExpiredException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+
 
 class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
@@ -86,7 +90,7 @@ class ApplicationResourceServiceTest {
 
 
     @Test
-    public void getApplicationResourceByIdShouldReturnEmptyDTOIfNOTAuthorized(){
+    public void getApplicationResourceByIdShouldThrowNotAuthorizesExceptionIfNOTAuthorized(){
         ApplicationResource appRes1 = new ApplicationResource();
         appRes1.setResourceId("adobek12");
         appRes1.setResourceOwnerOrgUnitId("3");
@@ -118,14 +122,8 @@ class ApplicationResourceServiceTest {
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
 
-        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
-
-        String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
-        String resourceIdAppres = appRes1.getResourceId();
-
-        assertNotEquals(resourceIdDTO,resourceIdAppres,"resourceIdDTO should be null");
-        System.out.println("resourceId should be null : " + resourceIdDTO);
+        assertThrows(ForbiddenException.class, () -> applicationResourceService
+                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L));
     }
 
     @Test
@@ -175,6 +173,7 @@ class ApplicationResourceServiceTest {
         ApplicationResource appRes1 = new ApplicationResource();
         appRes1.setResourceId("adobek12");
         appRes1.setResourceOwnerOrgUnitId("3");
+
         ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
@@ -182,6 +181,7 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGMIDT Midtbyen videregående skole")
                 .resourceLimit(100L)
                 .build();
+
         ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
@@ -189,6 +189,7 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
+
         List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
         locationsAppRes1.add(applicationResourceLocation1);
         locationsAppRes1.add(applicationResourceLocation2);

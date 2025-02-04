@@ -21,7 +21,7 @@ public class ResourceGroupPublishComponent {
         this.resourceGroupProducerService = resourceGroupProducerService;
         this.applicationResourceLocationService = applicationResourceLocationService;
     }
-    @Scheduled(initialDelayString = "30000",
+    @Scheduled(initialDelayString = "3000000",
             fixedDelayString = "900000")
 
     public void publishCompleteAndInCompleteResourceGroups() {
