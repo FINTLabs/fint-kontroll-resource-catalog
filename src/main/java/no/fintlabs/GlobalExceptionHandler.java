@@ -22,4 +22,10 @@ public class GlobalExceptionHandler {
         ErrorResponseBody errorResponse = new ErrorResponseBody(HttpStatus.FORBIDDEN.value(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseBody> handleException(Exception ex) {
+        log.error("An unhandled exception occurred with message: {}", ex.getMessage(), ex);
+        ErrorResponseBody errorResponse = new ErrorResponseBody(HttpStatus.INTERNAL_SERVER_ERROR.value(), "En uventet serverfeil oppstod") ;
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
 }
