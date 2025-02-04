@@ -42,14 +42,12 @@ public class ResourceController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
-        log.info("Fetching applicationResourse by id: {}", id);
+        log.info("Fetching application resource by id: {}", id);
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
                 .getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal.from(jwt), id);
-        if (applicationResourceDTOFrontendDetail !=null) {
-            return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
+
+        log.info("Fetching application resource by id: {} returned resource", id);
+        return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
     }
 
     @GetMapping("/applicationcategories")
