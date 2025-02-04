@@ -4,6 +4,8 @@ import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
+import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +41,6 @@ class ApplicationResourceServiceTest {
                 responseFactory)
         ;
     }
-
-
 
     @Test
     public void getApplicationResourceByIdShouldReturnDTOIfAuthorized(){
@@ -90,6 +90,8 @@ class ApplicationResourceServiceTest {
         ApplicationResource appRes1 = new ApplicationResource();
         appRes1.setResourceId("adobek12");
         appRes1.setResourceOwnerOrgUnitId("3");
+        appRes1.setLicenseEnforcement(HandhevingstypeLabels.HARDSTOP.name());
+
         ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
@@ -97,6 +99,7 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGMIDT Midtbyen videregående skole")
                 .resourceLimit(100L)
                 .build();
+
         ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
                 .builder()
                 .resourceId("adobek12")
@@ -104,6 +107,7 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
+
         List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
         locationsAppRes1.add(applicationResourceLocation1);
         locationsAppRes1.add(applicationResourceLocation2);
@@ -124,6 +128,47 @@ class ApplicationResourceServiceTest {
         System.out.println("resourceId should be null : " + resourceIdDTO);
     }
 
+    @Test
+    public void getApplicationResourceByIdShouldReturnDTOIfResourceIsUnRestricted(){
+        ApplicationResource appRes1 = new ApplicationResource();
+        appRes1.setResourceId("zip");
+        appRes1.setResourceOwnerOrgUnitId("3");
+        appRes1.setLicenseEnforcement(HandhevingstypeLabels.FREEALL.name());
+
+        ApplicationResourceLocation applicationResourceLocation1 = ApplicationResourceLocation
+                .builder()
+                .resourceId("zip")
+                .orgUnitId("1")
+                .orgUnitName("VGMIDT Midtbyen videregående skole")
+                .resourceLimit(100L)
+                .build();
+
+        ApplicationResourceLocation applicationResourceLocation2 = ApplicationResourceLocation
+                .builder()
+                .resourceId("zip")
+                .orgUnitId("2")
+                .orgUnitName("VGSTOR Storskog videregående skole")
+                .resourceLimit(200L)
+                .build();
+
+        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
+        locationsAppRes1.add(applicationResourceLocation1);
+        locationsAppRes1.add(applicationResourceLocation2);
+        appRes1.setValidForOrgUnits(locationsAppRes1);
+
+        FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
+        fintJwtEndUserPrincipal.setMail("titten@tei.no");
+        when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("4","5","6"));
+        when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
+
+        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
+                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
+
+        String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
+        String resourceIdAppres = appRes1.getResourceId();
+
+        assertEquals(resourceIdDTO,resourceIdAppres,"resourceIdDTO should equal");
+    }
 
     @Test
     public void getApplicationResourceByIdShouldReturnDTOIfAuthorizedForResourceOwnerOrgUnitId(){

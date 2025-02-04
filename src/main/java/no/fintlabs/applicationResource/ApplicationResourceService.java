@@ -5,6 +5,7 @@ import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -16,7 +17,6 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
 
@@ -39,33 +39,42 @@ public class ApplicationResourceService {
         this.responseFactory = responseFactory;
     }
     public void save(ApplicationResource applicationResource) {
-        applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId())
-                .ifPresentOrElse(onSaveExistingApplicationResource(applicationResource),
-                        onSaveNewApplicationResource(applicationResource));
+        Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
+
+        if (returnedApplicationResource.isPresent()) {
+            onSaveExistingApplicationResource(applicationResource);
+            return;
+        }
+        onSaveNewApplicationResource(applicationResource);
     }
 
-    private Runnable onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        return () -> applicationResourceRepository.save(applicationResource);
+    private void onSaveNewApplicationResource(ApplicationResource applicationResource) {
+        applicationResourceRepository.save(applicationResource);
     }
 
-    private Consumer<ApplicationResource> onSaveExistingApplicationResource(ApplicationResource applicationResource) {
-        return existingApplicationResource -> {
+    private void onSaveExistingApplicationResource(ApplicationResource applicationResource) {
+
+            ApplicationResource existingApplicationResource = applicationResourceRepository
+                    .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).get();
 
             Long applicationResourceId = existingApplicationResource.getId();
-            List<ApplicationResourceLocation> existingValidForOrgUnits = existingApplicationResource.getValidForOrgUnits();
-
 
             applicationResource.setId(applicationResourceId);
 
+            if (existingApplicationResource.getIdentityProviderGroupObjectId() != null) {
+                applicationResource.setIdentityProviderGroupObjectId(existingApplicationResource.getIdentityProviderGroupObjectId());
+            }
+            if (existingApplicationResource.getIdentityProviderGroupName() != null) {
+                applicationResource.setIdentityProviderGroupName(existingApplicationResource.getIdentityProviderGroupName());
+            }
             Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
 
-            if (!azureGroup.isEmpty()) {
+            if (azureGroup.isPresent()) {
                 applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
                 applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
             }
             applicationResourceRepository.save(applicationResource);
-        };
     }
 
     @Transactional
@@ -75,9 +84,15 @@ public class ApplicationResourceService {
 
         Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
 
-        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceOptional
-                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
-                .orElse(new ApplicationResourceDTOFrontendDetail());
+//        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceOptional
+//                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
+//                .orElse(new ApplicationResourceDTOFrontendDetail());
+
+        if (applicationResourceOptional.isEmpty()) {
+            return null;
+        }
+        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail =
+                modelMapper.map(applicationResourceOptional.get(),ApplicationResourceDTOFrontendDetail.class);
 
         List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
         List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
@@ -85,7 +100,11 @@ public class ApplicationResourceService {
             orgunitsInApplicationResourceLocations.add(applicationResourceLocation.getOrgUnitId());
         });
 
-        if (validOrgUnits.contains(ALLORGUNITS.name()) || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())){
+        String licenseEnforcement = applicationResourceDTOFrontendDetail.getLicenseEnforcement();
+        if (validOrgUnits.contains(ALLORGUNITS.name())
+                || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
+                || licenseEnforcement != null && isLicenseEnforcementIsUnRestricted(licenseEnforcement)
+        ){
             return applicationResourceDTOFrontendDetail;
         }
 
@@ -98,7 +117,16 @@ public class ApplicationResourceService {
         } else {
             return applicationResourceDTOFrontendDetail;
         }
+    }
 
+    private boolean isLicenseEnforcementIsUnRestricted(String licenseEnforcementType) {
+        Set<String > unlimitedLicenceEnforcementTypes = Set.of(
+                HandhevingstypeLabels.NOTSET.name(),
+                HandhevingstypeLabels.FREEALL.name(),
+                HandhevingstypeLabels.FREEEDU.name(),
+                HandhevingstypeLabels.FREESTUDENT.name());
+
+        return unlimitedLicenceEnforcementTypes.contains(licenseEnforcementType);
     }
     //validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
 
