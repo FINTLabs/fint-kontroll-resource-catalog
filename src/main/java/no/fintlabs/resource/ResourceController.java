@@ -52,7 +52,7 @@ public class ResourceController {
         log.info("Fetching applicationResourse by id: {}", id);
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
                 .getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal.from(jwt), id);
-        if (applicationResourceDTOFrontendDetail.isValid()) {
+        if (applicationResourceDTOFrontendDetail !=null) {
             return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -164,8 +164,6 @@ public ResponseEntity<HttpStatus> createApplicationResource(@AuthenticationPrinc
             .unitCost(request.getUnitCost())
             .status(request.getStatus())
             .statusChanged(Date.from(Instant.now()))
-            .dateCreated(Date.from(Instant.now()))
-            .createdBy(principal.getMail())
             .hasCost(request.isHasCost())
             .validForOrgUnits(request.getValidForOrgUnits())
             .build();
