@@ -99,7 +99,7 @@ public class ApplicationResourceService {
                 )
         ){
             log.error("User {} does not have access to application resource {} ", principal.getMail(), id);
-            throw new ForbiddenException("Ikke tilgang til ressursen");
+            throw new ForbiddenException("Bruker " + principal.getMail() + " har ikke tilgang til ressurs " + id);
         }
         ModelMapper modelMapper = new ModelMapper();
         return modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);

@@ -31,7 +31,7 @@ public class ResourceController {
             ApplicationResourceService applicationResourceService,
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
-            BrukertypeService brukertypeService,
+            //BrukertypeService brukertypeService,
             ServiceConfiguration serviceConfiguration) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
