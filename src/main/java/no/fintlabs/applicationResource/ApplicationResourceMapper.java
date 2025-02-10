@@ -9,7 +9,7 @@ public class ApplicationResourceMapper {
 
     public static Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
         return Map.of(
-                "applicationResources",
+                "resources",
                     applicationResourcePage.getContent()
                         .stream()
                         .map(ApplicationResourceMapper::toApplicationResourceDto)
