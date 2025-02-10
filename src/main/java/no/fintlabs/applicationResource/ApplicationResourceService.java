@@ -268,8 +268,8 @@ public class ApplicationResourceService {
         AppicationResourceSpesificationBuilder applicationResourceSpecification
                 = new AppicationResourceSpesificationBuilder(
                     searchString,
-                    orgUnits,
                     orgUnitsInScope,
+                    orgUnits,
                     resourceType,
                     userType,
                     accessType,

@@ -6,14 +6,19 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.opa.OpaService;
+import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -80,29 +85,37 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
     ApplicationResource restrictedResource = ApplicationResource.builder()
             .resourceId(adobek12)
+            .resourceName("Adobe Creative Cloud")
             .licenseEnforcement(hardStop)
             .validForRoles(List.of(student))
             .validForOrgUnits(List.of(adobek12_kompavd))
+            .status("ACTIVE")
             .build();
 
     ApplicationResource unrestrictedResourceForAllKabal = ApplicationResource.builder()
             .resourceId(kabal)
+            .resourceName("Microsoft Kabal")
             .licenseEnforcement(freeAll)
             .validForRoles(List.of(student, employee))
             .validForOrgUnits(List.of(kabal_varfk))
+            .status("ACTIVE")
             .build();
+
     ApplicationResource unrestrictedResourceForAllZip = ApplicationResource.builder()
             .resourceId(zip)
             .licenseEnforcement(freeAll)
             .validForRoles(List.of(student, employee))
             .validForOrgUnits(List.of(zip_varfk))
+            .status("ACTIVE")
             .build();
 
     ApplicationResource unRestrictedResourceForStudents = ApplicationResource.builder()
             .resourceId(m365)
+            .resourceName("Microsoft 365 Student")
             .licenseEnforcement(freeStudent)
             .validForRoles(List.of(student))
             .validForOrgUnits(List.of(m365_varfk))
+            .status("ACTIVE")
             .build();
 
     @BeforeEach
@@ -157,6 +170,31 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         assertEquals(Set.of(adobek12),
                 Set.of(resourceDTOFrontendList.getFirst().getResourceId())
         );
+    }
+
+    @Test
+    public void findBySearchCriteriaShouldReturnListSortedByResourceName() {
+        applicationResourceRepository.save(unrestrictedResourceForAllKabal);
+        applicationResourceRepository.save(restrictedResource);
+        applicationResourceRepository.save(unRestrictedResourceForStudents);
+
+        PageRequest pageRequest = PageRequest.of(0, 100, Sort.by("resourceName"));
+
+        given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
+
+        Page<ApplicationResource> findBySearchCriteria = applicationResourceService.findBySearchCriteria(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                pageRequest);
+
+        assertEquals(3, findBySearchCriteria.getTotalElements());
+        assertEquals(adobek12, findBySearchCriteria.getContent().get(0).getResourceId());
+        assertEquals(m365, findBySearchCriteria.getContent().get(1).getResourceId());
+        assertEquals(kabal, findBySearchCriteria.getContent().get(2).getResourceId());
     }
 
     @Test
