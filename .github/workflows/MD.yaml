@@ -21,6 +21,7 @@ on:
           - ofk-no
           - bfk-no
           - afk-no
+          - frid-no
 
 env:
   REGISTRY: ghcr.io
