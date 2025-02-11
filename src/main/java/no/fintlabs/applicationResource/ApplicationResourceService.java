@@ -13,10 +13,12 @@ import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.*;
@@ -277,7 +279,12 @@ public class ApplicationResourceService {
                     List.of("ACTIVE")
         );
 
-        return applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
+        Page<ApplicationResource> applicationResourcePage = applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
+
+        if (applicationResourcePage.getTotalElements() == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
+        }
+        return applicationResourcePage;
     }
 
     public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(

@@ -105,9 +105,9 @@ public class ResourceController {
                         applicationCategory,
                         pageable
             );
-            if (allApplicationResources == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
-            }
+//            if (allApplicationResources == null) {
+//                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
+//            }
             return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
         }
         catch (Exception e) {

@@ -107,7 +107,7 @@ public class ResourceControllerTest  {
 
         MvcResult result = mockMvc.perform(get("/api/resources/v1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.applicationResources", hasSize(2)))
+                .andExpect(jsonPath("$.resources", hasSize(2)))
                 .andReturn();
     }
 
