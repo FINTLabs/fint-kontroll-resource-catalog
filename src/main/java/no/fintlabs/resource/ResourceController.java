@@ -5,11 +5,18 @@ import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Date;
@@ -83,19 +90,31 @@ public class ResourceController {
             @RequestParam(value = "usertype", required = false) List<String> userType,
             @RequestParam(value = "accesstype", required = false) String accessType,
             @RequestParam(value = "applicationcategory", required = false) List<String> applicationCategory,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
+            @SortDefault(sort = {"resourceName"}, direction = Sort.Direction.ASC)
+            @ParameterObject @PageableDefault(size = 100) Pageable pageable
+
     ) {
-        return applicationResourceService.getAllActiveAndValidApplicationResources(
-                search,
-                orgUnits,
-                resourceType,
-                userType,
-                accessType,
-                applicationCategory,
-                page,
-                size
-        );
+        try {
+            Page<ApplicationResource> allApplicationResources = applicationResourceService
+                    .findBySearchCriteria(
+                        search,
+                        orgUnits,
+                        resourceType,
+                        userType,
+                        accessType,
+                        applicationCategory,
+                        pageable
+            );
+            if (allApplicationResources == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
+            }
+            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
+        }
+        catch (Exception e) {
+            log.error("Error fetching application resources", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Something went wrong when fetching application resources");
+        }
+
     }
 
     @GetMapping("/admin/v1")
