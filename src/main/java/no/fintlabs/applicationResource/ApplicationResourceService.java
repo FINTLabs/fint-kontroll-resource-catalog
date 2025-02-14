@@ -5,11 +5,14 @@ import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -29,23 +32,28 @@ public class ApplicationResourceService {
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
     private final ResponseFactory responseFactory;
+    private final OpaService opaService;
 
     public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, FintCache<Long, AzureGroup> azureGroupCache,
                                       AuthorizationUtil authorizationUtil,
-                                      ResponseFactory responseFactory) {
+                                      ResponseFactory responseFactory, OpaService opaService) {
         this.applicationResourceRepository = applicationResourceRepository;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
         this.responseFactory = responseFactory;
+        this.opaService = opaService;
     }
     public void save(ApplicationResource applicationResource) {
+        log.info("Trying to save application resource {} with resourceId {}", applicationResource.getResourceName(), applicationResource.getResourceId());
         Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
 
         if (returnedApplicationResource.isPresent()) {
+            log.info("Application resource with resourceId {} already exists. Updating existing resource", applicationResource.getResourceId());
             onSaveExistingApplicationResource(applicationResource);
             return;
         }
+        log.info("Application resource with resourceId {} does not exist. Saving new resource", applicationResource.getResourceId());
         onSaveNewApplicationResource(applicationResource);
     }
 
@@ -243,6 +251,33 @@ public class ApplicationResourceService {
 
 
         return responseEntity;
+    }
+
+    public Page<ApplicationResource> findBySearchCriteria(
+            String searchString,
+            List<String> orgUnits,
+            String resourceType,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory,
+            Pageable pageable
+    ) {
+        List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
+        log.info("Org units returned from scope: {}", orgUnitsInScope);
+
+        AppicationResourceSpesificationBuilder applicationResourceSpecification
+                = new AppicationResourceSpesificationBuilder(
+                    searchString,
+                    orgUnitsInScope,
+                    orgUnits,
+                    resourceType,
+                    userType,
+                    accessType,
+                    applicationCategory,
+                    List.of("ACTIVE")
+        );
+
+        return applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
     }
 
     public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(

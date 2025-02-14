@@ -4,6 +4,7 @@ package no.fintlabs.applicationResource;
 import jakarta.persistence.criteria.*;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.opa.model.OrgUnitType;
 import org.springframework.data.jpa.domain.Specification;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 
@@ -51,7 +52,7 @@ public class AppicationResourceSpesificationBuilder {
             applicationResourceSpecification = Specification.where(null);
         }
 
-        if (scopedOrgUnitIds != null){
+        if (scopedOrgUnitIds != null && !scopedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
             applicationResourceSpecification =
                     applicationResourceSpecification.and(allAuthorizedOrgUnitIds(scopedOrgUnitIds).or(resourceAccessIsUnlimited()));
         }
