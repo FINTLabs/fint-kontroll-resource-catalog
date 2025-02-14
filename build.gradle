@@ -34,23 +34,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
-
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.flywaydb:flyway-core'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.postgresql:postgresql'
 
-
+    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.82.Final:osx-aarch_64'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'cglib:cglib-nodep:3.3.0'
-
 
     testImplementation 'com.h2database:h2'
     implementation platform('org.testcontainers:testcontainers-bom:1.20.1')
@@ -59,14 +57,17 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
 
     implementation 'org.springframework.kafka:spring-kafka'
-    implementation 'no.fintlabs:fint-kafka:3.0.0-rc-1'
-    implementation 'no.fintlabs:fint-flyt-cache:1.0.0'
     implementation 'org.ehcache:ehcache:3.10.6'
     implementation 'net.sf.ehcache:ehcache:2.10.9.2'
     implementation 'no.fintlabs:fint-resource-server-security:1.1.0'
     implementation 'org.modelmapper:modelmapper:2.4.5'
-    implementation 'no.fintlabs:fint-kontroll-auth:1.2.4'
     implementation 'jakarta.servlet:jakarta.servlet-api'
+
+    implementation 'no.fintlabs:fint-kafka:3.0.0-rc-1'
+    implementation 'no.fintlabs:fint-flyt-cache:1.0.0'
+    implementation 'no.fintlabs:fint-kontroll-auth:1.2.4'
+    implementation 'no.fintlabs:fint-kontroll-db-audit:1.0.4'
+//    implementation files('/Users/mortensolberg/Development/vigoikt/fint-kontroll-db-audit/build/libs/fint-kontroll-db-audit-0-SNAPSHOT-plain.jar')
 
 }
 

@@ -6,6 +6,7 @@ import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
 import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
+import no.fintlabs.kodeverk.brukertype.Brukertype;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -31,6 +32,4 @@ public class ResourceGroupConsumerConfiguration {
                 )
         ).createContainer(EntityTopicNameParameters.builder().resource("resource-group").build());
     }
-
-
 }
