@@ -47,9 +47,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ResourceController.class)
-//@Testcontainers
-//@ActiveProfiles("test")
-//@Import({ApplicationResourceService.class})
+@Testcontainers
+@ActiveProfiles("test")
+@Import({ApplicationResourceService.class})
 public class ResourceControllerTest  {
     private MockMvc mockMvc;
     @MockBean
@@ -107,7 +107,7 @@ public class ResourceControllerTest  {
 
         MvcResult result = mockMvc.perform(get("/api/resources/v1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.applicationResources", hasSize(2)))
+                .andExpect(jsonPath("$.resources", hasSize(2)))
                 .andReturn();
     }
 
