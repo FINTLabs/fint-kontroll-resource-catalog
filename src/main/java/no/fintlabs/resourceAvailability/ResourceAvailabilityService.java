@@ -20,7 +20,8 @@ public class ResourceAvailabilityService {
         log.info("Trying to save resourceAvailability: {}", resourceAvailability.toString());
 
         resourceAvailabilityRepository.findByResourceId(resourceAvailability.getResourceId())
-                .ifPresentOrElse(saveExistingResourceAvailability(resourceAvailability), saveNewResourceAvailability(resourceAvailability));
+                .ifPresentOrElse(saveExistingResourceAvailability(resourceAvailability),
+                        saveNewResourceAvailability(resourceAvailability));
     }
 
     private Runnable saveNewResourceAvailability(ResourceAvailability resourceAvailability) {

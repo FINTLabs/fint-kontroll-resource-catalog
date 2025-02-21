@@ -14,7 +14,7 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 public class ResourceAvailabilityConsumerConfiguration {
 
     @Bean
-    public ConcurrentMessageListenerContainer<String,ResourceAvailability> resourceAvailabilityConsumer(
+    public ConcurrentMessageListenerContainer<String, ResourceAvailabilityDTO> resourceAvailabilityConsumer(
             EntityConsumerFactoryService entityConsumerFactoryService,
             ResourceAvailabilityService resourceAvailabilityService
     ) {
@@ -24,10 +24,10 @@ public class ResourceAvailabilityConsumerConfiguration {
                 .build();
 
        return entityConsumerFactoryService.createFactory(
-               ResourceAvailability.class,
-               (ConsumerRecord<String,ResourceAvailability> consumerRecord) ->{
+               ResourceAvailabilityDTO.class,
+               (ConsumerRecord<String,ResourceAvailabilityDTO> consumerRecord) ->{
                    log.debug("Consumer record: {}", consumerRecord);
-                   resourceAvailabilityService.save(consumerRecord.value());
+                   resourceAvailabilityService.save(ResourceAvailabilityMapper.toResourceAvailability(consumerRecord.value()));
                }).createContainer(entityTopicNameParameters);
     }
 
