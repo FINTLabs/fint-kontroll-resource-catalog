@@ -43,16 +43,16 @@ public class AppicationResourceSpesificationBuilder {
     }
 
     public Specification<ApplicationResource> build() {
-        Specification<ApplicationResource> applicationResourceSpecification;
-        
-        if (search != null) {
-            applicationResourceSpecification = resourceNameLike(search);
-        }
-        else {
-            applicationResourceSpecification = Specification.where(null);
-        }
+        Specification<ApplicationResource> applicationResourceSpecification = resourceNameLike(search);
+//
+//        if (search != null) {
+//            applicationResourceSpecification = resourceNameLike(search);
+//        }
+//        else {
+//            applicationResourceSpecification = Specification.where(null);
+//        }
 
-        if (scopedOrgUnitIds != null && !scopedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
+        if (scopedOrgUnitIds != null && !scopedOrgUnitIds.isEmpty() && !scopedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
             applicationResourceSpecification =
                     applicationResourceSpecification.and(allAuthorizedOrgUnitIds(scopedOrgUnitIds).or(resourceAccessIsUnlimited()));
         }
@@ -85,6 +85,10 @@ public class AppicationResourceSpesificationBuilder {
 
         return applicationResourceSpecification;
     }
+    public static Specification<ApplicationResource> hasName(String name) {
+        return (root, query, criteriaBuilder) ->
+                name == null ? criteriaBuilder.conjunction() : criteriaBuilder.equal(root.get("name"), name);
+    }
 
     public static Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
 
@@ -95,9 +99,9 @@ public class AppicationResourceSpesificationBuilder {
         };
     }
 
-    public Specification<ApplicationResource> resourceNameLike(String search) {
+    public Specification<ApplicationResource> resourceNameLike(String name) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("resourceName")),"%" + search.toLowerCase() + "%" );
+                name == null ? criteriaBuilder.conjunction() : criteriaBuilder.like(criteriaBuilder.lower(root.get("resourceName")),"%" + search.toLowerCase() + "%" );
     }
 
     public Specification<ApplicationResource> resourceTypeLike(String resourceType) {
@@ -140,7 +144,7 @@ public class AppicationResourceSpesificationBuilder {
 
     public Specification<ApplicationResource> isActive() {
         return (root, query, criteriaBuilder) ->
-            criteriaBuilder.equal(root.get("status"),"ACTIVE");
+                criteriaBuilder.equal(root.get("status"),"ACTIVE");
     }
 
     public Specification<ApplicationResource> resourceAccessIsUnlimited() {
@@ -152,5 +156,4 @@ public class AppicationResourceSpesificationBuilder {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.in(root.get("licenseEnforcement")).value(unlimitedLicenceEnforcementTypes);
     }
-
 }
