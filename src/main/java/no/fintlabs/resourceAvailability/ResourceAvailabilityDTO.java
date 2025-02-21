@@ -10,5 +10,5 @@ import lombok.*;
 public class ResourceAvailabilityDTO {
     private String resourceId;
     private Long assignedResources;
-    private ResourceConsumerAssignmentDTO resourceConsumerAssignment;
+    private ResourceConsumerAssignment resourceConsumerAssignment;
 }

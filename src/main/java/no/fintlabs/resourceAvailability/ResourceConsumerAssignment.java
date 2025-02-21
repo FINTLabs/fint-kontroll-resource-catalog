@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ResourceConsumerAssignmentDTO {
+public class ResourceConsumerAssignment {
     private String orgUnitId;
     private Long assignedResources;
 }
