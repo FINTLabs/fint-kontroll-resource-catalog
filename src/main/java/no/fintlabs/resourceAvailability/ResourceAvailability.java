@@ -3,6 +3,7 @@ package no.fintlabs.resourceAvailability;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -24,7 +25,7 @@ public class ResourceAvailability {
     @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
     @JoinColumn(name = "id")
     @CollectionTable(name = "resource_availability_resource_consumer_assignments")
-    private List<ResourceConsumerAssignments> resourceConsumerAssignments;
+    private List<ResourceConsumerAssignment> resourceConsumerAssignments = new ArrayList<>();
 
 
     @Override

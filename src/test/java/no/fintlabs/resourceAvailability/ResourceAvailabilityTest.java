@@ -29,26 +29,26 @@ class ResourceAvailabilityTest  extends DatabaseIntegrationTest {
 
     @Test
     public void shouldReturnNewResourceAvailabilityOnSave() {
-        List<ResourceConsumerAssignments> resourceConsumerAssignmentsNewList = new ArrayList<>();
+        List<ResourceConsumerAssignment> resourceConsumerAssignmentNewList = new ArrayList<>();
         ResourceAvailability resourceAvailabilityNew = ResourceAvailability
                 .builder()
                 .resourceId("Kabal")
                 .assignedResources(100L)
-                .resourceConsumerAssignments(resourceConsumerAssignmentsNewList)
+                .resourceConsumerAssignments(resourceConsumerAssignmentNewList)
                 .build();
 
-        ResourceConsumerAssignments resourceConsumerAssignments1 = ResourceConsumerAssignments
+        ResourceConsumerAssignment resourceConsumerAssignment1 = ResourceConsumerAssignment
                 .builder()
                 .orgUnitId("org1")
                 .assignedResources(20L)
                 .build();
-        resourceConsumerAssignmentsNewList.add(resourceConsumerAssignments1);
-        ResourceConsumerAssignments resourceConsumerAssignments2 = ResourceConsumerAssignments
+        resourceConsumerAssignmentNewList.add(resourceConsumerAssignment1);
+        ResourceConsumerAssignment resourceConsumerAssignment2 = ResourceConsumerAssignment
                 .builder()
                 .orgUnitId("org1")
                 .assignedResources(20L)
                 .build();
-        resourceConsumerAssignmentsNewList.add(resourceConsumerAssignments2);
+        resourceConsumerAssignmentNewList.add(resourceConsumerAssignment2);
         resourceAvailabilityService.save(resourceAvailabilityNew);
 
         Optional<ResourceAvailability> resourceAvailabilityfromDB = resourceAvailabilityRepository
@@ -59,48 +59,48 @@ class ResourceAvailabilityTest  extends DatabaseIntegrationTest {
 
     @Test
     public void shouldNotReturnNewRecordOfResourceAvailabilityOnUpdate() {
-        List<ResourceConsumerAssignments> resourceConsumerAssignmentsNewList = new ArrayList<>();
+        List<ResourceConsumerAssignment> resourceConsumerAssignmentNewList = new ArrayList<>();
         ResourceAvailability resourceAvailabilityNew = ResourceAvailability
                 .builder()
                 .resourceId("Kabal")
                 .assignedResources(100L)
-                .resourceConsumerAssignments(resourceConsumerAssignmentsNewList)
+                .resourceConsumerAssignments(resourceConsumerAssignmentNewList)
                 .build();
 
-        ResourceConsumerAssignments resourceConsumerAssignments1 = ResourceConsumerAssignments
+        ResourceConsumerAssignment resourceConsumerAssignment1 = ResourceConsumerAssignment
                 .builder()
                 .orgUnitId("org1")
                 .assignedResources(20L)
                 .build();
-        resourceConsumerAssignmentsNewList.add(resourceConsumerAssignments1);
-        ResourceConsumerAssignments resourceConsumerAssignments2 = ResourceConsumerAssignments
+        resourceConsumerAssignmentNewList.add(resourceConsumerAssignment1);
+        ResourceConsumerAssignment resourceConsumerAssignment2 = ResourceConsumerAssignment
                 .builder()
                 .orgUnitId("org2")
                 .assignedResources(20L)
                 .build();
-        resourceConsumerAssignmentsNewList.add(resourceConsumerAssignments2);
+        resourceConsumerAssignmentNewList.add(resourceConsumerAssignment2);
         resourceAvailabilityService.save(resourceAvailabilityNew);
 
-        List<ResourceConsumerAssignments> resourceConsumerAssignmentsUpdateList = new ArrayList<>();
+        List<ResourceConsumerAssignment> resourceConsumerAssignmentUpdateList = new ArrayList<>();
         ResourceAvailability resourceAvailabilityUpdate = ResourceAvailability
                 .builder()
                 .resourceId("Kabal")
                 .assignedResources(110L)
-                .resourceConsumerAssignments(resourceConsumerAssignmentsNewList)
+                .resourceConsumerAssignments(resourceConsumerAssignmentNewList)
                 .build();
 
-        ResourceConsumerAssignments resourceConsumerAssignmentsUpdate1 = ResourceConsumerAssignments
+        ResourceConsumerAssignment resourceConsumerAssignmentUpdate1 = ResourceConsumerAssignment
                 .builder()
                 .orgUnitId("org1")
                 .assignedResources(25L)
                 .build();
-        resourceConsumerAssignmentsUpdateList.add(resourceConsumerAssignmentsUpdate1);
-        ResourceConsumerAssignments resourceConsumerAssignmentsUpdate2 = ResourceConsumerAssignments
+        resourceConsumerAssignmentUpdateList.add(resourceConsumerAssignmentUpdate1);
+        ResourceConsumerAssignment resourceConsumerAssignmentUpdate2 = ResourceConsumerAssignment
                 .builder()
                 .orgUnitId("org2")
                 .assignedResources(25L)
                 .build();
-        resourceConsumerAssignmentsUpdateList.add(resourceConsumerAssignmentsUpdate2);
+        resourceConsumerAssignmentUpdateList.add(resourceConsumerAssignmentUpdate2);
         resourceAvailabilityService.save(resourceAvailabilityUpdate);
 
         Optional<ResourceAvailability> resourceAvailabilityfromDB = resourceAvailabilityRepository

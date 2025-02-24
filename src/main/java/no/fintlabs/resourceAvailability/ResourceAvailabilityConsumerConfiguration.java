@@ -26,8 +26,9 @@ public class ResourceAvailabilityConsumerConfiguration {
        return entityConsumerFactoryService.createFactory(
                ResourceAvailabilityDTO.class,
                (ConsumerRecord<String,ResourceAvailabilityDTO> consumerRecord) ->{
-                   log.debug("Consumer record: {}", consumerRecord);
-                   resourceAvailabilityService.save(ResourceAvailabilityMapper.toResourceAvailability(consumerRecord.value()));
+                   log.info("Consumer record: {}", consumerRecord);
+                   ResourceAvailability resourceAvailability = ResourceAvailabilityMapper.toResourceAvailability(consumerRecord.value());
+                   resourceAvailabilityService.save(resourceAvailability);
                }).createContainer(entityTopicNameParameters);
     }
 
