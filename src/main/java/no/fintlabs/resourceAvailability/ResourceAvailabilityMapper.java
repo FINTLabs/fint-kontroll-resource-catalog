@@ -8,17 +8,17 @@ public class ResourceAvailabilityMapper {
         return ResourceAvailability.builder()
                 .resourceId(resourceAvailabilityDTO.getResourceId())
                 .assignedResources(resourceAvailabilityDTO.getAssignedResources())
-                .resourceConsumerAssignments(toResourceConsumerAssignment(resourceAvailabilityDTO.getResourceConsumerAssignment()))
+                .resourceConsumerAssignments(toResourceConsumerAssignment(resourceAvailabilityDTO.getResourceConsumerAssignmentDTO()))
                 .build();
     }
 
-    private static List<ResourceConsumerAssignments> toResourceConsumerAssignment(ResourceConsumerAssignment resourceConsumerAssignment) {
-        ResourceConsumerAssignments resourceConsumerAssignments = ResourceConsumerAssignments.builder()
-                .orgUnitId(resourceConsumerAssignment.getOrgUnitId())
-                .assignedResources(resourceConsumerAssignment.getAssignedResources())
+    private static List<ResourceConsumerAssignment> toResourceConsumerAssignment(ResourceConsumerAssignmentDTO resourceConsumerAssignmentDTO) {
+        ResourceConsumerAssignment resourceConsumerAssignment = ResourceConsumerAssignment.builder()
+                .orgUnitId(resourceConsumerAssignmentDTO.getOrgUnitId())
+                .assignedResources(resourceConsumerAssignmentDTO.getAssignedResources())
                 .build();
 
-        return List.of(resourceConsumerAssignments);
+        return List.of(resourceConsumerAssignment);
 
     }
 }

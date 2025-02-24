@@ -4,6 +4,8 @@ package no.fintlabs.resourceAvailability;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Service
@@ -34,8 +36,27 @@ public class ResourceAvailabilityService {
     private Consumer<ResourceAvailability> saveExistingResourceAvailability(ResourceAvailability resourceAvailability) {
         return existingResourceAvailability -> {
             resourceAvailability.setId(existingResourceAvailability.getId());
+
+            List<ResourceConsumerAssignment> mergedAssignments = new ArrayList<>(existingResourceAvailability.getResourceConsumerAssignments());
+
+            for (ResourceConsumerAssignment newAssignment : resourceAvailability.getResourceConsumerAssignments()) {
+                ResourceConsumerAssignment existingAssignment = mergedAssignments.stream()
+                        .filter(a -> a.getOrgUnitId().equals(newAssignment.getOrgUnitId()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (existingAssignment != null) {
+                    existingAssignment.setAssignedResources(newAssignment.getAssignedResources());
+                } else {
+                    mergedAssignments.add(newAssignment);
+                }
+            }
+
+            resourceAvailability.setResourceConsumerAssignments(mergedAssignments);
             resourceAvailabilityRepository.save(resourceAvailability);
-            log.info("Update resourceAvailability with id: {}", resourceAvailability.getId());
+            log.info("Updated resourceAvailability with id: {}", existingResourceAvailability.getId());
         };
     }
 }
+
+
