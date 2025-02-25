@@ -29,7 +29,8 @@ logging:
   level:
     root: INFO
     org.apache.kafka: WARN
-
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
 management:
   endpoints:
     web:
