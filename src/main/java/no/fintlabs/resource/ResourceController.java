@@ -95,6 +95,7 @@ public class ResourceController {
 
     ) {
         try {
+            log.info("Page request info - page size: {} page number: {}", pageable.getPageSize(), pageable.getPageNumber());
             Page<ApplicationResource> allApplicationResources = applicationResourceService
                     .findBySearchCriteria(
                         search,
