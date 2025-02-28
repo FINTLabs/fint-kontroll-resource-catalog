@@ -207,24 +207,31 @@ public ResponseEntity<HttpStatus> updateApplicationResource(@RequestBody Applica
     }
 }
 
-@DeleteMapping("v1/{id}")
-public ResponseEntity<HttpStatus> deleteApplicationResource(@PathVariable Long id) {
-    try {
-        applicationResourceService.deleteApplicationResource(id);
-    } catch (ApplicationResourceNotFoundExeption applicationResourceNotFoundExeption) {
-        log.error("Application resource not found", applicationResourceNotFoundExeption);
+    @DeleteMapping("v1/{id}")
+    public ResponseEntity<HttpStatus> deleteApplicationResource(@PathVariable Long id) {
+        try {
+            applicationResourceService.deleteApplicationResource(id);
+        } catch (ApplicationResourceNotFoundExeption applicationResourceNotFoundExeption) {
+            log.error("Application resource not found", applicationResourceNotFoundExeption);
 
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-}
+    @GetMapping("admin/source/v1")
+    public ResponseEntity<String> getSourceConfig() {
+        String source = serviceConfiguration.getSource();
 
-@GetMapping("admin/source/v1")
-public ResponseEntity<String> getSourceConfig() {
-    String source = serviceConfiguration.getSource();
+        return new ResponseEntity<>(source, HttpStatus.OK);
+    }
 
-    return new ResponseEntity<>(source, HttpStatus.OK);
-}
+    @GetMapping("/source/v1")
+    public ResponseEntity<String> getSourceConfigPublic() {
+        String source = serviceConfiguration.getSource();
+
+        return new ResponseEntity<>(source, HttpStatus.OK);
+    }
 
 }
