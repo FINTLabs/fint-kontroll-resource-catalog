@@ -88,7 +88,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceName("Adobe Creative Cloud")
             .licenseEnforcement(hardStop)
             .validForRoles(List.of(student))
-            .validForOrgUnits(List.of(adobek12_kompavd))
+            .validForOrgUnits(Set.of(adobek12_kompavd))
             .status("ACTIVE")
             .build();
 
@@ -97,7 +97,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceName("Microsoft Kabal")
             .licenseEnforcement(freeAll)
             .validForRoles(List.of(student, employee))
-            .validForOrgUnits(List.of(kabal_varfk))
+            .validForOrgUnits(Set.of(kabal_varfk))
             .status("ACTIVE")
             .build();
 
@@ -105,7 +105,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceId(zip)
             .licenseEnforcement(freeAll)
             .validForRoles(List.of(student, employee))
-            .validForOrgUnits(List.of(zip_varfk))
+            .validForOrgUnits(Set.of(zip_varfk))
             .status("ACTIVE")
             .build();
 
@@ -114,7 +114,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceName("Microsoft 365 Student")
             .licenseEnforcement(freeStudent)
             .validForRoles(List.of(student))
-            .validForOrgUnits(List.of(m365_varfk))
+            .validForOrgUnits(Set.of(m365_varfk))
             .status("ACTIVE")
             .build();
 
@@ -189,6 +189,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 null,
+                null,
                 pageRequest);
 
         assertEquals(3, findBySearchCriteria.getTotalElements());
@@ -205,15 +206,20 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 .resourceId(m365)
                 .identityProviderGroupObjectId(idpGroupObjectId)
                 .identityProviderGroupName("app-varfk-m365-kon")
+                .validForOrgUnits(Set.of(m365_varfk))
                 .build();
 
         ApplicationResource appResUpdated  = ApplicationResource.builder()
                 .resourceId(m365)
                 .resourceName("Microsoft 365 Student")
+                .validForOrgUnits(Set.of(m365_varfk))
                 .build();
 
-        ApplicationResource savedAppRes1 = applicationResourceRepository.saveAndFlush(appResNew);
-
+//        applicationResourceService.save(appResNew);
+//        applicationResourceRepository.flush();
+//
+//        //ApplicationResource savedAppRes1 = applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(m365).get();
+        ApplicationResource savedAppRes1 = applicationResourceRepository.save(appResNew);
         given(azureGroupCache.getOptional(savedAppRes1.getId())).willReturn(Optional.empty());
 
         applicationResourceService.save(appResUpdated);

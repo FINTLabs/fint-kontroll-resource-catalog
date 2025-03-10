@@ -4,9 +4,8 @@ package no.fintlabs.applicationResource;
 import jakarta.persistence.criteria.*;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
-import no.fintlabs.opa.model.OrgUnitType;
+import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import org.springframework.data.jpa.domain.Specification;
-import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +13,8 @@ import java.util.Set;
 @Slf4j
 public class AppicationResourceSpesificationBuilder {
     private final String search;
-    private final List<String> scopedOrgUnitIds;
+    private final boolean hasAccessToAllAppResources;
+    private final Set<Long> restrictedApplicationResourceIds;
     private final List<String> filteredOrgUnitIds;
     private final String resourceType;
     private final List<String> userType;
@@ -25,15 +25,18 @@ public class AppicationResourceSpesificationBuilder {
 
     public AppicationResourceSpesificationBuilder(
             String search,
-            List<String> scopedOrgUnitIds,
+            boolean hasAccessAllToAppResources,
+            Set<Long> restrictedApplicationResourceIds,
             List<String> filteredOrgUnitIds,
             String resourceType,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
-            List<String> status) {
+            List<String> status
+    ) {
         this.search = search;
-        this.scopedOrgUnitIds = scopedOrgUnitIds;
+        this.hasAccessToAllAppResources = hasAccessAllToAppResources;
+        this.restrictedApplicationResourceIds = restrictedApplicationResourceIds;
         this.filteredOrgUnitIds = filteredOrgUnitIds;
         this.resourceType = resourceType;
         this.userType = userType;
@@ -52,9 +55,12 @@ public class AppicationResourceSpesificationBuilder {
             applicationResourceSpecification = Specification.where(null);
         }
 
-        if (scopedOrgUnitIds != null && !scopedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name())){
+        if (!hasAccessToAllAppResources){
             applicationResourceSpecification =
-                    applicationResourceSpecification.and(allAuthorizedOrgUnitIds(scopedOrgUnitIds).or(resourceAccessIsUnlimited()));
+                    //applicationResourceSpecification.and(resourceAccessIsUnlimited().or(allAuthorizedOrgUnitIds(scopedOrgUnitIds)));
+                    applicationResourceSpecification.and(resourceAccessIsUnlimited().
+                            or(restrictedResourceIsInAccessableRestrictedResources(restrictedApplicationResourceIds))
+                    );
         }
         if (filteredOrgUnitIds != null){
             applicationResourceSpecification =
@@ -84,6 +90,12 @@ public class AppicationResourceSpesificationBuilder {
         //applicationResourceSpecification = applicationResourceSpecification.and(isActive());
 
         return applicationResourceSpecification;
+    }
+
+    private Specification<ApplicationResource> restrictedResourceIsInAccessableRestrictedResources(Set<Long> restrictedApplicationResourceIds) {
+        return ((root, query, criteriaBuilder) ->
+                criteriaBuilder.in(root.get("Id")).value(restrictedApplicationResourceIds)
+        );
     }
 
     public static Specification<ApplicationResource> allAuthorizedOrgUnitIds(List<String> orgUnitIds) {
@@ -144,11 +156,7 @@ public class AppicationResourceSpesificationBuilder {
     }
 
     public Specification<ApplicationResource> resourceAccessIsUnlimited() {
-        Set<String > unlimitedLicenceEnforcementTypes = Set.of(
-                HandhevingstypeLabels.NOTSET.name(),
-                HandhevingstypeLabels.FREEALL.name(),
-                HandhevingstypeLabels.FREEEDU.name(),
-                HandhevingstypeLabels.FREESTUDENT.name());
+        Set<String > unlimitedLicenceEnforcementTypes = Handhevingstype.getUnRestrictedLicenceEnforcementTypes();
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.in(root.get("licenseEnforcement")).value(unlimitedLicenceEnforcementTypes);
     }

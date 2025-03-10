@@ -101,7 +101,7 @@ public class ResourceControllerTest  {
 
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
         given(applicationResourceService.findBySearchCriteria(
-                null, null,null, null, null, null,
+                null, null, null,null, null, null, null,
                 pageRequest))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
 

@@ -118,31 +118,31 @@ public class ResourceController {
 
     }
 
-    @GetMapping("/admin/v1")
-    public ResponseEntity<Map<String, Object>> getAllResourcesForAdmins(
-            @AuthenticationPrincipal Jwt jwt,
-            @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "orgunits", required = false) List<String> orgUnits,
-            @RequestParam(value = "resourceType", required = false) String resourceType,
-            @RequestParam(value = "usertype", required = false) List<String> userType,
-            @RequestParam(value = "accesstype", required = false) String accessType,
-            @RequestParam(value = "applicationcategory", required = false) List<String> applicationCategory,
-            @RequestParam(value = "status", required = false) List<String> status,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
-    ) {
-
-        return applicationResourceService.getAllApplicationResourcesForAdmins(
-                search,
-                orgUnits,
-                resourceType,
-                userType,
-                accessType,
-                applicationCategory,
-                status,
-                page,
-                size);
-    }
+//    @GetMapping("/admin/v1")
+//    public ResponseEntity<Map<String, Object>> getAllResourcesForAdmins(
+//            @AuthenticationPrincipal Jwt jwt,
+//            @RequestParam(value = "search", required = false) String search,
+//            @RequestParam(value = "orgunits", required = false) List<String> orgUnits,
+//            @RequestParam(value = "resourceType", required = false) String resourceType,
+//            @RequestParam(value = "usertype", required = false) List<String> userType,
+//            @RequestParam(value = "accesstype", required = false) String accessType,
+//            @RequestParam(value = "applicationcategory", required = false) List<String> applicationCategory,
+//            @RequestParam(value = "status", required = false) List<String> status,
+//            @RequestParam(value = "page", defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "${fint.kontroll.resource-catalog.pagesize:20}") int size
+//    ) {
+//
+//        return applicationResourceService.getAllApplicationResourcesForAdmins(
+//                search,
+//                orgUnits,
+//                resourceType,
+//                userType,
+//                accessType,
+//                applicationCategory,
+//                status,
+//                page,
+//                size);
+//    }
 
 
 

@@ -37,7 +37,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .resourceId("res2")
             .orgUnitId("orgUnitId2")
             .build();
-    List<ApplicationResourceLocation> resourceLocationsRes2 = List.of(res2_OrgUnitId1, res2_OrgUnitId2);
+    Set<ApplicationResourceLocation> resourceLocationsRes2 = Set.of(res2_OrgUnitId1, res2_OrgUnitId2);
 
 
     ApplicationResourceLocation res3_OrgUnitId1 = ApplicationResourceLocation.builder()
@@ -48,7 +48,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .resourceId("res3")
             .orgUnitId("orgUnitId2")
             .build();
-    List<ApplicationResourceLocation> resourceLocationsRes3 = List.of(res3_OrgUnitId1, res3_OrgUnitId2);
+    Set<ApplicationResourceLocation> resourceLocationsRes3 = Set.of(res3_OrgUnitId1, res3_OrgUnitId2);
 
     ApplicationResourceLocation res4_OrgUnitId1 = ApplicationResourceLocation.builder()
             .resourceId("res4")
@@ -59,7 +59,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .resourceId("res1")
             .licenseEnforcement("HARDSTOP")
             .validForRoles(List.of("Student"))
-            .validForOrgUnits(List.of(res1_orgUnitId1))
+            .validForOrgUnits(Set.of(res1_orgUnitId1))
             .build();
 
     ApplicationResource unrestrictedResourceForAll = ApplicationResource.builder()
@@ -80,7 +80,7 @@ class ApplicationResourceSpesificationBuilderIntegrationTest extends DatabaseInt
             .resourceId("res4")
             .licenseEnforcement("FLOATING")
             .validForRoles(List.of("Employee"))
-            .validForOrgUnits(List.of(res4_OrgUnitId1))
+            .validForOrgUnits(Set.of(res4_OrgUnitId1))
             .build();
 
     @BeforeEach

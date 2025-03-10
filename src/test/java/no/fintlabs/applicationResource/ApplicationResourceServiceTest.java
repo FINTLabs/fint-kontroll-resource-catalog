@@ -2,6 +2,7 @@ package no.fintlabs.applicationResource;
 
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.opa.OpaService;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.when;
 class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
     private ApplicationResourceRepository applicationResourceRepository;
+    private ApplicationResourceLocationRepository applicationResourceLocationRepository;
     @Mock
     private FintCache<Long, AzureGroup> azureGroupCache;
     @Mock
@@ -39,6 +42,7 @@ class ApplicationResourceServiceTest {
         authorizationUtil = mock(AuthorizationUtil.class);
         applicationResourceService = new ApplicationResourceService(
                 applicationResourceRepository,
+                applicationResourceLocationRepository,
                 azureGroupCache,
                 authorizationUtil,
                 responseFactory,
@@ -66,9 +70,8 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
@@ -112,9 +115,7 @@ class ApplicationResourceServiceTest {
                 .resourceLimit(200L)
                 .build();
 
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
@@ -155,9 +156,7 @@ class ApplicationResourceServiceTest {
                 .resourceLimit(200L)
                 .build();
 
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
@@ -193,9 +192,7 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
