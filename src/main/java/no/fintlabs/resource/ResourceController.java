@@ -96,14 +96,15 @@ public class ResourceController {
     ) {
         try {
             Page<ApplicationResource> allApplicationResources = applicationResourceService
-                    .findBySearchCriteria(
-                        search,
-                        orgUnits,
-                        resourceType,
-                        userType,
-                        accessType,
-                        applicationCategory,
-                        pageable
+                .findBySearchCriteria(
+                    FintJwtEndUserPrincipal.from(jwt),
+                    search,
+                    orgUnits,
+                    resourceType,
+                    userType,
+                    accessType,
+                    applicationCategory,
+                    pageable
             );
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
