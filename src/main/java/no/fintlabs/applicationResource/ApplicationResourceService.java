@@ -14,6 +14,7 @@ import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -312,8 +313,45 @@ public class ApplicationResourceService {
                     applicationCategory,
                     List.of("ACTIVE")
         );
-
         return applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
+    }
+
+    public Page<ApplicationResource> searchApplicationResources(
+            FintJwtEndUserPrincipal principal,
+            String searchString,
+            List<String> orgUnits,
+            String resourceType,
+            List<String> userType,
+            String accessType,
+            List<String> applicationCategory,
+            Pageable pageable
+    ) {
+        List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
+        log.info("Org units returned from scope: {}", orgUnitsInScope);
+
+        Set<Long> accessableRestrictedResourceIds = new HashSet<>();
+
+        if (!orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name())) {
+            Optional<Set<Long>> optionalestrictedResourcesForOrgUnitsInScope = getRestrictedResourcesForOrgUnitsInScope(orgUnitsInScope);
+
+            if (optionalestrictedResourcesForOrgUnitsInScope.isPresent()) {
+                accessableRestrictedResourceIds = optionalestrictedResourcesForOrgUnitsInScope.get();
+                log.info("Restricted resources accessable for {} found: {}", principal.getMail(), accessableRestrictedResourceIds);
+            }
+        }
+        boolean hasAccessAllToAppResources = orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name());
+
+        Specification<ApplicationResource> applicationResourceSpecification =
+                Specification.where(ApplicationResourceSpecification.hasResourceNameLike(searchString)
+                        .and(ApplicationResourceSpecification.resourceIsAccessable(hasAccessAllToAppResources,accessableRestrictedResourceIds))
+                        .and(ApplicationResourceSpecification.isInFilteredOrgUnits(orgUnits))
+                        .and(ApplicationResourceSpecification.userTypeLike(userType))
+                        .and(ApplicationResourceSpecification.accessTypeLike(accessType))
+                        .and(ApplicationResourceSpecification.applicationCategoryLike(applicationCategory))
+                        .and(ApplicationResourceSpecification.statuslike(List.of("ACTIVE")))
+                );
+
+        return applicationResourceRepository.findAll(applicationResourceSpecification, pageable);
     }
 
     public Optional<Set<Long>> getRestrictedResourcesForOrgUnitsInScope(List<String> orgUnitsInScope) {

@@ -96,7 +96,7 @@ public class ResourceController {
     ) {
         try {
             Page<ApplicationResource> allApplicationResources = applicationResourceService
-                .findBySearchCriteria(
+                .searchApplicationResources(
                     FintJwtEndUserPrincipal.from(jwt),
                     search,
                     orgUnits,
