@@ -1,0 +1,1 @@
+alter table application_resource_location ADD resource_name varchar(255);

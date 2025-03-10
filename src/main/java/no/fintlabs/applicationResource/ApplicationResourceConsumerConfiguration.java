@@ -1,10 +1,12 @@
 package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationService;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
 import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.resourceGroup.AzureGroup;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,6 +45,27 @@ public class ApplicationResourceConsumerConfiguration {
                 -> applicationResourceService.save(consumerRecord.value()))
                 .createContainer(entityTopicNameParameters);
     }
+
+    @Bean
+    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
+    public ConcurrentMessageListenerContainer<String,ApplicationResourceLocation> applicationResourceLocationConsumer(
+            ApplicationResourceLocationService applicationResourceLocationService,
+            EntityConsumerFactoryService entityConsumerFactoryService
+    ){
+        EntityTopicNameParameters entityTopicNameParameters = EntityTopicNameParameters
+                .builder()
+                .resource("applicationresource-location")
+                .build();
+
+        log.info("Source is FINT. Creating application resource location consumer for {}", entityTopicNameParameters);
+
+        return entityConsumerFactoryService.createFactory(
+                        ApplicationResourceLocation.class,
+                        (ConsumerRecord<String,ApplicationResourceLocation> consumerRecord)
+                                -> applicationResourceLocationService.save(consumerRecord.value()))
+                .createContainer(entityTopicNameParameters);
+    }
+
     @Bean
     @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     ConcurrentMessageListenerContainer<String, ApplicationResourceUserType> userTypeConsumer(
@@ -60,6 +83,7 @@ public class ApplicationResourceConsumerConfiguration {
                 -> brukertypeService.save(consumerRecord.value()))
                 .createContainer(entityTopicNameParameters);
     }
+
     @Bean
     public ConcurrentMessageListenerContainer<String, AzureGroup> azureGroupConsumer(
             FintCache<Long, AzureGroup> azureGroupCache,
