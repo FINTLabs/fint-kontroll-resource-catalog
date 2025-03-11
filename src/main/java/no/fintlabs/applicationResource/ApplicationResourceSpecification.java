@@ -11,12 +11,12 @@ import java.util.Set;
 
 public class ApplicationResourceSpecification {
 
-    public static Specification<ApplicationResource> hasResourceNameLike(String search) {
+    public static Specification<ApplicationResource> hasNameLike(String search) {
         return (root, query, criteriaBuilder) ->
                 search == null ? criteriaBuilder.conjunction() : criteriaBuilder.like(criteriaBuilder.lower(root.get("resourceName")),"%" + search.toLowerCase() + "%" );
     }
 
-    public static Specification<ApplicationResource> resourceIsAccessable(boolean hasAccessAllToAppResources, Set<Long> accessableRestrictedResourceIds) {
+    public static Specification<ApplicationResource> isAccessable(boolean hasAccessAllToAppResources, Set<Long> accessableRestrictedResourceIds) {
 
         if (hasAccessAllToAppResources) {
             return (root, query, criteriaBuilder) ->criteriaBuilder.conjunction();

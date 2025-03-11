@@ -15,7 +15,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -342,8 +341,8 @@ public class ApplicationResourceService {
         boolean hasAccessAllToAppResources = orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name());
 
         Specification<ApplicationResource> applicationResourceSpecification =
-                Specification.where(ApplicationResourceSpecification.hasResourceNameLike(searchString)
-                        .and(ApplicationResourceSpecification.resourceIsAccessable(hasAccessAllToAppResources,accessableRestrictedResourceIds))
+                Specification.where(ApplicationResourceSpecification.hasNameLike(searchString)
+                        .and(ApplicationResourceSpecification.isAccessable(hasAccessAllToAppResources,accessableRestrictedResourceIds))
                         .and(ApplicationResourceSpecification.isInFilteredOrgUnits(orgUnits))
                         .and(ApplicationResourceSpecification.userTypeLike(userType))
                         .and(ApplicationResourceSpecification.accessTypeLike(accessType))
