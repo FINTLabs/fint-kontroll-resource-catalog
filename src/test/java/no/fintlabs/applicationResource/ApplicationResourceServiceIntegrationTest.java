@@ -25,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -53,10 +54,10 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     private AuthorizationUtil authorizationUtil;
     @MockBean
     private OpaService opaService;
-    
+
     private final String varfk = "varfk";
     private final String kompavd = "kompavd";
-    
+
     private final String zip = "zip";
     private final String kabal = "kabal";
     private final String adobek12 = "adobek12";
@@ -243,13 +244,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 .resourceId(m365)
                 .identityProviderGroupObjectId(idpGroupObjectId)
                 .identityProviderGroupName("app-varfk-m365-kon")
-                .validForOrgUnits(Set.of(m365_varfk))
-                .build();
-
-        ApplicationResource appResUpdated  = ApplicationResource.builder()
-                .resourceId(m365)
-                .resourceName("Microsoft 365 Student")
-                .validForOrgUnits(Set.of(m365_varfk))
+                .validForOrgUnits(new HashSet<>(List.of(m365_varfk)))  // Convert to mutable HashSet
                 .build();
 
 //        applicationResourceService.save(appResNew);
@@ -258,6 +253,12 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 //        //ApplicationResource savedAppRes1 = applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(m365).get();
         ApplicationResource savedAppRes1 = applicationResourceRepository.save(appResNew);
         given(azureGroupCache.getOptional(savedAppRes1.getId())).willReturn(Optional.empty());
+
+        ApplicationResource appResUpdated  = ApplicationResource.builder()
+                .resourceId(m365)
+                .resourceName("Microsoft 365 Student")
+                .validForOrgUnits(new HashSet<>(savedAppRes1.getValidForOrgUnits())) // Ensure mutability
+                .build();
 
         applicationResourceService.save(appResUpdated);
         ApplicationResource savedAppResUpdated = applicationResourceRepository.findById(savedAppRes1.getId()).get();
