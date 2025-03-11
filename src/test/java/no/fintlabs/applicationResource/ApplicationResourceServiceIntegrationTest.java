@@ -62,12 +62,15 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     private final String kabal = "kabal";
     private final String adobek12 = "adobek12";
     private final String m365 = "m365";
+    private final String adobek12old = "adobek12old";
 
     private final String student = "Student";
     private final String employee = "Employee";
     private final String freeAll = "FREEALL";
     private final String freeStudent = "FREESTUDENT";
     private final String hardStop = "HARDSTOP";
+
+    private final List<String> statusListActive = List.of("ACTIVE");
 
     FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
     Sort sort;
@@ -102,6 +105,14 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .status("ACTIVE")
             .build();
 
+    ApplicationResource inactiveResource = ApplicationResource.builder()
+            .resourceId(adobek12old)
+            .resourceName("Adobe Creative Cloud Old")
+            .licenseEnforcement(hardStop)
+            .validForRoles(List.of(student))
+            .status("INACTIVE")
+            .build();
+
     ApplicationResource unrestrictedResourceForAllKabal = ApplicationResource.builder()
             .resourceId(kabal)
             .resourceName("Microsoft Kabal")
@@ -131,11 +142,13 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @BeforeEach
     public void setUp() {
         applicationResourceRepository.deleteAll();
+        applicationResourceRepository.save(inactiveResource);
 
         fintJwtEndUserPrincipal.setMail("test@novari.no");
         sort = Sort.by(Sort.Order.asc("resourceName"));
         pageable = PageRequest.of(0, 10, sort);
     }
+
     @Test
     public void searchApplicationResourcesListWithRestrictedScopeShouldReturnRestrictedResourceInScopeAndAllFreeResources() {
 
@@ -147,7 +160,6 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         applicationResourceRepository.save(unrestrictedResourceForAllZip);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
 
-        given(authorizationUtil.getAllAuthorizedOrgUnitIDs()).willReturn(List.of(kompavd));
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(kompavd));
 
         Page<ApplicationResource> applicationResourcesPage = applicationResourceService.searchApplicationResources(
@@ -158,6 +170,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 null,
+                statusListActive,
                 pageable);
 
         List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
@@ -171,6 +184,40 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                         applicationResourcesList.get(3).getResourceId())
                 );
     }
+
+    @Test
+    public void getAllApplicationResourcesForAdminsShouldReturnAllActiveAndInactiveResources() {
+
+        applicationResourceRepository.save(restrictedResource);
+        applicationResourceRepository.save(unrestrictedResourceForAllKabal);
+        applicationResourceRepository.save(unrestrictedResourceForAllZip);
+        applicationResourceRepository.save(unRestrictedResourceForStudents);
+
+        given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
+
+        Page<ApplicationResource> applicationResourcesPage = applicationResourceService.searchApplicationResources(
+                fintJwtEndUserPrincipal,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                pageable);
+
+        List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
+
+        assertEquals(5, applicationResourcesList.size());
+        assertEquals(Set.of(adobek12old, zip, kabal, adobek12, m365),
+                Set.of(
+                        applicationResourcesList.get(0).getResourceId(),
+                        applicationResourcesList.get(1).getResourceId(),
+                        applicationResourcesList.get(2).getResourceId(),
+                        applicationResourcesList.get(3).getResourceId(),
+                        applicationResourcesList.get(4).getResourceId())
+        );
+    }
     @Test
     public void searchApplicationResourcesWithRestrictedScopeAndFilteredOrgUnitShouldReturnResourceInScope() {
 
@@ -180,7 +227,6 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
 
-        given(authorizationUtil.getAllAuthorizedOrgUnitIDs()).willReturn(List.of(kompavd));
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(kompavd));
 
         Page<ApplicationResource> applicationResourcesPage = applicationResourceService.searchApplicationResources(
@@ -191,19 +237,11 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 null,
+                statusListActive,
                 pageable);
 
         List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
 
-//        List<ApplicationResourceDTOFrontendList> resourceDTOFrontendList =
-//                applicationResourceService.getApplicationResourceDTOFrontendList(
-//                        null,
-//                        List.of(kompavd),
-//                        null,
-//                        null,
-//                        null,
-//                        null,
-//                        null);
         assertEquals(1, applicationResourcesList.size());
         assertEquals(Set.of(adobek12),
                 Set.of(applicationResourcesList.getFirst().getResourceId())
@@ -220,7 +258,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
 
-        Page<ApplicationResource> findBySearchCriteria = applicationResourceService.findBySearchCriteria(
+        Page<ApplicationResource> findBySearchCriteria = applicationResourceService.searchApplicationResources(
                 fintJwtEndUserPrincipal,
                 null,
                 null,
@@ -228,6 +266,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 null,
+                statusListActive,
                 pageRequest);
 
         assertEquals(3, findBySearchCriteria.getTotalElements());
@@ -247,11 +286,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 .validForOrgUnits(new HashSet<>(List.of(m365_varfk)))  // Convert to mutable HashSet
                 .build();
 
-//        applicationResourceService.save(appResNew);
-//        applicationResourceRepository.flush();
-//
-//        //ApplicationResource savedAppRes1 = applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(m365).get();
         ApplicationResource savedAppRes1 = applicationResourceRepository.save(appResNew);
+
         given(azureGroupCache.getOptional(savedAppRes1.getId())).willReturn(Optional.empty());
 
         ApplicationResource appResUpdated  = ApplicationResource.builder()

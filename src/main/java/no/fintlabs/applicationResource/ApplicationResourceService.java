@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -159,32 +160,6 @@ public class ApplicationResourceService {
         return unlimitedLicenceEnforcementTypes.contains(licenseEnforcementType);
     }
 
-//    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
-//            String search,
-//            List<String> filteredOrgUnitIds,
-//            String type,
-//            List<String> userType,
-//            String accessType,
-//            List<String> applicationCategory,
-//            List<String> status
-//    ) {
-//        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
-//        List<String> scopedOrgUnitIds =
-//                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
-//
-//        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-//                search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
-//        );
-//
-//        List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
-//
-//        return applicationResourseList
-//                .stream()
-//                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
-//                .toList();
-//    }
-
-
     public Optional<ApplicationResource> getApplicationResourceFromId(Long applicationResourceId) {
 
         return applicationResourceRepository.findById(applicationResourceId);
@@ -238,81 +213,32 @@ public class ApplicationResourceService {
         applicationResource.setStatus("DELETED");
         applicationResource.setStatusChanged(Date.from(Instant.now()));
         applicationResourceRepository.saveAndFlush(applicationResource);
-
-
     }
 
-//    public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
-//            String search,
-//            List<String> orgunits,
-//            String resourceType,
-//            List<String> userType,
-//            String accessType,
-//            List<String> applicationCategory,
-//            List<String> status,
-//            int page,
-//            int size
-//    ) {
-//        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
-//        List<String> scopedOrgUnitIds =
-//                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
-//
-//
-//        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-//                search, scopedOrgUnitIds, orgunits, resourceType, userType, accessType, applicationCategory, status);
-//
-//        List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
-//
-//        List<ApplicationResourceDTOFrontendListForAdmin> applicationResourceDTOFrontendListForAdmins = applicationResourceList
-//                .stream()
-//                .map(ApplicationResource::toApplicationResourceDTOFrontendListForAdmin)
-//                .toList();
-//
-//        ResponseEntity<Map<String,Object>> responseEntity = responseFactory.createResponsAndPaging(applicationResourceDTOFrontendListForAdmins,page,size);
-//
-//
-//        return responseEntity;
-//    }
-
-    public Page<ApplicationResource> findBySearchCriteria(
-            FintJwtEndUserPrincipal principal,
-            String searchString,
-            List<String> orgUnits,
+    public Page<ApplicationResource> getAllApplicationResourcesForAdmins(
+            FintJwtEndUserPrincipal jwtEndUserPrincipal,
+            String search,
+            List<String> orgunits,
             String resourceType,
-            List<String> userType,
+            List<String> userTypes,
             String accessType,
-            List<String> applicationCategory,
+            List<String> applicationCategories,
+            List<String> statusList,
             Pageable pageable
     ) {
-        List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
-        log.info("Org units returned from scope: {}", orgUnitsInScope);
 
-        Set<Long> accessableRestrictedResourceIds = new HashSet<>();
-
-        if (!orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name())) {
-            Optional<Set<Long>> optionalestrictedResourcesForOrgUnitsInScope
-                    =getRestrictedResourcesForOrgUnitsInScope(orgUnitsInScope);
-
-            if (optionalestrictedResourcesForOrgUnitsInScope.isPresent()) {
-                accessableRestrictedResourceIds = optionalestrictedResourcesForOrgUnitsInScope.get();
-                log.info("Restricted resources accessable for {} found: {}", principal.getMail(), accessableRestrictedResourceIds);
-             }
-        }
-        boolean hasAccessAllToAppResources = orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name());
-
-        AppicationResourceSpesificationBuilder applicationResourceSpecification
-                = new AppicationResourceSpesificationBuilder(
-                    searchString,
-                    hasAccessAllToAppResources,
-                    accessableRestrictedResourceIds,
-                    orgUnits,
-                    resourceType,
-                    userType,
-                    accessType,
-                    applicationCategory,
-                    List.of("ACTIVE")
+        Page<ApplicationResource> applicationResourcePage = searchApplicationResources(
+                jwtEndUserPrincipal,
+                search,
+                orgunits,
+                resourceType,
+                userTypes,
+                accessType,
+                applicationCategories,
+                statusList,
+                pageable
         );
-        return applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
+        return applicationResourcePage;
     }
 
     public Page<ApplicationResource> searchApplicationResources(
@@ -323,6 +249,7 @@ public class ApplicationResourceService {
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
+            List<String> statusList,
             Pageable pageable
     ) {
         List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
@@ -347,7 +274,7 @@ public class ApplicationResourceService {
                         .and(ApplicationResourceSpecification.userTypeLike(userType))
                         .and(ApplicationResourceSpecification.accessTypeLike(accessType))
                         .and(ApplicationResourceSpecification.applicationCategoryLike(applicationCategory))
-                        .and(ApplicationResourceSpecification.statuslike(List.of("ACTIVE")))
+                        .and(ApplicationResourceSpecification.statuslike(statusList))
                 );
 
         return applicationResourceRepository.findAll(applicationResourceSpecification, pageable);
@@ -360,40 +287,4 @@ public class ApplicationResourceService {
                 .collect(Collectors.toSet())
         );
     }
-
-//    public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(
-//            String search,
-//            List<String> orgUnits,
-//            String resourceType,
-//            List<String> userType,
-//            String accessType,
-//            List<String> applicationCategory,
-//            int page,
-//            int size
-//    ) {
-//        //TODO finne rolle til bruker. Hvis bruker er tildeler, hente kun aktive ressurser. Ellers hente alle ressurser.
-//        // Da vil admin-endepunktene også kunne benytte getApplicationResourceDTOFrontendList
-//
-//        List<String> status = List.of("ACTIVE");
-//        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-//                this.getApplicationResourceDTOFrontendList(
-//                        search,
-//                        orgUnits,
-//                        resourceType,
-//                        userType,
-//                        accessType,
-//                        applicationCategory,
-//                        status
-//                );
-//
-//        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendListFiltered = applicationResourceDTOFrontendLists
-//                .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
-//                .toList();
-//
-//        ResponseEntity<Map<String,Object>> responseEntity = responseFactory.createResponsAndPaging(applicationResourceDTOFrontendListFiltered,page,size);
-//
-//        return responseEntity;
-//    }
-
-
 }

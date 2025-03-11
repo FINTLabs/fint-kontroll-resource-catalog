@@ -12,6 +12,7 @@ import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
+import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -67,6 +69,7 @@ public class ResourceControllerTest  {
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;
+    private FintJwtEndUserPrincipal principal;
 
     @Autowired
     private WebApplicationContext context;
@@ -78,6 +81,7 @@ public class ResourceControllerTest  {
         Jwt jwt = createMockJwtToken();
         createSecurityContext(jwt);
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+        principal = FintJwtEndUserPrincipal.from(jwt);
 
         resource1 = ApplicationResource.builder()
                 .resourceId("1")
@@ -97,12 +101,20 @@ public class ResourceControllerTest  {
     @Test
     public void getAllActiveResources_ShouldReturnTwoResources() throws Exception {
 
-        PageRequest pageRequest = PageRequest.of(0, 100, Sort.by("resourceName"));
+        Sort sort = Sort.by(Sort.Order.asc("resourceName"));
+        Pageable pageable = PageRequest.of(0, 100, sort);
 
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
-        given(applicationResourceService.findBySearchCriteria(
-                null, null, null,null, null, null, null,
-                pageRequest))
+        given(applicationResourceService.searchApplicationResources(
+                principal,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of("ACTIVE"),
+                pageable))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
 
         MvcResult result = mockMvc.perform(get("/api/resources/v1"))
