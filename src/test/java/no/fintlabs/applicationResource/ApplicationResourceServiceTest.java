@@ -91,7 +91,6 @@ class ApplicationResourceServiceTest {
         verify(applicationResourceRepository, times(1)).findById(1L);
     }
 
-
     @Test
     public void getApplicationResourceByIdShouldReturnEmptyDTOIfNOTAuthorized(){
         ApplicationResource appRes1 = new ApplicationResource();
