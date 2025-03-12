@@ -29,7 +29,10 @@ logging:
   level:
     root: INFO
     org.apache.kafka: WARN
-
+    net.sf.ehcache: WARN
+    no.fintlabs.cache.ehcache: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
 management:
   endpoints:
     web:
