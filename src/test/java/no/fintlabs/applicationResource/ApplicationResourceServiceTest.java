@@ -2,9 +2,11 @@ package no.fintlabs.applicationResource;
 
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.authorization.ForbiddenException;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.resourceGroup.AzureGroup;
@@ -17,6 +19,7 @@ import org.springframework.security.web.authentication.www.NonceExpiredException
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -29,8 +32,11 @@ import static org.mockito.Mockito.when;
 class ApplicationResourceServiceTest {
     private ApplicationResourceService applicationResourceService;
     private ApplicationResourceRepository applicationResourceRepository;
+    private ApplicationResourceLocationRepository applicationResourceLocationRepository;
     @Mock
     private FintCache<Long, AzureGroup> azureGroupCache;
+    @Mock
+    private OpaService opaService;
     private AuthorizationUtil authorizationUtil;
     private ResponseFactory responseFactory;
 
@@ -40,9 +46,11 @@ class ApplicationResourceServiceTest {
         authorizationUtil = mock(AuthorizationUtil.class);
         applicationResourceService = new ApplicationResourceService(
                 applicationResourceRepository,
+                applicationResourceLocationRepository,
                 azureGroupCache,
                 authorizationUtil,
-                responseFactory)
+                responseFactory,
+                opaService)
         ;
     }
 
@@ -66,9 +74,8 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
@@ -87,7 +94,6 @@ class ApplicationResourceServiceTest {
 
         verify(applicationResourceRepository, times(1)).findById(1L);
     }
-
 
     @Test
     public void getApplicationResourceByIdShouldThrowNotAuthorizesExceptionIfNOTAuthorized(){
@@ -112,9 +118,7 @@ class ApplicationResourceServiceTest {
                 .resourceLimit(200L)
                 .build();
 
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
@@ -149,9 +153,7 @@ class ApplicationResourceServiceTest {
                 .resourceLimit(200L)
                 .build();
 
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
-        locationsAppRes1.add(applicationResourceLocation1);
-        locationsAppRes1.add(applicationResourceLocation2);
+        Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
         FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
@@ -189,7 +191,6 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
-
         List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
         locationsAppRes1.add(applicationResourceLocation1);
         locationsAppRes1.add(applicationResourceLocation2);

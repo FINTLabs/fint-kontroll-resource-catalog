@@ -1,48 +1,60 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: fintlabs-no
+namespace: fridiks-no
 resources:
   - ../../../base
 commonLabels:
   app.kubernetes.io/name: fint-kontroll-resource-catalog
-  app.kubernetes.io/instance: fint-kontroll-resource-catalog_fintlabs_no
+  app.kubernetes.io/instance: fint-kontroll-resource-catalog_fridiks_no
   app.kubernetes.io/version: latest
   app.kubernetes.io/component: backend
   app.kubernetes.io/part-of: fint-kontroll
   fintlabs.no/team: bas
-  fintlabs.no/org-id: fintlabs.no
+  fintlabs.no/org-id: fridiks.no
 patches:
   - patch: |-
       - op: replace
         path: "/spec/orgId"
-        value: "fintlabs.no"
+        value: "fridiks.no"
       - op: replace
         path: "/spec/env/0/value"
         value: "https://role-catalog.vigoiks.no/vigo/kontroll/user"
       - op: replace
         path: "/spec/env/1/value"
-        value: "fintlabs.no"
+        value: "fridiks.no"
       - op: replace
         path: "/spec/env/2/value"
-        value: "fint-kontroll-resource-catalog"
+        value: "fridiks-no-fint-kontroll-resource-catalog"
       - op: replace
         path: "/spec/env/3/value"
         value: "-XX:+ExitOnOutOfMemoryError -Xmx1950m"
       - op: replace
         path: "/spec/env/4/value"
-        value: "gui"
+        value: "fint"
       - op: replace
         path: "/spec/kafka/acls/0/topic"
-        value: "fintlabs-no.kontroll.*"
+        value: "fridiks-no.kontroll.*"
       - op: replace
         path: "/spec/kafka/acls/1/topic"
-        value: "fintlabs-no.kontroll.*"
+        value: "fridiks-no.kontroll.*"
       - op: replace
         path: "/spec/ingress/basePath"
-        value: "/beta/fintlabs-no/api/resources"
+        value: "/fridiks-no/api/resources"
       - op: replace
         path: "/spec/url/basePath"
-        value: "/beta/fintlabs-no"
+        value: "/fridiks-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "/fridiks-no/actuator/prometheus"
+      - op: add
+        path: "/spec/resources"
+        value:
+          limits:
+            cpu: "1000m"
+            memory: "2000Mi"
+          requests:
+            cpu: "500m"
+            memory: "500Mi"
     target:
       kind: Application
       name: fint-kontroll-resource-catalog

@@ -21,12 +21,15 @@ on:
           - ofk-no
           - bfk-no
           - afk-no
+          - fridiks-no
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   CLUSTER_NAME: ${{ inputs.cluster }}
   ORG: ${{ inputs.org }}
+  JAVA-VERSION: "21"
+  JAVA-DISTRIBUTION: "zulu"
 
 jobs:
   cd:
@@ -69,6 +72,15 @@ jobs:
           echo "OrgId: $ORG"
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA-DISTRIBUTION }}
+          java-version: ${{ env.JAVA-VERSION }}
+          cache: 'gradle'
+
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3.3.0

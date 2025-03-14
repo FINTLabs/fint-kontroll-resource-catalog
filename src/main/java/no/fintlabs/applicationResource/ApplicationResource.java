@@ -1,5 +1,7 @@
 package no.fintlabs.applicationResource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -7,15 +9,10 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.resource.Resource;
 
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @SuperBuilder
 @Entity
 @Table(name="application_resource")
@@ -34,19 +31,21 @@ public class ApplicationResource extends Resource {
     private Long unitCost;
     private String status;
     private Date statusChanged;
-    private String createdBy;
-    private Date dateCreated;
     private boolean needApproval;
 
+    public ApplicationResource() {
+    }
+
+    @ToString.Exclude
+    @JsonManagedReference(value = "resource-location")
+    @JsonIgnore
+    //mappedBy ="applicationResource",
+    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    private Set<ApplicationResourceLocation> validForOrgUnits;
 
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
     private List<String> validForRoles= new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "id")
-    @CollectionTable(name="application_resource_valid_for_org_units")
-    private List<ApplicationResourceLocation> validForOrgUnits = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "application_resource_application_category", joinColumns = @JoinColumn(name = "id"))
@@ -102,8 +101,6 @@ public class ApplicationResource extends Resource {
                 && Objects.equals(validForRoles, that.validForRoles)
                 && Objects.equals(validForOrgUnits, that.validForOrgUnits)
                 && Objects.equals(applicationCategory, that.applicationCategory)
-                && Objects.equals(createdBy, that.createdBy)
-                && Objects.equals(dateCreated, that.dateCreated)
                 && Objects.equals(needApproval, that.needApproval);
     }
 
@@ -125,8 +122,6 @@ public class ApplicationResource extends Resource {
                 validForRoles,
                 validForOrgUnits,
                 applicationCategory,
-                createdBy,
-                dateCreated,
                 needApproval);
     }
 }
