@@ -31,4 +31,30 @@ public class ApplicationResourceMapper {
                 applicationResource.getApplicationCategory()
         );
     }
+    public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
+        return Map.of(
+                "resources",
+                applicationResourcePage.getContent()
+                        .stream()
+                        .map(ApplicationResourceMapper::toApplicationResourceAdminDto)
+                        .collect(Collectors.toList()),
+                "currentPage", applicationResourcePage.getNumber(),
+                "totalPages", applicationResourcePage.getTotalPages(),
+                "size", applicationResourcePage.getSize(),
+                "totalItems", applicationResourcePage.getTotalElements()
+        );
+    }
+    public static ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(ApplicationResource applicationResource) {
+        return new ApplicationResourceDTOFrontendListForAdmin (
+                applicationResource.getId(),
+                applicationResource.getResourceId(),
+                applicationResource.getResourceName(),
+                applicationResource.getResourceType(),
+                applicationResource.getResourceLimit(),
+                applicationResource.getStatus(),
+                applicationResource.getIdentityProviderGroupObjectId(),
+                applicationResource.isNeedApproval(),
+                applicationResource.getApplicationCategory()
+        );
+    }
 }

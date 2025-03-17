@@ -37,6 +37,5 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
 
 
 
-
-
+    Optional<ApplicationResource> getApplicationResourceByResourceId(String resourceId);
 }

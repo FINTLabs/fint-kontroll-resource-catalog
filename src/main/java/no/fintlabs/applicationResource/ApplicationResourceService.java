@@ -3,6 +3,7 @@ package no.fintlabs.applicationResource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.opa.OpaService;
@@ -13,6 +14,7 @@ import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +22,10 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
+import static org.hibernate.internal.util.collections.CollectionHelper.isEmpty;
 
 
 @Slf4j
@@ -29,24 +33,33 @@ import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
 public class ApplicationResourceService {
 
     private final ApplicationResourceRepository applicationResourceRepository;
+    private final ApplicationResourceLocationRepository applicationResourceLocationRepository;
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
     private final ResponseFactory responseFactory;
     private final OpaService opaService;
+    //private final ApplicationResourceLocationService applicationResourceLocationService;
 
-    public ApplicationResourceService(ApplicationResourceRepository applicationResourceRepository, FintCache<Long, AzureGroup> azureGroupCache,
-                                      AuthorizationUtil authorizationUtil,
-                                      ResponseFactory responseFactory, OpaService opaService) {
+    public ApplicationResourceService(
+        ApplicationResourceRepository applicationResourceRepository,
+        ApplicationResourceLocationRepository applicationResourceLocationRepository,
+        FintCache<Long, AzureGroup> azureGroupCache,
+        AuthorizationUtil authorizationUtil,
+        ResponseFactory responseFactory,
+        OpaService opaService
+    ) {
         this.applicationResourceRepository = applicationResourceRepository;
+        this.applicationResourceLocationRepository = applicationResourceLocationRepository;
         this.azureGroupCache = azureGroupCache;
         this.authorizationUtil = authorizationUtil;
         this.responseFactory = responseFactory;
         this.opaService = opaService;
+        //this.applicationResourceLocationService = applicationResourceLocationService;
     }
     public void save(ApplicationResource applicationResource) {
         log.info("Trying to save application resource {} with resourceId {}", applicationResource.getResourceName(), applicationResource.getResourceId());
-        Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
+
+        Optional<ApplicationResource> returnedApplicationResource = getApplicationResource(applicationResource);
 
         if (returnedApplicationResource.isPresent()) {
             log.info("Application resource with resourceId {} already exists. Updating existing resource", applicationResource.getResourceId());
@@ -54,11 +67,21 @@ public class ApplicationResourceService {
             return;
         }
         log.info("Application resource with resourceId {} does not exist. Saving new resource", applicationResource.getResourceId());
-        onSaveNewApplicationResource(applicationResource);
+        ApplicationResource newApplicationResource = onSaveNewApplicationResource(applicationResource);
     }
 
-    private void onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        applicationResourceRepository.save(applicationResource);
+    public Optional<ApplicationResource> getApplicationResourceByResourceId(String resourceId) {
+        return applicationResourceRepository.getApplicationResourceByResourceId(resourceId);
+    }
+
+    private Optional<ApplicationResource> getApplicationResource(ApplicationResource applicationResource) {
+        Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
+        return returnedApplicationResource;
+    }
+
+    private ApplicationResource onSaveNewApplicationResource(ApplicationResource applicationResource) {
+        return applicationResourceRepository.save(applicationResource);
     }
 
     private void onSaveExistingApplicationResource(ApplicationResource applicationResource) {
@@ -136,33 +159,6 @@ public class ApplicationResourceService {
 
         return unlimitedLicenceEnforcementTypes.contains(licenseEnforcementType);
     }
-    //validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
-
-    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
-            String search,
-            List<String> filteredOrgUnitIds,
-            String type,
-            List<String> userType,
-            String accessType,
-            List<String> applicationCategory,
-            List<String> status
-    ) {
-        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
-        List<String> scopedOrgUnitIds =
-                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
-
-        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
-        );
-
-        List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
-
-        return applicationResourseList
-                .stream()
-                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
-                .toList();
-    }
-
 
     public Optional<ApplicationResource> getApplicationResourceFromId(Long applicationResourceId) {
 
@@ -217,100 +213,78 @@ public class ApplicationResourceService {
         applicationResource.setStatus("DELETED");
         applicationResource.setStatusChanged(Date.from(Instant.now()));
         applicationResourceRepository.saveAndFlush(applicationResource);
-
-
     }
 
-    public ResponseEntity<Map<String, Object>> getAllApplicationResourcesForAdmins(
+    public Page<ApplicationResource> getAllApplicationResourcesForAdmins(
+            FintJwtEndUserPrincipal jwtEndUserPrincipal,
             String search,
             List<String> orgunits,
             String resourceType,
-            List<String> userType,
+            List<String> userTypes,
             String accessType,
-            List<String> applicationCategory,
-            List<String> status,
-            int page,
-            int size
+            List<String> applicationCategories,
+            List<String> statusList,
+            Pageable pageable
     ) {
-        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
-        List<String> scopedOrgUnitIds =
-                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
 
-
-        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, scopedOrgUnitIds, orgunits, resourceType, userType, accessType, applicationCategory, status);
-
-        List<ApplicationResource> applicationResourceList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
-
-        List<ApplicationResourceDTOFrontendListForAdmin> applicationResourceDTOFrontendListForAdmins = applicationResourceList
-                .stream()
-                .map(ApplicationResource::toApplicationResourceDTOFrontendListForAdmin)
-                .toList();
-
-        ResponseEntity<Map<String,Object>> responseEntity = responseFactory.createResponsAndPaging(applicationResourceDTOFrontendListForAdmins,page,size);
-
-
-        return responseEntity;
+        Page<ApplicationResource> applicationResourcePage = searchApplicationResources(
+                jwtEndUserPrincipal,
+                search,
+                orgunits,
+                resourceType,
+                userTypes,
+                accessType,
+                applicationCategories,
+                statusList,
+                pageable
+        );
+        return applicationResourcePage;
     }
 
-    public Page<ApplicationResource> findBySearchCriteria(
+    public Page<ApplicationResource> searchApplicationResources(
+            FintJwtEndUserPrincipal principal,
             String searchString,
             List<String> orgUnits,
             String resourceType,
             List<String> userType,
             String accessType,
             List<String> applicationCategory,
+            List<String> statusList,
             Pageable pageable
     ) {
         List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
         log.info("Org units returned from scope: {}", orgUnitsInScope);
 
-        AppicationResourceSpesificationBuilder applicationResourceSpecification
-                = new AppicationResourceSpesificationBuilder(
-                    searchString,
-                    orgUnitsInScope,
-                    orgUnits,
-                    resourceType,
-                    userType,
-                    accessType,
-                    applicationCategory,
-                    List.of("ACTIVE")
-        );
+        Set<Long> accessableRestrictedResourceIds = new HashSet<>();
 
-        return applicationResourceRepository.findAll(applicationResourceSpecification.build(), pageable);
-    }
+        if (!orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name())) {
+            Optional<Set<Long>> optionalestrictedResourcesForOrgUnitsInScope = getRestrictedResourcesForOrgUnitsInScope(orgUnitsInScope);
 
-    public ResponseEntity<Map<String, Object>> getAllActiveAndValidApplicationResources(
-            String search,
-            List<String> orgUnits,
-            String resourceType,
-            List<String> userType,
-            String accessType,
-            List<String> applicationCategory,
-            int page,
-            int size
-    ) {
-        //TODO finne rolle til bruker. Hvis bruker er tildeler, hente kun aktive ressurser. Ellers hente alle ressurser.
-        // Da vil admin-endepunktene også kunne benytte getApplicationResourceDTOFrontendList
+            if (optionalestrictedResourcesForOrgUnitsInScope.isPresent()) {
+                accessableRestrictedResourceIds = optionalestrictedResourcesForOrgUnitsInScope.get();
+                log.info("Restricted resources accessable for {} found: {}", principal.getMail(), accessableRestrictedResourceIds);
+            }
+        }
+        boolean hasAccessAllToAppResources = orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name());
 
-        List<String> status = List.of("ACTIVE");
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendLists =
-                this.getApplicationResourceDTOFrontendList(
-                        search,
-                        orgUnits,
-                        resourceType,
-                        userType,
-                        accessType,
-                        applicationCategory,
-                        status
+        Specification<ApplicationResource> applicationResourceSpecification =
+                Specification.where(ApplicationResourceSpecification.hasNameLike(searchString)
+                        .and(ApplicationResourceSpecification.isAccessable(hasAccessAllToAppResources,accessableRestrictedResourceIds))
+                        .and(ApplicationResourceSpecification.isInFilteredOrgUnits(orgUnits))
+                        .and(ApplicationResourceSpecification.userTypeLike(userType))
+                        .and(ApplicationResourceSpecification.accessTypeLike(accessType))
+                        .and(ApplicationResourceSpecification.applicationCategoryLike(applicationCategory))
+                        .and(ApplicationResourceSpecification.statuslike(statusList))
                 );
 
-        List<ApplicationResourceDTOFrontendList> applicationResourceDTOFrontendListFiltered = applicationResourceDTOFrontendLists
-                .stream().filter(ent -> ent.getIdentityProviderGroupObjectId()!=null)
-                .toList();
+        return applicationResourceRepository.findAll(applicationResourceSpecification, pageable);
+    }
 
-        ResponseEntity<Map<String,Object>> responseEntity = responseFactory.createResponsAndPaging(applicationResourceDTOFrontendListFiltered,page,size);
-
-        return responseEntity;
+    public Optional<Set<Long>> getRestrictedResourcesForOrgUnitsInScope(List<String> orgUnitsInScope) {
+        return Optional.of(applicationResourceLocationRepository.getDistinctByOrOrgUnitIdIsIn(orgUnitsInScope)
+                .stream()
+                .map(ApplicationResourceLocation::getResourceRef)
+                .collect(Collectors.toSet())
+        );
     }
 }

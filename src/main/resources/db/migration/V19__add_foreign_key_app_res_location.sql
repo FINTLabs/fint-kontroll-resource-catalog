@@ -1,0 +1,2 @@
+alter table application_resource_location add constraint fk_resource_ref foreign key (resource_ref) references application_resource;
+drop table application_resource_valid_for_org_units;
