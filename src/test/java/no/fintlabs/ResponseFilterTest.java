@@ -1,14 +1,15 @@
 package no.fintlabs;
 
-import io.micrometer.tracing.Span;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
-import io.micrometer.tracing.test.simple.SimpleSpan;
-import jakarta.servlet.*;
-import jakarta.servlet.http.Cookie;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import no.fintlabs.applicationResource.*;
+import no.fintlabs.applicationResource.AccessTypeService;
+import no.fintlabs.applicationResource.ApplicationCategoryService;
+import no.fintlabs.applicationResource.ApplicationResourceDTOFrontendDetail;
+import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.resource.ResourceController;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -34,42 +36,41 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.github.tomakehurst.wiremock.http.Response.response;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureObservability
 @WebMvcTest(ResourceController.class)
-@Import({ResponseFilter.class})
 @ExtendWith({MockitoExtension.class})
 public class ResponseFilterTest {
-
-    @Autowired
     private MockMvc mockMvc;
 
-
-    @Autowired
-    private ResponseFilter responseFilter;
     @MockBean
     private GlobalExceptionHandler globalExceptionHandler;
+
     @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
     private Tracer tracer;
     @Mock
     private TraceContext.Builder traceContextBuilderMock;
+
     @MockBean
     private ApplicationResourceService applicationResourceServiceMock;
+
     @MockBean
     private ApplicationCategoryService applicationCategoryService;
+
     @MockBean
     private AccessTypeService accessTypeService;
+
     @MockBean
     private ServiceConfiguration serviceConfiguration;
 
@@ -83,8 +84,9 @@ public class ResponseFilterTest {
     public void setup() throws ServletException {
         Jwt jwt = createMockJwtToken();
         createSecurityContext(jwt);
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context).build();
-        this.mockMvc = MockMvcBuilders.standaloneSetup(new ResourceController(applicationResourceServiceMock, applicationCategoryService, accessTypeService, serviceConfiguration)).build();
+        ResponseFilter responseFilter = new ResponseFilter(tracer);
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
+                .addFilter(responseFilter).build();
     }
 
     @Test
@@ -101,8 +103,6 @@ public class ResponseFilterTest {
         when(applicationResourceServiceMock.getApplicationResourceDTOFrontendDetailById(principal, 1L))
                 .thenReturn(applicationResource);
 
-        ResponseFilter responseFilter = new ResponseFilter(tracer);
-
         String traceId = "123e4567-e89b-12d3-a456-426614174000";
 
         tracer.traceContextBuilder().traceId(traceId).spanId("mockSpanId").build();
@@ -111,7 +111,8 @@ public class ResponseFilterTest {
         mockMvc.perform(get("/api/resources/1"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(TRACE_ID_HEADER_NAME, traceId));
-            }
+    }
+
     @Test
     public void testDoFilter() throws IOException, ServletException {
         String traceId = "123e4567-e89b-12d3-a456-426614174000";
@@ -134,7 +135,8 @@ public class ResponseFilterTest {
         SecurityContextHolderAwareRequestFilter authInjector = new SecurityContextHolderAwareRequestFilter();
         authInjector.afterPropertiesSet();
 
-}
+    }
+
     private UsernamePasswordAuthenticationToken createJwtAuthentication(Jwt jwt) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
