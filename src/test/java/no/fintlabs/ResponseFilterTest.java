@@ -133,8 +133,8 @@ public class ResponseFilterTest {
         SecurityContextHolder.getContext().setAuthentication(createJwtAuthentication(jwt));
         SecurityContextHolderAwareRequestFilter authInjector = new SecurityContextHolderAwareRequestFilter();
         authInjector.afterPropertiesSet();
-    }
 
+}
     private UsernamePasswordAuthenticationToken createJwtAuthentication(Jwt jwt) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));

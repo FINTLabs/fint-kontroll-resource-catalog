@@ -46,7 +46,6 @@ public class ResourceController {
         this.serviceConfiguration = serviceConfiguration;
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
         log.info("Fetching application resource by id: {}", id);
@@ -92,7 +91,6 @@ public class ResourceController {
             @ParameterObject @PageableDefault(size = 100) Pageable pageable
 
     ) {
-        try {
             Page<ApplicationResource> allApplicationResources = applicationResourceService
                 .searchApplicationResources(
                     FintJwtEndUserPrincipal.from(jwt),
@@ -105,15 +103,7 @@ public class ResourceController {
                     List.of("ACTIVE"),
                     pageable
             );
-            if (allApplicationResources == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
-            }
             return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
-        }
-        catch (Exception e) {
-            log.error("Error fetching application resources", e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Something went wrong when fetching application resources");
-        }
     }
 
     @GetMapping("/admin/v1")

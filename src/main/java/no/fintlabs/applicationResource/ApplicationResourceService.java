@@ -16,7 +16,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -136,30 +135,30 @@ public class ApplicationResourceService {
         return modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);
     }
 
-    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
-            String search,
-            List<String> filteredOrgUnitIds,
-            String type,
-            List<String> userType,
-            String accessType,
-            List<String> applicationCategory,
-            List<String> status
-    ) {
-        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
-        List<String> scopedOrgUnitIds =
-                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
-
-        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
-                search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
-        );
-
-        List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
-
-        return applicationResourseList
-                .stream()
-                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
-                .toList();
-    }
+//    public List<ApplicationResourceDTOFrontendList> getApplicationResourceDTOFrontendList(
+//            String search,
+//            List<String> filteredOrgUnitIds,
+//            String type,
+//            List<String> userType,
+//            String accessType,
+//            List<String> applicationCategory,
+//            List<String> status
+//    ) {
+//        List<String> allAuthorizedOrgUnitIds = getAllAuthorizedOrgUnitIDs();
+//        List<String> scopedOrgUnitIds =
+//                allAuthorizedOrgUnitIds.contains(OrgUnitType.ALLORGUNITS.name()) ? null : allAuthorizedOrgUnitIds;
+//
+//        AppicationResourceSpesificationBuilder appicationResourceSpesification = new AppicationResourceSpesificationBuilder(
+//                search, scopedOrgUnitIds, filteredOrgUnitIds, type, userType, accessType, applicationCategory, status
+//        );
+//
+//        List<ApplicationResource> applicationResourseList = applicationResourceRepository.findAll(appicationResourceSpesification.build());
+//
+//        return applicationResourseList
+//                .stream()
+//                .map(ApplicationResource::toApplicationResourceDTOFrontendList)
+//                .toList();
+//    }
 
 
     private boolean isLicenseEnforcementIsUnRestricted(String licenseEnforcementType) {
@@ -212,10 +211,10 @@ public class ApplicationResourceService {
     public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) {
         Optional<ApplicationResource> applicationResourceSaved = applicationResourceRepository.findById(applicationResource.getId());
 
-        if (applicationResourceSaved.isPresent()) {
-            applicationResource.setCreatedBy(applicationResourceSaved.get().getCreatedBy());
-            applicationResource.setDateCreated(applicationResourceSaved.get().getDateCreated());
-        }
+//        if (applicationResourceSaved.isPresent()) {
+//            applicationResource.setCreatedBy(applicationResourceSaved.get().getCreatedBy());
+//            applicationResource.setDateCreated(applicationResourceSaved.get().getDateCreated());
+//        }
 
         ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
 
@@ -295,7 +294,25 @@ public class ApplicationResourceService {
                         .and(ApplicationResourceSpecification.statuslike(statusList))
                 );
 
-        return applicationResourceRepository.findAll(applicationResourceSpecification, pageable);
+        Page<ApplicationResource> applicationResourcePage = applicationResourceRepository.findAll(applicationResourceSpecification, pageable);
+
+        if (applicationResourcePage.getTotalElements() == 0) {
+            log.info("Fetching application resources for user {} returned no resources", principal.getMail());
+            log.info("Request parameters: Access all resource {} - search string {} - accessable restricted resources {} " +
+                    "- org units in scope {} - filtered org units {} -usertype {} - accessType {} - application category {}"
+                    , hasAccessAllToAppResources
+                    , searchString
+                    , accessableRestrictedResourceIds
+                    , orgUnitsInScope
+                    , orgUnits
+                    , userType
+                    , accessType
+                    , applicationCategory
+                );
+
+            throw new NoApplicationResourcesFoundException();
+        }
+        return  applicationResourcePage;
     }
 
     public Optional<Set<Long>> getRestrictedResourcesForOrgUnitsInScope(List<String> orgUnitsInScope) {
@@ -309,9 +326,9 @@ public class ApplicationResourceService {
             List<String> validOrgUnits,
             ApplicationResource applicationResource
     ) {
-        List<ApplicationResourceLocation> applicationResourceLocations = applicationResource.getValidForOrgUnits();
         List<String> orgunitsResourceLocations = new ArrayList<>();
-        applicationResourceLocations.forEach(applicationResourceLocation -> {
+
+        applicationResource.getValidForOrgUnits().forEach(applicationResourceLocation -> {
             orgunitsResourceLocations.add(applicationResourceLocation.getOrgUnitId());
         });
         log.info("Resource locations found for resource {}: {}",
@@ -322,7 +339,7 @@ public class ApplicationResourceService {
             return false;
         }
         return !(orgunitsResourceLocations.stream()
-                .filter(orgUnit -> validOrgUnits.contains(orgUnit))
+                .filter(validOrgUnits::contains)
                 .toList()
                 .isEmpty());
 

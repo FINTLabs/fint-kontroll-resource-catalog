@@ -16,10 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.security.web.authentication.www.NonceExpiredException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -191,7 +188,7 @@ class ApplicationResourceServiceTest {
                 .orgUnitName("VGSTOR Storskog videregående skole")
                 .resourceLimit(200L)
                 .build();
-        List<ApplicationResourceLocation> locationsAppRes1 = new ArrayList<>();
+        Set<ApplicationResourceLocation> locationsAppRes1 = new HashSet<>();
         locationsAppRes1.add(applicationResourceLocation1);
         locationsAppRes1.add(applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
