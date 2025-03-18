@@ -28,7 +28,7 @@ public class ApplicationResourceLocationService {
         this.applicationResourceLocationRepository = applicationResourceLocationRepository;
     }
 
-    public void save(ApplicationResourceLocation applicationResourceLocation) {
+    public Optional<ApplicationResourceLocation> save(ApplicationResourceLocation applicationResourceLocation) {
         String orgUnitId = applicationResourceLocation.getOrgUnitId();
         log.info("Trying to save application resource location - resource: {} {} orgunit: {} {}",
                 applicationResourceLocation.getResourceId(),
@@ -44,7 +44,7 @@ public class ApplicationResourceLocationService {
            log.warn("Application resource with referenced resourceId {} does not exist in database, application resource location will not be saved",
                    applicationResourceLocation.getResourceId()
            );
-           return;
+           return Optional.empty();
         }
         Long applicationResourceId = applicationResource.get().getId();
         log.info("Found application resource with id {} in database based on referenced resourceId {}",
@@ -74,6 +74,7 @@ public class ApplicationResourceLocationService {
                 savedApplicationResourceLocation.getOrgUnitId(),
                 savedApplicationResourceLocation.getOrgUnitName()
         );
+        return Optional.of(savedApplicationResourceLocation);
     }
 
     public void extractAndSendToPublish(ApplicationResource applicationResource) {
