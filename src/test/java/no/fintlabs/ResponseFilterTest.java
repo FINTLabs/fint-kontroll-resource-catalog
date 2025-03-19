@@ -2,9 +2,7 @@ package no.fintlabs;
 
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
-import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
@@ -20,11 +18,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,7 +30,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -112,23 +105,6 @@ public class ResponseFilterTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(TRACE_ID_HEADER_NAME, traceId));
     }
-
-//    @Test
-//    public void testDoFilter() throws IOException, ServletException {
-//        String traceId = "123e4567-e89b-12d3-a456-426614174000";
-//
-//        tracer.traceContextBuilder().traceId(traceId).spanId("mockSpanId").build();
-//        when(tracer.currentSpan().context().traceId()).thenReturn(traceId);
-//
-//        ResponseFilter responseFilter = new ResponseFilter(tracer);
-//
-//        HttpServletResponse mockResp = Mockito.mock(HttpServletResponse.class);
-//        HttpServletRequest mockReq = Mockito.mock(HttpServletRequest.class);
-//        FilterChain mockChain = Mockito.mock(FilterChain.class);
-//
-//        responseFilter.doFilter(mockReq, mockResp, mockChain);
-//        assertEquals(traceId, mockResp.getHeader(TRACE_ID_HEADER_NAME));
-//    }
 
     private void createSecurityContext(Jwt jwt) throws ServletException {
         SecurityContextHolder.getContext().setAuthentication(createJwtAuthentication(jwt));
