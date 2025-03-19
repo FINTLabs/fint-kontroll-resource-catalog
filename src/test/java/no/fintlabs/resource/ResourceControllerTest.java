@@ -1,7 +1,9 @@
 package no.fintlabs.resource;
 
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.ServletException;
 import no.fintlabs.Application;
+import no.fintlabs.GlobalExceptionHandler;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
@@ -15,6 +17,8 @@ import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -66,6 +70,10 @@ public class ResourceControllerTest  {
     BrukertypeService brukertypeService;
     @MockBean
     ServiceConfiguration serviceConfiguration;
+    @MockBean
+    GlobalExceptionHandler globalExceptionHandler;
+    @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
+    private Tracer tracer;
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;
@@ -105,7 +113,7 @@ public class ResourceControllerTest  {
         Pageable pageable = PageRequest.of(0, 100, sort);
 
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
-        given(applicationResourceService.searchApplicationResources(
+        given(applicationResourceService.getAllApplicationResources(
                 principal,
                 null,
                 null,
@@ -113,7 +121,6 @@ public class ResourceControllerTest  {
                 null,
                 null,
                 null,
-                List.of("ACTIVE"),
                 pageable))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
 

@@ -41,7 +41,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex) {
         log.error("An unhandled exception occurred with message: {}", ex.getMessage(), ex);
-        String correlationId = getCorrelationId();
         ProblemDetail problemDetail = getProblemDetail(ex, HttpStatus.INTERNAL_SERVER_ERROR);
         problemDetail.setDetail("En uventet serverfeil oppstod");
 

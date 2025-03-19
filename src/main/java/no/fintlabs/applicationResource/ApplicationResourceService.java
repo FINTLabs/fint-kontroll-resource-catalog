@@ -257,6 +257,29 @@ public class ApplicationResourceService {
         );
         return applicationResourcePage;
     }
+    public Page<ApplicationResource> getAllApplicationResources(
+            FintJwtEndUserPrincipal jwtEndUserPrincipal,
+            String search,
+            List<String> orgunits,
+            String resourceType,
+            List<String> userTypes,
+            String accessType,
+            List<String> applicationCategories,
+            Pageable pageable
+    ) {
+
+        return searchApplicationResources(
+                jwtEndUserPrincipal,
+                search,
+                orgunits,
+                resourceType,
+                userTypes,
+                accessType,
+                applicationCategories,
+                List.of("ACTIVE"),
+                pageable
+        );
+    }
 
     public Page<ApplicationResource> searchApplicationResources(
             FintJwtEndUserPrincipal principal,
@@ -309,7 +332,6 @@ public class ApplicationResourceService {
                     , accessType
                     , applicationCategory
                 );
-
             throw new NoApplicationResourcesFoundException();
         }
         return  applicationResourcePage;

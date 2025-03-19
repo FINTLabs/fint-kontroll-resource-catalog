@@ -92,7 +92,7 @@ public class ResourceController {
 
     ) {
             Page<ApplicationResource> allApplicationResources = applicationResourceService
-                .searchApplicationResources(
+                .getAllApplicationResources(
                     FintJwtEndUserPrincipal.from(jwt),
                     search,
                     orgUnits,
@@ -100,7 +100,6 @@ public class ResourceController {
                     userType,
                     accessType,
                     applicationCategory,
-                    List.of("ACTIVE"),
                     pageable
             );
             return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
