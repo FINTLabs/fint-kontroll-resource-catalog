@@ -46,7 +46,10 @@ public class ApplicationResourceLocationExtendedProduserService {
         );
     }
 
-    public List<ApplicationResourceLocationExtended> publish(Long applicationResourceId, List<ApplicationResourceLocation> applicationResourceLocations) {
+    public List<ApplicationResourceLocationExtended> publish(
+            Long applicationResourceId,
+            List<ApplicationResourceLocation> applicationResourceLocations
+    ) {
         List<ApplicationResourceLocationExtended> publishedApplicationRessourceLocationsExtended = applicationResourceLocations
                 .stream()
                 .map(applicationResourceLocation -> createExtendedApplicationResourceLocation(applicationResourceId, applicationResourceLocation))
