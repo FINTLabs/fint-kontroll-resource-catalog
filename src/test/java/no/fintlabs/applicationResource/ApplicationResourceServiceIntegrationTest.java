@@ -1,18 +1,17 @@
 package no.fintlabs.applicationResource;
 
 import no.fintlabs.DatabaseIntegrationTest;
+import no.fintlabs.OrgUnitType;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.opa.OpaService;
-import no.fintlabs.opa.model.OrgUnitType;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -31,7 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
 
 @DataJpaTest

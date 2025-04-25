@@ -1,17 +1,15 @@
 package no.fintlabs.resource;
 
 import jakarta.servlet.ServletException;
-import no.fintlabs.Application;
-import no.fintlabs.ResponseFactory;
+import no.fintlabs.OrgUnitType;
 import no.fintlabs.ServiceConfiguration;
-import no.fintlabs.applicationResource.*;
-import no.fintlabs.authorization.AuthorizationUtil;
-import no.fintlabs.cache.FintCache;
+import no.fintlabs.applicationResource.AccessTypeService;
+import no.fintlabs.applicationResource.ApplicationCategoryService;
+import no.fintlabs.applicationResource.ApplicationResource;
+import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
-import no.fintlabs.opa.model.OrgUnitType;
-import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +22,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -39,9 +36,12 @@ import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
