@@ -1,31 +1,33 @@
 package no.fintlabs.applicationResource;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.OrgUnitType;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
-import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
-import no.fintlabs.opa.model.OrgUnitType;
+import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import jakarta.transaction.Transactional;
-
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static no.fintlabs.opa.model.OrgUnitType.ALLORGUNITS;
-import static org.hibernate.internal.util.collections.CollectionHelper.isEmpty;
+import static no.fintlabs.OrgUnitType.ALLORGUNITS;
 
 
 @Slf4j
