@@ -1,5 +1,6 @@
 package no.fintlabs.applicationResource;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.OrgUnitType;
@@ -200,8 +201,43 @@ public class ApplicationResourceService {
     }
 
 
-    public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) {
-        ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
+    public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) throws ApplicationResourceNotFoundExeption {
+        ApplicationResource applicationResourceToUpdate = applicationResourceRepository
+                .findById(applicationResource.getId())
+                .orElseThrow(() -> new ApplicationResourceNotFoundExeption(applicationResource.getId()));
+
+        applicationResourceToUpdate.setApplicationAccessType(applicationResource.getApplicationAccessType());
+        applicationResourceToUpdate.setApplicationAccessRole(applicationResource.getApplicationAccessRole());
+        applicationResourceToUpdate.setPlatform(applicationResource.getPlatform());
+        applicationResourceToUpdate.setAccessType(applicationResource.getAccessType());
+        applicationResourceToUpdate.setResourceLimit(applicationResource.getResourceLimit());
+        applicationResourceToUpdate.setResourceOwnerOrgUnitId(applicationResource.getResourceOwnerOrgUnitId());
+        applicationResourceToUpdate.setResourceOwnerOrgUnitName(applicationResource.getResourceOwnerOrgUnitName());
+        applicationResourceToUpdate.setLicenseEnforcement(applicationResource.getLicenseEnforcement());
+        applicationResourceToUpdate.setHasCost(applicationResource.isHasCost());
+        applicationResourceToUpdate.setUnitCost(applicationResource.getUnitCost());
+        applicationResourceToUpdate.setStatus(applicationResource.getStatus());
+        applicationResourceToUpdate.setStatusChanged(applicationResource.getStatusChanged());
+        applicationResourceToUpdate.setNeedApproval(applicationResource.isNeedApproval());
+        applicationResourceToUpdate.setValidForRoles(applicationResource.getValidForRoles());
+        applicationResourceToUpdate.setApplicationCategory(applicationResource.getApplicationCategory());
+
+        applicationResourceToUpdate.getValidForOrgUnits().clear();
+        for (ApplicationResourceLocation applicationResourceLocation : applicationResource.getValidForOrgUnits()) {
+            applicationResourceLocation.setApplicationResource(applicationResourceToUpdate);
+            applicationResourceToUpdate.getValidForOrgUnits().add(applicationResourceLocation);
+        }
+
+
+        ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
+
+//        Set<ApplicationResourceLocation> applicationResourceLocationToBeSaved = applicationResource.getValidForOrgUnits();
+//        if (applicationResourceLocationToBeSaved.isEmpty()) {
+//            log.info("Resource {} has no valid for orgunits", updatedApplicationResource.getResourceId());
+//        } else {
+//            applicationResourceLocationToBeSaved.forEach(applicationResourceLocationRepository::saveAndFlush);
+//        }
+
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
 
