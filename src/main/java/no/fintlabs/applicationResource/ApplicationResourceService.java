@@ -228,16 +228,7 @@ public class ApplicationResourceService {
             applicationResourceToUpdate.getValidForOrgUnits().add(applicationResourceLocation);
         }
 
-
         ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
-
-//        Set<ApplicationResourceLocation> applicationResourceLocationToBeSaved = applicationResource.getValidForOrgUnits();
-//        if (applicationResourceLocationToBeSaved.isEmpty()) {
-//            log.info("Resource {} has no valid for orgunits", updatedApplicationResource.getResourceId());
-//        } else {
-//            applicationResourceLocationToBeSaved.forEach(applicationResourceLocationRepository::saveAndFlush);
-//        }
-
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
 
