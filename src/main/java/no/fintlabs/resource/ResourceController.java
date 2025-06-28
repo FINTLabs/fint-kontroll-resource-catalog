@@ -186,7 +186,7 @@ public class ResourceController {
     }
 
     @PutMapping("v1")
-    public ResponseEntity<HttpStatus> updateApplicationResource(@RequestBody ApplicationResource request) {
+    public ResponseEntity<HttpStatus> updateApplicationResource(@RequestBody ApplicationResource request) throws ApplicationResourceNotFoundExeption {
         ApplicationResource applicationResource = ApplicationResource.builder()
                 .id(request.id)
                 .resourceId(request.resourceId)
@@ -210,6 +210,7 @@ public class ResourceController {
         ApplicationResource updateApplicationResource = applicationResourceService.updateApplicationResource(applicationResource);
 
         if (updateApplicationResource != null) {
+            log.info("Resource updated: {}", updateApplicationResource.getResourceId());
             return new ResponseEntity<>(HttpStatus.ACCEPTED);
         } else {
             return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
