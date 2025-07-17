@@ -38,10 +38,11 @@ public class ApplicationResource extends Resource {
 
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")
-    @JsonIgnore
+   // @JsonIgnore
     //mappedBy ="applicationResource",
-    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<ApplicationResourceLocation> validForOrgUnits;
+
 
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
