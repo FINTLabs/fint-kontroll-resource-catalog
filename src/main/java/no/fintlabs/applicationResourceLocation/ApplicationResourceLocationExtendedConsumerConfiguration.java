@@ -20,16 +20,22 @@ public class ApplicationResourceLocationExtendedConsumerConfiguration {
     }
 
     @Bean
-    public ConcurrentMessageListenerContainer<String,ApplicationResourceLocationExtended> applicationResourceLocationExtendedConsumer(
-            FintCache<Long,ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocationCache
-    ){
+    public ConcurrentMessageListenerContainer<String, ApplicationResourceLocationExtended> applicationResourceLocationExtendedConsumer(
+            FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocationCache
+    ) {
 
         return entityConsumerFactoryService.createFactory(
-                ApplicationResourceLocationExtended.class,
-                consumerRecord
-                -> publishedExtendedApplicationResourceLocationCache.put(
-                        consumerRecord.value().id(),
-                        consumerRecord.value()))
+                        ApplicationResourceLocationExtended.class,
+                        consumerRecord
+                                -> {
+                            Long recordId = Long.valueOf(consumerRecord.key());
+                            if (consumerRecord.value() != null) {
+                                publishedExtendedApplicationResourceLocationCache.put(
+                                        recordId,
+                                        consumerRecord.value());
+                            } else publishedExtendedApplicationResourceLocationCache.remove(recordId);
+
+                        })
                 .createContainer(EntityTopicNameParameters.builder().resource("applicationresourcelocation-extended").build());
     }
 }

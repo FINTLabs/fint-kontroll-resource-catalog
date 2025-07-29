@@ -45,7 +45,6 @@ class ApplicationResourceServiceTest {
                 applicationResourceLocationRepository,
                 azureGroupCache,
                 authorizationUtil,
-                responseFactory,
                 opaService)
         ;
     }
@@ -74,13 +73,11 @@ class ApplicationResourceServiceTest {
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
-        FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
-        fintJwtEndUserPrincipal.setMail("titten@tei.no");
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("1","2","3"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
+                .getApplicationResourceDTOFrontendDetailById(1L);
 
         String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
         String resourceIdAppres = appRes1.getResourceId();
@@ -117,13 +114,11 @@ class ApplicationResourceServiceTest {
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
-        FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
-        fintJwtEndUserPrincipal.setMail("titten@tei.no");
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
+                .getApplicationResourceDTOFrontendDetailById(1L);
 
         String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
         String resourceIdAppres = appRes1.getResourceId();
@@ -158,13 +153,11 @@ class ApplicationResourceServiceTest {
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
-        FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
-        fintJwtEndUserPrincipal.setMail("titten@tei.no");
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
+                .getApplicationResourceDTOFrontendDetailById(1L);
 
         String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
         String resourceIdAppres = appRes1.getResourceId();
@@ -194,13 +187,11 @@ class ApplicationResourceServiceTest {
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
         appRes1.setValidForOrgUnits(locationsAppRes1);
 
-        FintJwtEndUserPrincipal fintJwtEndUserPrincipal = new FintJwtEndUserPrincipal();
-        fintJwtEndUserPrincipal.setMail("titten@tei.no");
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("3","4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceDTOFrontendDetailById(fintJwtEndUserPrincipal,1L);
+                .getApplicationResourceDTOFrontendDetailById(1L);
 
         String resourceIdDTO = applicationResourceDTOFrontendDetail.getResourceId();
         String resourceIdAppres = appRes1.getResourceId();

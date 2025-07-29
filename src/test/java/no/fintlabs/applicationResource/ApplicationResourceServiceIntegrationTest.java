@@ -100,7 +100,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceName("Adobe Creative Cloud")
             .licenseEnforcement(hardStop)
             .validForRoles(List.of(student))
-            .validForOrgUnits(Set.of(adobek12_kompavd))
+            .validForOrgUnits(new HashSet<>())
             .status("ACTIVE")
             .build();
 
@@ -151,9 +151,11 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @Test
     public void searchApplicationResourcesListWithRestrictedScopeShouldReturnRestrictedResourceInScopeAndAllFreeResources() {
 
-        ApplicationResource savedRestrictedResource = applicationResourceRepository.save(restrictedResource);
-        adobek12_kompavd.setResourceRef(savedRestrictedResource.getId());
-        applicationResourceLocationRepository.save(adobek12_kompavd);
+        adobek12_kompavd.setApplicationResource(restrictedResource);
+
+        restrictedResource.getValidForOrgUnits().add(adobek12_kompavd);
+
+        applicationResourceRepository.save(restrictedResource);
 
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(unrestrictedResourceForAllZip);
@@ -220,9 +222,12 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @Test
     public void searchApplicationResourcesWithRestrictedScopeAndFilteredOrgUnitShouldReturnResourceInScope() {
 
-        ApplicationResource savedRestrictedResource = applicationResourceRepository.save(restrictedResource);
-        adobek12_kompavd.setResourceRef(savedRestrictedResource.getId());
-        applicationResourceLocationRepository.save(adobek12_kompavd);
+        adobek12_kompavd.setApplicationResource(restrictedResource);
+
+        restrictedResource.getValidForOrgUnits().add(adobek12_kompavd);
+
+        applicationResourceRepository.save(restrictedResource);
+
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
 

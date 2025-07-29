@@ -51,23 +51,15 @@ public class ResourceController {
     public ResponseEntity<ApplicationResourceDTOFrontendDetail> getApplicationResourceById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
         log.info("Fetching applicationResourse by id: {}", id);
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
-                .getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal.from(jwt), id);
-        if (applicationResourceDTOFrontendDetail !=null) {
-            return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
+                .getApplicationResourceDTOFrontendDetailById(id);
+        return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
     }
 
     @GetMapping("/applicationcategories")
     public ResponseEntity<List<String>> getApplicationCategories() {
         List<String> applicationCategories = applicationCategoryService.getAllApplicationCategories();
+        return new ResponseEntity<>(applicationCategories, HttpStatus.OK);
 
-        if (!applicationCategories.isEmpty()) {
-            return new ResponseEntity<>(applicationCategories, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
     }
 
     @GetMapping("/accesstypes")
@@ -186,7 +178,7 @@ public class ResourceController {
     }
 
     @PutMapping("v1")
-    public ResponseEntity<HttpStatus> updateApplicationResource(@RequestBody ApplicationResource request) throws ApplicationResourceNotFoundExeption {
+    public ResponseEntity<HttpStatus> updateApplicationResource(@RequestBody ApplicationResource request) throws ApplicationResourceNotFoundException {
         ApplicationResource applicationResource = ApplicationResource.builder()
                 .id(request.id)
                 .resourceId(request.resourceId)
@@ -221,8 +213,8 @@ public class ResourceController {
     public ResponseEntity<HttpStatus> deleteApplicationResource(@PathVariable Long id) {
         try {
             applicationResourceService.deleteApplicationResource(id);
-        } catch (ApplicationResourceNotFoundExeption applicationResourceNotFoundExeption) {
-            log.error("Application resource not found", applicationResourceNotFoundExeption);
+        } catch (ApplicationResourceNotFoundException applicationResourceNotFoundException) {
+            log.error("Application resource not found", applicationResourceNotFoundException);
 
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
