@@ -1,7 +1,7 @@
 package no.fintlabs.kodeverk.applikasjonskategori;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceNotFoundExeption;
+import no.fintlabs.applicationResource.ApplicationResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class ApplikasjonskategoriService {
         return newOrUpdatedApplikasjonskategori;
     }
 
-    public void deleteApplikasjonskategori(Long id) throws ApplicationResourceNotFoundExeption {
+    public void deleteApplikasjonskategori(Long id) throws ApplicationResourceNotFoundException {
 
         applikasjonskategoriRepository.deleteById(id);
         log.info("deleted applikasjonskategori: {}", id);
