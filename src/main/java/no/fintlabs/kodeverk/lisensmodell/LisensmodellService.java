@@ -2,7 +2,7 @@ package no.fintlabs.kodeverk.lisensmodell;
 
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceNotFoundExeption;
+import no.fintlabs.applicationResource.ApplicationResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class LisensmodellService {
     }
 
 
-    public void deleteLisensmodell(Long id) throws ApplicationResourceNotFoundExeption {
+    public void deleteLisensmodell(Long id) throws ApplicationResourceNotFoundException {
         lisensmodellRepository.deleteById(id);
         log.info("Deleted Lisensmodell: {}", id);
     }

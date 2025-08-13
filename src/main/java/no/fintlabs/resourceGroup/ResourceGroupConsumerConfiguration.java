@@ -22,7 +22,7 @@ public class ResourceGroupConsumerConfiguration {
 
     @Bean
     ConcurrentMessageListenerContainer<String, ApplicationResource> resourceGroupConsumer(
-            FintCache<Long,ApplicationResource> publishedApplicationResourceCache
+            FintCache<Long, ApplicationResource> publishedApplicationResourceCache
     ){
         return entityConsumerFactoryService.createFactory(
                 ApplicationResource.class,

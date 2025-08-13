@@ -1,7 +1,9 @@
 package no.fintlabs.resource;
 
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.ServletException;
 import no.fintlabs.OrgUnitType;
+import no.fintlabs.ProblemDetailFactory;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
@@ -66,6 +68,10 @@ public class ResourceControllerTest  {
     BrukertypeService brukertypeService;
     @MockBean
     ServiceConfiguration serviceConfiguration;
+    @MockBean
+    Tracer tracer;
+    @MockBean
+    ProblemDetailFactory problemDetailFactory;
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;

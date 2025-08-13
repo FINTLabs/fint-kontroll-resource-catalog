@@ -48,26 +48,6 @@ public class ApplicationResourceConsumerConfiguration {
 
     @Bean
     @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
-    public ConcurrentMessageListenerContainer<String,ApplicationResourceLocation> applicationResourceLocationConsumer(
-            ApplicationResourceLocationService applicationResourceLocationService,
-            EntityConsumerFactoryService entityConsumerFactoryService
-    ){
-        EntityTopicNameParameters entityTopicNameParameters = EntityTopicNameParameters
-                .builder()
-                .resource("applicationresource-location")
-                .build();
-
-        log.info("Source is FINT. Creating application resource location consumer for {}", entityTopicNameParameters);
-
-        return entityConsumerFactoryService.createFactory(
-                        ApplicationResourceLocation.class,
-                        (ConsumerRecord<String,ApplicationResourceLocation> consumerRecord)
-                                -> applicationResourceLocationService.save(consumerRecord.value()))
-                .createContainer(entityTopicNameParameters);
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     ConcurrentMessageListenerContainer<String, ApplicationResourceUserType> userTypeConsumer(
             BrukertypeService brukertypeService,
             EntityConsumerFactoryService entityConsumerFactoryService
@@ -94,7 +74,7 @@ public class ApplicationResourceConsumerConfiguration {
                 consumerRecord -> {
                     AzureGroup azureGroup = consumerRecord.value();
                     log.debug("Saving: " + azureGroup.getId() + " to cache");
-                    Optional<ApplicationResource> applicationResourceOptional = applicationResourceService.getApplicationResourceFromId(azureGroup.getResourceGroupID());
+                    Optional<ApplicationResource> applicationResourceOptional = applicationResourceService.findApplicationResourceById(azureGroup.getResourceGroupID());
 
                     if (applicationResourceOptional.isPresent()) {
                         ApplicationResource applicationResource = applicationResourceOptional.get();
