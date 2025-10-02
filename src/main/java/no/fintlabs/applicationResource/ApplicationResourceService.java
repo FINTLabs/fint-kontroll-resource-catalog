@@ -1,10 +1,10 @@
 package no.fintlabs.applicationResource;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import no.fintlabs.OrgUnitType;
-import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
@@ -20,12 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static no.fintlabs.OrgUnitType.ALLORGUNITS;
@@ -33,100 +28,67 @@ import static no.fintlabs.OrgUnitType.ALLORGUNITS;
 
 @Slf4j
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class ApplicationResourceService {
 
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ApplicationResourceLocationRepository applicationResourceLocationRepository;
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
-    private final ResponseFactory responseFactory;
     private final OpaService opaService;
-    //private final ApplicationResourceLocationService applicationResourceLocationService;
 
-    public ApplicationResourceService(
-        ApplicationResourceRepository applicationResourceRepository,
-        ApplicationResourceLocationRepository applicationResourceLocationRepository,
-        FintCache<Long, AzureGroup> azureGroupCache,
-        AuthorizationUtil authorizationUtil,
-        ResponseFactory responseFactory,
-        OpaService opaService
-    ) {
-        this.applicationResourceRepository = applicationResourceRepository;
-        this.applicationResourceLocationRepository = applicationResourceLocationRepository;
-        this.azureGroupCache = azureGroupCache;
-        this.authorizationUtil = authorizationUtil;
-        this.responseFactory = responseFactory;
-        this.opaService = opaService;
-        //this.applicationResourceLocationService = applicationResourceLocationService;
-    }
     public void save(ApplicationResource applicationResource) {
-        log.info("Trying to save application resource {} with resourceId {}", applicationResource.getResourceName(), applicationResource.getResourceId());
+        String resourceId = applicationResource.getResourceId();
+        log.info("Trying to save application resource {} with resourceId {}",
+                applicationResource.getResourceName(), resourceId);
 
-        Optional<ApplicationResource> returnedApplicationResource = getApplicationResource(applicationResource);
-
-        if (returnedApplicationResource.isPresent()) {
-            log.info("Application resource with resourceId {} already exists. Updating existing resource", applicationResource.getResourceId());
-            onSaveExistingApplicationResource(applicationResource);
-            return;
-        }
-        log.info("Application resource with resourceId {} does not exist. Saving new resource", applicationResource.getResourceId());
-        ApplicationResource newApplicationResource = onSaveNewApplicationResource(applicationResource);
+        getApplicationResourceByResourceId(resourceId)
+                .ifPresentOrElse(existing -> {
+                    log.info("Application resource with resourceId {} already exists. Updating existing resource", resourceId);
+                    saveExistingApplicationResource(applicationResource);
+                }, () -> {
+                    log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
+                    applicationResourceRepository.save(applicationResource);
+                });
     }
 
     public Optional<ApplicationResource> getApplicationResourceByResourceId(String resourceId) {
-        return applicationResourceRepository.getApplicationResourceByResourceId(resourceId);
+        return applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId);
     }
 
-    private Optional<ApplicationResource> getApplicationResource(ApplicationResource applicationResource) {
-        Optional<ApplicationResource> returnedApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
-        return returnedApplicationResource;
+    private void saveExistingApplicationResource(ApplicationResource applicationResource) {
+
+        ApplicationResource existingApplicationResource = applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).get();
+
+        Long applicationResourceId = existingApplicationResource.getId();
+
+        applicationResource.setId(applicationResourceId);
+
+        if (existingApplicationResource.getIdentityProviderGroupObjectId() != null) {
+            applicationResource.setIdentityProviderGroupObjectId(existingApplicationResource.getIdentityProviderGroupObjectId());
+        }
+        if (existingApplicationResource.getIdentityProviderGroupName() != null) {
+            applicationResource.setIdentityProviderGroupName(existingApplicationResource.getIdentityProviderGroupName());
+        }
+        Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
+
+        if (azureGroup.isPresent()) {
+            applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
+            applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
+        }
+        applicationResourceRepository.save(applicationResource);
     }
 
-    private ApplicationResource onSaveNewApplicationResource(ApplicationResource applicationResource) {
-        return applicationResourceRepository.save(applicationResource);
-    }
-
-    private void onSaveExistingApplicationResource(ApplicationResource applicationResource) {
-
-            ApplicationResource existingApplicationResource = applicationResourceRepository
-                    .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).get();
-
-            Long applicationResourceId = existingApplicationResource.getId();
-
-            applicationResource.setId(applicationResourceId);
-
-            if (existingApplicationResource.getIdentityProviderGroupObjectId() != null) {
-                applicationResource.setIdentityProviderGroupObjectId(existingApplicationResource.getIdentityProviderGroupObjectId());
-            }
-            if (existingApplicationResource.getIdentityProviderGroupName() != null) {
-                applicationResource.setIdentityProviderGroupName(existingApplicationResource.getIdentityProviderGroupName());
-            }
-            Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
-
-            if (azureGroup.isPresent()) {
-                applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
-                applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
-            }
-            applicationResourceRepository.save(applicationResource);
-    }
-
-    @Transactional
-    public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(FintJwtEndUserPrincipal principal, Long id) {
+    public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
         List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
         ModelMapper modelMapper = new ModelMapper();
 
-        Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
+        ApplicationResource applicationResource = applicationResourceRepository.findById(id).orElseThrow(() -> new ApplicationResourceNotFoundException(id));
 
-//        ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceOptional
-//                .map(applicationResource -> modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class))
-//                .orElse(new ApplicationResourceDTOFrontendDetail());
-
-        if (applicationResourceOptional.isEmpty()) {
-            return null;
-        }
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail =
-                modelMapper.map(applicationResourceOptional.get(),ApplicationResourceDTOFrontendDetail.class);
+                modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);
 
         List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
         List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
@@ -137,13 +99,13 @@ public class ApplicationResourceService {
         String licenseEnforcement = applicationResourceDTOFrontendDetail.getLicenseEnforcement();
         if (validOrgUnits.contains(ALLORGUNITS.name())
                 || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
-                || licenseEnforcement != null && isLicenseEnforcementIsUnRestricted(licenseEnforcement)
-        ){
+                || licenseEnforcement != null && isLicenseEnforcementUnrestricted(licenseEnforcement)
+        ) {
             return applicationResourceDTOFrontendDetail;
         }
 
         List<String> validatedOrgUnits = orgunitsInApplicationResourceLocations.stream()
-                .filter(orgUnit -> validOrgUnits.contains(orgUnit))
+                .filter(validOrgUnits::contains)
                 .toList();
 
         if (validatedOrgUnits.isEmpty()) {
@@ -153,8 +115,8 @@ public class ApplicationResourceService {
         }
     }
 
-    private boolean isLicenseEnforcementIsUnRestricted(String licenseEnforcementType) {
-        Set<String > unlimitedLicenceEnforcementTypes = Set.of(
+    private boolean isLicenseEnforcementUnrestricted(String licenseEnforcementType) {
+        Set<String> unlimitedLicenceEnforcementTypes = Set.of(
                 HandhevingstypeLabels.NOTSET.name(),
                 HandhevingstypeLabels.FREEALL.name(),
                 HandhevingstypeLabels.FREEEDU.name(),
@@ -163,35 +125,13 @@ public class ApplicationResourceService {
         return unlimitedLicenceEnforcementTypes.contains(licenseEnforcementType);
     }
 
-    public Optional<ApplicationResource> getApplicationResourceFromId(Long applicationResourceId) {
-
+    public Optional<ApplicationResource> findApplicationResourceById(Long applicationResourceId) {
         return applicationResourceRepository.findById(applicationResourceId);
     }
 
     public List<ApplicationResource> getAllApplicationResources() {
-
         return applicationResourceRepository.findAll();
     }
-
-
-    public List<String> getAllAuthorizedOrgUnitIDs() {
-
-        return authorizationUtil.getAllAuthorizedOrgUnitIDs();
-    }
-
-
-    public List<String> compareRequestedOrgUnitIDsWithOPA(List<String> requestedOrgUnitIDs) {
-        List<String> orgUnitsFromOPA = getAllAuthorizedOrgUnitIDs();
-        if (orgUnitsFromOPA.contains(OrgUnitType.ALLORGUNITS.name())) {
-
-            return requestedOrgUnitIDs;
-        }
-
-        return orgUnitsFromOPA.stream()
-                .filter(requestedOrgUnitIDs::contains)
-                .toList();
-    }
-
 
     public ApplicationResource createApplicationResource(ApplicationResource applicationResource) {
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
@@ -201,10 +141,10 @@ public class ApplicationResourceService {
     }
 
 
-    public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) throws ApplicationResourceNotFoundExeption {
+    public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) throws ApplicationResourceNotFoundException {
         ApplicationResource applicationResourceToUpdate = applicationResourceRepository
                 .findById(applicationResource.getId())
-                .orElseThrow(() -> new ApplicationResourceNotFoundExeption(applicationResource.getId()));
+                .orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
         applicationResourceToUpdate.setApplicationAccessType(applicationResource.getApplicationAccessType());
         applicationResourceToUpdate.setApplicationAccessRole(applicationResource.getApplicationAccessRole());
@@ -222,11 +162,7 @@ public class ApplicationResourceService {
         applicationResourceToUpdate.setValidForRoles(applicationResource.getValidForRoles());
         applicationResourceToUpdate.setApplicationCategory(applicationResource.getApplicationCategory());
 
-        applicationResourceToUpdate.getValidForOrgUnits().clear();
-        for (ApplicationResourceLocation applicationResourceLocation : applicationResource.getValidForOrgUnits()) {
-            applicationResourceLocation.setApplicationResource(applicationResourceToUpdate);
-            applicationResourceToUpdate.getValidForOrgUnits().add(applicationResourceLocation);
-        }
+        updateApplicationResourceLocations(applicationResourceToUpdate, applicationResource);
 
         ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
 
@@ -235,9 +171,47 @@ public class ApplicationResourceService {
         return updatedApplicationResource;
     }
 
-    public void deleteApplicationResource(Long id) throws ApplicationResourceNotFoundExeption {
+    private void updateApplicationResourceLocations(ApplicationResource applicationResourceToUpdate, ApplicationResource applicationResource) {
+        Set<ApplicationResourceLocation> existingLocations = applicationResourceToUpdate.getValidForOrgUnits();
+        Set<ApplicationResourceLocation> newLocations = applicationResource.getValidForOrgUnits();
+
+        Map<String, ApplicationResourceLocation> newLocationsByOrgUnitId = newLocations.stream()
+                .collect(Collectors.toMap(ApplicationResourceLocation::getOrgUnitId, location -> location));
+
+        Iterator<ApplicationResourceLocation> iterator = existingLocations.iterator();
+        while (iterator.hasNext()) {
+            ApplicationResourceLocation existing = iterator.next();
+            ApplicationResourceLocation updated = newLocationsByOrgUnitId.get(existing.getOrgUnitId());
+            if (updated != null) {
+                existing.setResourceLimit(updated.getResourceLimit());
+                existing.setResourceName(updated.getResourceName());
+                existing.setOrgUnitName(updated.getOrgUnitName());
+
+                newLocationsByOrgUnitId.remove(existing.getOrgUnitId());
+            } else {
+                iterator.remove();
+            }
+        }
+
+        for (ApplicationResourceLocation location : newLocationsByOrgUnitId.values()) {
+            ApplicationResourceLocation newLocation = new ApplicationResourceLocation();
+            newLocation.setOrgUnitId(location.getOrgUnitId());
+            newLocation.setResourceId(location.getResourceId());
+            newLocation.setResourceLimit(location.getResourceLimit());
+            newLocation.setResourceName(location.getResourceName());
+            newLocation.setOrgUnitName(location.getOrgUnitName());
+            newLocation.setApplicationResource(applicationResourceToUpdate);
+
+            existingLocations.add(newLocation);
+        }
+    }
+
+
+
+
+    public void deleteApplicationResource(Long id) throws ApplicationResourceNotFoundException {
         ApplicationResource applicationResource = applicationResourceRepository.findById(id)
-                .orElseThrow(() -> new ApplicationResourceNotFoundExeption(id));
+                .orElseThrow(() -> new ApplicationResourceNotFoundException(id));
 
         applicationResource.setStatus("DELETED");
         applicationResource.setStatusChanged(Date.from(Instant.now()));
@@ -298,7 +272,7 @@ public class ApplicationResourceService {
 
         Specification<ApplicationResource> applicationResourceSpecification =
                 Specification.where(ApplicationResourceSpecification.hasNameLike(searchString)
-                        .and(ApplicationResourceSpecification.isAccessable(hasAccessAllToAppResources,accessableRestrictedResourceIds))
+                        .and(ApplicationResourceSpecification.isAccessable(hasAccessAllToAppResources, accessableRestrictedResourceIds))
                         .and(ApplicationResourceSpecification.isInFilteredOrgUnits(orgUnits))
                         .and(ApplicationResourceSpecification.userTypeLike(userType))
                         .and(ApplicationResourceSpecification.accessTypeLike(accessType))
@@ -310,9 +284,9 @@ public class ApplicationResourceService {
     }
 
     public Optional<Set<Long>> getRestrictedResourcesForOrgUnitsInScope(List<String> orgUnitsInScope) {
-        return Optional.of(applicationResourceLocationRepository.getDistinctByOrOrgUnitIdIsIn(orgUnitsInScope)
+        return Optional.of(applicationResourceLocationRepository.getDistinctByOrgUnitIdIsIn(orgUnitsInScope)
                 .stream()
-                .map(ApplicationResourceLocation::getResourceRef)
+                .map(location -> location.getApplicationResource().getId())
                 .collect(Collectors.toSet())
         );
     }

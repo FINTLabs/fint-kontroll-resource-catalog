@@ -65,10 +65,11 @@ dependencies {
 
     implementation 'no.fintlabs:fint-kafka:3.0.0-rc-1'
     implementation 'no.fintlabs:fint-flyt-cache:1.0.0'
-    implementation 'no.fintlabs:fint-kontroll-auth:1.3.6'
+    implementation 'no.fintlabs:fint-kontroll-auth:1.3.7'
     implementation 'no.fintlabs:fint-kontroll-db-audit:1.0.4'
-//    implementation files('/Users/mortensolberg/Development/vigoikt/fint-kontroll-db-audit/build/libs/fint-kontroll-db-audit-0-SNAPSHOT-plain.jar')
 
+    testImplementation 'io.micrometer:micrometer-tracing-test'
+    testImplementation 'io.micrometer:micrometer-tracing-integration-test'
 }
 
 test {

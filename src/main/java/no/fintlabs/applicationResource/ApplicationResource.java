@@ -21,6 +21,7 @@ public class ApplicationResource extends Resource {
     private String applicationAccessRole;
     @ElementCollection
     @CollectionTable(name = "application_resource_platform",joinColumns = @JoinColumn(name="id"))
+    @Builder.Default
     private List<String> platform = new ArrayList<>();
     private String accessType;
     private Long resourceLimit;
@@ -38,49 +39,19 @@ public class ApplicationResource extends Resource {
 
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")
-   // @JsonIgnore
-    //mappedBy ="applicationResource",
-    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.EAGER)
-    private Set<ApplicationResourceLocation> validForOrgUnits;
+    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Builder.Default
+    private Set<ApplicationResourceLocation> validForOrgUnits = new HashSet<>();
 
 
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
-    private List<String> validForRoles= new ArrayList<>();
+    @Builder.Default
+    private List<String> validForRoles = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "application_resource_application_category", joinColumns = @JoinColumn(name = "id"))
     private List<String> applicationCategory;
-
-
-    public ApplicationResourceDTOFrontendList toApplicationResourceDTOFrontendList(){
-        return ApplicationResourceDTOFrontendList
-                .builder()
-                .id(id)
-                .resourceId(resourceId)
-                .resourceName(resourceName)
-                .resourceType(resourceType)
-                .resourceLimit(resourceLimit)
-                .identityProviderGroupObjectId(identityProviderGroupObjectId)
-                .applicationCategory(applicationCategory)
-                .build();
-    }
-
-    public ApplicationResourceDTOFrontendListForAdmin toApplicationResourceDTOFrontendListForAdmin(){
-        return ApplicationResourceDTOFrontendListForAdmin
-                .builder()
-                .id(id)
-                .resourceId(resourceId)
-                .resourceName(resourceName)
-                .resourceType(resourceType)
-                .resourceLimit(resourceLimit)
-                .identityProviderGroupObjectId(identityProviderGroupObjectId)
-                .applicationCategory(applicationCategory)
-                .status(status)
-                .needApproval(needApproval)
-                .build();
-    }
-
 
     @Override
     public boolean equals(Object o) {

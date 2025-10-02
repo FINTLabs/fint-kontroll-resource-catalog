@@ -46,6 +46,18 @@ public class ApplicationResourceLocationExtendedProduserService {
         );
     }
 
+    public void onRemove(ApplicationResourceLocation applicationResourceLocation) {
+        String key = applicationResourceLocation.getId().toString();
+        log.info("Publishing removal of extended applicationResourceLocation entity with id: {}", key);
+        entityProducer.send(
+                EntityProducerRecord.<ApplicationResourceLocationExtended>builder()
+                        .topicNameParameters(entityTopicNameParameters)
+                        .key(key)
+                        .value(null)
+                        .build()
+        );
+    }
+
     public List<ApplicationResourceLocationExtended> publish(Long applicationResourceId, List<ApplicationResourceLocation> applicationResourceLocations) {
         List<ApplicationResourceLocationExtended> publishedApplicationRessourceLocationsExtended = applicationResourceLocations
                 .stream()

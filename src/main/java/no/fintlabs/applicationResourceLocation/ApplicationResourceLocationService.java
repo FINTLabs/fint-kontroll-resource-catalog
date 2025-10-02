@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -28,53 +27,51 @@ public class ApplicationResourceLocationService {
         this.applicationResourceLocationRepository = applicationResourceLocationRepository;
     }
 
-    public void save(ApplicationResourceLocation applicationResourceLocation) {
-        String orgUnitId = applicationResourceLocation.getOrgUnitId();
+    public void save(ApplicationResourceLocation location) {
+        String orgUnitId = location.getOrgUnitId();
+        String resourceId = location.getResourceId();
+
         log.info("Trying to save application resource location - resource: {} {} orgunit: {} {}",
-                applicationResourceLocation.getResourceId(),
-                applicationResourceLocation.getResourceName(),
-                orgUnitId,
-                applicationResourceLocation.getOrgUnitName()
-                );
+                resourceId, location.getResourceName(), orgUnitId, location.getOrgUnitName());
 
-        Optional<ApplicationResource> applicationResource =
-                applicationResourceService.getApplicationResourceByResourceId(applicationResourceLocation.getResourceId());
+        Optional<ApplicationResource> optionalResource = applicationResourceService.getApplicationResourceByResourceId(resourceId);
 
-        if (applicationResource.isEmpty()) {
-           log.warn("Application resource with referenced resourceId {} does not exist in database, application resource location will not be saved",
-                   applicationResourceLocation.getResourceId()
-           );
-           return;
-        }
-        Long applicationResourceId = applicationResource.get().getId();
-        log.info("Found application resource with id {} in database based on referenced resourceId {}",
-                applicationResourceId,
-                applicationResourceLocation.getResourceId()
-        );
-        applicationResourceLocation.setResourceRef(applicationResource.get().getId());
-
-        Optional<ApplicationResourceLocation> existingApplicationResourceLocation =
-                applicationResourceLocationRepository.findByResourceRefAndOrgUnitId(applicationResourceId, orgUnitId);
-
-        if (existingApplicationResourceLocation.isPresent()) {
-            log.info("Application Resource location already exists in database. Updating existing application resource location {}",
-                    existingApplicationResourceLocation.get().getId());
-            applicationResourceLocation.setId(existingApplicationResourceLocation.get().getId());
-
+        if (optionalResource.isEmpty()) {
+            log.warn("Application resource with referenced resourceId {} does not exist, skipping save", resourceId);
+            return;
         }
 
-        ApplicationResourceLocation savedApplicationResourceLocation =
-                applicationResourceLocationRepository.save(applicationResourceLocation);
+        ApplicationResource resource = optionalResource.get();
+        location.setApplicationResource(resource);
+
+        Optional<ApplicationResourceLocation> existingOptional =
+                applicationResourceLocationRepository.findByApplicationResourceAndOrgUnitId(resource, orgUnitId);
+
+        final boolean updated;
+
+        if (existingOptional.isPresent()) {
+            ApplicationResourceLocation existing = existingOptional.get();
+            existing.setResourceLimit(location.getResourceLimit());
+            existing.setResourceName(location.getResourceName());
+            existing.setOrgUnitName(location.getOrgUnitName());
+            location = existing;
+            updated = true;
+        } else {
+            updated = false;
+        }
+
+        ApplicationResourceLocation saved = applicationResourceLocationRepository.save(location);
 
         log.info("{} application resource location - resource: {} ({}) {} orgunit: {} {}",
-                existingApplicationResourceLocation.isPresent() ? "Updated existing": "Saved new",
-                savedApplicationResourceLocation.getResourceRef(),
-                savedApplicationResourceLocation.getResourceId(),
-                savedApplicationResourceLocation.getResourceName(),
-                savedApplicationResourceLocation.getOrgUnitId(),
-                savedApplicationResourceLocation.getOrgUnitName()
+                updated ? "Updated existing" : "Saved new",
+                saved.getApplicationResource().getId(),
+                saved.getResourceId(),
+                saved.getResourceName(),
+                saved.getOrgUnitId(),
+                saved.getOrgUnitName()
         );
     }
+
 
     public void extractAndSendToPublish(ApplicationResource applicationResource) {
 
