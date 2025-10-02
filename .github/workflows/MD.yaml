@@ -92,7 +92,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5.6.1
+        uses: docker/metadata-action@v5.8.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -130,7 +130,7 @@ jobs:
           use-kubelogin: 'true'
 
       - name: Deploy to ${{ env.CLUSTER_NAME }}
-        uses: azure/k8s-deploy@v5
+        uses: azure/k8s-deploy@v5.0.3
         with:
           manifests: ${{ steps.bake.outputs.manifestsBundle }}
           images: |
