@@ -16,6 +16,7 @@ import java.util.*;
 @SuperBuilder
 @Entity
 @Table(name="application_resource")
+@NoArgsConstructor
 public class ApplicationResource extends Resource {
     private String applicationAccessType;
     private String applicationAccessRole;
@@ -33,15 +34,11 @@ public class ApplicationResource extends Resource {
     private Date statusChanged;
     private boolean needApproval;
 
-    public ApplicationResource() {
-    }
-
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")
-   // @JsonIgnore
-    //mappedBy ="applicationResource",
     @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.EAGER)
-    private Set<ApplicationResourceLocation> validForOrgUnits;
+    @Setter(AccessLevel.NONE)
+    private Set<ApplicationResourceLocation> validForOrgUnits = new HashSet<>();
 
 
     @ElementCollection
