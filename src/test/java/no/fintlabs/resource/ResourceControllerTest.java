@@ -1,7 +1,9 @@
 package no.fintlabs.resource;
 
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.ServletException;
 import no.fintlabs.OrgUnitType;
+import no.fintlabs.ProblemDetailFactory;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
@@ -66,6 +68,10 @@ public class ResourceControllerTest  {
     BrukertypeService brukertypeService;
     @MockBean
     ServiceConfiguration serviceConfiguration;
+    @MockBean
+    private Tracer tracer;
+    @MockBean
+    private ProblemDetailFactory problemDetailFactory;
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;
@@ -117,7 +123,7 @@ public class ResourceControllerTest  {
                 pageable))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
 
-        MvcResult result = mockMvc.perform(get("/api/resources/v1"))
+        mockMvc.perform(get("/api/resources/v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resources", hasSize(2)))
                 .andReturn();
