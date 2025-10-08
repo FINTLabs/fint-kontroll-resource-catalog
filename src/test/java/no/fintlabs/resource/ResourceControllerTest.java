@@ -69,9 +69,9 @@ public class ResourceControllerTest  {
     @MockBean
     ServiceConfiguration serviceConfiguration;
     @MockBean
-    Tracer tracer;
+    private Tracer tracer;
     @MockBean
-    ProblemDetailFactory problemDetailFactory;
+    private ProblemDetailFactory problemDetailFactory;
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;
@@ -123,7 +123,7 @@ public class ResourceControllerTest  {
                 pageable))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
 
-        MvcResult result = mockMvc.perform(get("/api/resources/v1"))
+        mockMvc.perform(get("/api/resources/v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resources", hasSize(2)))
                 .andReturn();

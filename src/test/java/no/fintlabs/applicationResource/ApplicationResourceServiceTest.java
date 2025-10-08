@@ -1,6 +1,5 @@
 package no.fintlabs.applicationResource;
 
-import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
@@ -34,7 +33,6 @@ class ApplicationResourceServiceTest {
     @Mock
     private OpaService opaService;
     private AuthorizationUtil authorizationUtil;
-    private ResponseFactory responseFactory;
 
     @BeforeEach
     public void setup(){
@@ -71,7 +69,7 @@ class ApplicationResourceServiceTest {
                 .build();
 
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
-        appRes1.setValidForOrgUnits(locationsAppRes1);
+        appRes1.getValidForOrgUnits().addAll(locationsAppRes1);
 
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("1","2","3"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
@@ -112,7 +110,7 @@ class ApplicationResourceServiceTest {
                 .build();
 
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
-        appRes1.setValidForOrgUnits(locationsAppRes1);
+        appRes1.getValidForOrgUnits().addAll(locationsAppRes1);
 
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
@@ -151,7 +149,7 @@ class ApplicationResourceServiceTest {
                 .build();
 
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
-        appRes1.setValidForOrgUnits(locationsAppRes1);
+        appRes1.getValidForOrgUnits().addAll(locationsAppRes1);
 
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
@@ -185,7 +183,8 @@ class ApplicationResourceServiceTest {
                 .resourceLimit(200L)
                 .build();
         Set<ApplicationResourceLocation> locationsAppRes1 = Set.of(applicationResourceLocation1, applicationResourceLocation2);
-        appRes1.setValidForOrgUnits(locationsAppRes1);
+        appRes1.getValidForOrgUnits().addAll(locationsAppRes1);
+
 
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("3","4","5","6"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));

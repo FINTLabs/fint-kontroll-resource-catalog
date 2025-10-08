@@ -4,6 +4,7 @@ import no.fintlabs.exception.KontrollException;
 import org.springframework.http.HttpStatus;
 
 public class ApplicationResourceNotFoundException extends KontrollException {
+
     public ApplicationResourceNotFoundException(Long id) {
         super(String.format("ApplicationResourceNotFoundExeption - applicationResource with id : %s does not exists: ", id));
     }

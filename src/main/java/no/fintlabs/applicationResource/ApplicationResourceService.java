@@ -57,28 +57,46 @@ public class ApplicationResourceService {
         return applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId);
     }
 
-    private void saveExistingApplicationResource(ApplicationResource applicationResource) {
-
+    private void saveExistingApplicationResource(ApplicationResource incoming) {
+        log.info("Application resource with resourceId {} already exists. Updating existing resource", incoming.getResourceId());
         ApplicationResource existingApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).get();
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(incoming.getId()));
 
-        Long applicationResourceId = existingApplicationResource.getId();
+        mapApplicationResource(incoming, existingApplicationResource);
 
-        applicationResource.setId(applicationResourceId);
 
-        if (existingApplicationResource.getIdentityProviderGroupObjectId() != null) {
-            applicationResource.setIdentityProviderGroupObjectId(existingApplicationResource.getIdentityProviderGroupObjectId());
-        }
-        if (existingApplicationResource.getIdentityProviderGroupName() != null) {
-            applicationResource.setIdentityProviderGroupName(existingApplicationResource.getIdentityProviderGroupName());
-        }
-        Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(applicationResourceId);
+        Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(existingApplicationResource.getId());
 
         if (azureGroup.isPresent()) {
-            applicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
-            applicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
+            existingApplicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
+            existingApplicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
         }
-        applicationResourceRepository.save(applicationResource);
+        applicationResourceRepository.save(existingApplicationResource);
+    }
+
+    private void mapApplicationResource(ApplicationResource incoming, ApplicationResource existingApplicationResource) {
+        existingApplicationResource.setApplicationAccessType(incoming.getApplicationAccessType());
+        existingApplicationResource.setApplicationAccessRole(incoming.getApplicationAccessRole());
+        existingApplicationResource.setPlatform(incoming.getPlatform());
+        existingApplicationResource.setAccessType(incoming.getAccessType());
+        existingApplicationResource.setResourceLimit(incoming.getResourceLimit());
+        existingApplicationResource.setResourceOwnerOrgUnitId(incoming.getResourceOwnerOrgUnitId());
+        existingApplicationResource.setResourceOwnerOrgUnitName(incoming.getResourceOwnerOrgUnitName());
+        existingApplicationResource.setLicenseEnforcement(incoming.getLicenseEnforcement());
+        existingApplicationResource.setHasCost(incoming.isHasCost());
+        existingApplicationResource.setUnitCost(incoming.getUnitCost());
+        existingApplicationResource.setStatus(incoming.getStatus());
+        existingApplicationResource.setStatusChanged(incoming.getStatusChanged());
+        existingApplicationResource.setNeedApproval(incoming.isNeedApproval());
+        existingApplicationResource.setValidForRoles(incoming.getValidForRoles());
+        existingApplicationResource.setApplicationCategory(incoming.getApplicationCategory());
+        existingApplicationResource.setResourceName(incoming.getResourceName());
+        existingApplicationResource.setResourceType(incoming.getResourceType());
+        existingApplicationResource.getValidForOrgUnits().clear();
+        for (ApplicationResourceLocation applicationResourceLocation : incoming.getValidForOrgUnits()) {
+            applicationResourceLocation.setApplicationResource(existingApplicationResource);
+            existingApplicationResource.getValidForOrgUnits().add(applicationResourceLocation);
+        }
     }
 
     public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
@@ -146,21 +164,7 @@ public class ApplicationResourceService {
                 .findById(applicationResource.getId())
                 .orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
-        applicationResourceToUpdate.setApplicationAccessType(applicationResource.getApplicationAccessType());
-        applicationResourceToUpdate.setApplicationAccessRole(applicationResource.getApplicationAccessRole());
-        applicationResourceToUpdate.setPlatform(applicationResource.getPlatform());
-        applicationResourceToUpdate.setAccessType(applicationResource.getAccessType());
-        applicationResourceToUpdate.setResourceLimit(applicationResource.getResourceLimit());
-        applicationResourceToUpdate.setResourceOwnerOrgUnitId(applicationResource.getResourceOwnerOrgUnitId());
-        applicationResourceToUpdate.setResourceOwnerOrgUnitName(applicationResource.getResourceOwnerOrgUnitName());
-        applicationResourceToUpdate.setLicenseEnforcement(applicationResource.getLicenseEnforcement());
-        applicationResourceToUpdate.setHasCost(applicationResource.isHasCost());
-        applicationResourceToUpdate.setUnitCost(applicationResource.getUnitCost());
-        applicationResourceToUpdate.setStatus(applicationResource.getStatus());
-        applicationResourceToUpdate.setStatusChanged(applicationResource.getStatusChanged());
-        applicationResourceToUpdate.setNeedApproval(applicationResource.isNeedApproval());
-        applicationResourceToUpdate.setValidForRoles(applicationResource.getValidForRoles());
-        applicationResourceToUpdate.setApplicationCategory(applicationResource.getApplicationCategory());
+        mapApplicationResource(applicationResource, applicationResourceToUpdate);
 
         updateApplicationResourceLocations(applicationResourceToUpdate, applicationResource);
 
@@ -230,7 +234,7 @@ public class ApplicationResourceService {
             Pageable pageable
     ) {
 
-        Page<ApplicationResource> applicationResourcePage = searchApplicationResources(
+        return searchApplicationResources(
                 jwtEndUserPrincipal,
                 search,
                 orgunits,
@@ -241,7 +245,6 @@ public class ApplicationResourceService {
                 statusList,
                 pageable
         );
-        return applicationResourcePage;
     }
 
     public Page<ApplicationResource> searchApplicationResources(
