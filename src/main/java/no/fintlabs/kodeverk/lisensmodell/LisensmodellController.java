@@ -2,7 +2,7 @@ package no.fintlabs.kodeverk.lisensmodell;
 
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.applicationResource.ApplicationResourceNotFoundExeption;
+import no.fintlabs.applicationResource.ApplicationResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -76,8 +76,8 @@ public class LisensmodellController {
     public ResponseEntity<Lisensmodell> deleteLisensmodell(@PathVariable Long id) {
         try {
             lisensmodellService.deleteLisensmodell(id);
-        } catch (ApplicationResourceNotFoundExeption applicationResourceNotFoundExeption) {
-            log.error("Application resource not found", applicationResourceNotFoundExeption);
+        } catch (ApplicationResourceNotFoundException applicationResourceNotFoundException) {
+            log.error("Application resource not found", applicationResourceNotFoundException);
             return ResponseEntity.notFound().build();
         }
 
