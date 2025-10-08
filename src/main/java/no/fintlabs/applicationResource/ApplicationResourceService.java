@@ -73,7 +73,7 @@ public class ApplicationResourceService {
             existingApplicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
             existingApplicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
         }
-        applicationResourceRepository.save(incoming);
+        applicationResourceRepository.save(existingApplicationResource);
     }
 
     private void mapApplicationResource(ApplicationResource incoming, ApplicationResource existingApplicationResource) {
