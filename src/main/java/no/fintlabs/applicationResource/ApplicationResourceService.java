@@ -3,7 +3,6 @@ package no.fintlabs.applicationResource;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import no.fintlabs.OrgUnitType;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
@@ -93,10 +92,7 @@ public class ApplicationResourceService {
         existingApplicationResource.setResourceName(incoming.getResourceName());
         existingApplicationResource.setResourceType(incoming.getResourceType());
         existingApplicationResource.getValidForOrgUnits().clear();
-        for (ApplicationResourceLocation applicationResourceLocation : incoming.getValidForOrgUnits()) {
-            applicationResourceLocation.setApplicationResource(existingApplicationResource);
-            existingApplicationResource.getValidForOrgUnits().add(applicationResourceLocation);
-        }
+        updateApplicationResourceLocations(existingApplicationResource, incoming);
     }
 
     public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
@@ -165,8 +161,6 @@ public class ApplicationResourceService {
                 .orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
         mapApplicationResource(applicationResource, applicationResourceToUpdate);
-
-        updateApplicationResourceLocations(applicationResourceToUpdate, applicationResource);
 
         ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
 
