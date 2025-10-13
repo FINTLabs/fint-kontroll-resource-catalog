@@ -17,6 +17,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "application_resource_location")
 @EntityListeners(ApplicationResourceLocationListener.class)
+@EqualsAndHashCode
 public class ApplicationResourceLocation {
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +34,7 @@ public class ApplicationResourceLocation {
     )
     @JoinColumn(name="resource_ref")
     @JsonBackReference(value = "resource-location")
+    @EqualsAndHashCode.Exclude
     private ApplicationResource applicationResource;
 
 }
