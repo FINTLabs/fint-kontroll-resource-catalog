@@ -11,17 +11,19 @@ import no.fintlabs.kafka.entity.topic.EntityTopicService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+
 @Slf4j
 @Service
 public class ResourceGroupProducerService {
     private final EntityProducer<ApplicationResource> entityProducer;
     private final EntityTopicNameParameters entityTopicNameParameters;
-    private final FintCache<Long,ApplicationResource> publishedApplicationResourceCache;
+    private final FintCache<Long, Integer> publishedApplicationResourceCache;
 
     public ResourceGroupProducerService(
             EntityProducerFactory entityProducerFactory,
             EntityTopicService entityTopicService,
-            FintCache<Long, ApplicationResource> publishedApplicationResourceCache
+            FintCache<Long, Integer> publishedApplicationResourceCache
     ) {
         entityProducer = entityProducerFactory.createProducer(ApplicationResource.class);
         this.publishedApplicationResourceCache = publishedApplicationResourceCache;
@@ -42,19 +44,23 @@ public class ResourceGroupProducerService {
                         .build()
         );
     }
-    public List<ApplicationResource> publishResourceGroups (List<ApplicationResource> applicationResources) {
+    public List<ApplicationResource> publishResourceGroups(List<ApplicationResource> applicationResources) {
         log.info("Number of entities in cache: {}", publishedApplicationResourceCache.getNumberOfEntries());
-        List<ApplicationResource> publishedApplicationResources =  applicationResources
-                .stream()
-                .filter(applicationResource -> publishedApplicationResourceCache
-                        .getOptional(applicationResource.getId())
-                        .map(publishedApplicationResourceInCache -> !publishedApplicationResourceInCache.equals(applicationResource))
-                        .orElse(true)
-                )
+
+        List<ApplicationResource> toPublish = applicationResources.stream()
+                .filter(ar -> {
+                    Long id = ar.getId();
+                    int currentHash = ar.hashCode();
+                    return publishedApplicationResourceCache
+                            .getOptional(id)
+                            .map(cachedHash -> !Objects.equals(cachedHash, currentHash))
+                            .orElse(true);
+                })
                 .peek(this::publish)
                 .toList();
-        log.info("Published application resources: {}", publishedApplicationResources.size());
-        return publishedApplicationResources;
+
+        log.info("Published application resources: {}", toPublish.size());
+        return toPublish;
     }
 
 

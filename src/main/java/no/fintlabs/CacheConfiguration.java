@@ -21,8 +21,8 @@ public class CacheConfiguration {
     }
 
     @Bean
-    FintCache<Long, ApplicationResource> publishedApplicationCache() {
-        return createCache(ApplicationResource.class);
+    FintCache<Long, Integer> publishedApplicationCache() {
+        return createCache(Integer.class);
     }
 
     @Bean
