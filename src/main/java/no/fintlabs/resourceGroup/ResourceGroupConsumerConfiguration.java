@@ -22,14 +22,16 @@ public class ResourceGroupConsumerConfiguration {
 
     @Bean
     ConcurrentMessageListenerContainer<String, ApplicationResource> resourceGroupConsumer(
-            FintCache<Long,ApplicationResource> publishedApplicationResourceCache
+            FintCache<Long, Integer> publishedApplicationResourceCache
     ){
         return entityConsumerFactoryService.createFactory(
                 ApplicationResource.class,
-                consumerRecord -> publishedApplicationResourceCache.put(
-                        consumerRecord.value().getId(),
-                        consumerRecord.value()
-                )
+                consumerRecord -> {
+                    ApplicationResource ar = consumerRecord.value();
+                    if (ar != null && ar.getId() != null) {
+                        publishedApplicationResourceCache.put(ar.getId(), ar.hashCode());
+                    }
+                }
         ).createContainer(EntityTopicNameParameters.builder().resource("resource-group").build());
     }
 }

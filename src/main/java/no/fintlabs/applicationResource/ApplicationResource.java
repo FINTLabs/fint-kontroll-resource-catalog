@@ -1,6 +1,5 @@
 package no.fintlabs.applicationResource;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +21,8 @@ public class ApplicationResource extends Resource {
     private String applicationAccessRole;
     @ElementCollection
     @CollectionTable(name = "application_resource_platform",joinColumns = @JoinColumn(name="id"))
-    private List<String> platform = new ArrayList<>();
+    @Builder.Default
+    private Set<String> platform = new HashSet<>();
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;
@@ -38,51 +38,25 @@ public class ApplicationResource extends Resource {
     @JsonManagedReference(value = "resource-location")
     @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.EAGER)
     @Setter(AccessLevel.NONE)
+    @Builder.Default
     private Set<ApplicationResourceLocation> validForOrgUnits = new HashSet<>();
 
 
     @ElementCollection
     @CollectionTable(name = "application_resource_valid_for_roles", joinColumns = @JoinColumn(name = "id"))
-    private List<String> validForRoles= new ArrayList<>();
+    @Builder.Default
+    private Set<String> validForRoles = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(name = "application_resource_application_category", joinColumns = @JoinColumn(name = "id"))
-    private List<String> applicationCategory;
-
-
-    public ApplicationResourceDTOFrontendList toApplicationResourceDTOFrontendList(){
-        return ApplicationResourceDTOFrontendList
-                .builder()
-                .id(id)
-                .resourceId(resourceId)
-                .resourceName(resourceName)
-                .resourceType(resourceType)
-                .resourceLimit(resourceLimit)
-                .identityProviderGroupObjectId(identityProviderGroupObjectId)
-                .applicationCategory(applicationCategory)
-                .build();
-    }
-
-    public ApplicationResourceDTOFrontendListForAdmin toApplicationResourceDTOFrontendListForAdmin(){
-        return ApplicationResourceDTOFrontendListForAdmin
-                .builder()
-                .id(id)
-                .resourceId(resourceId)
-                .resourceName(resourceName)
-                .resourceType(resourceType)
-                .resourceLimit(resourceLimit)
-                .identityProviderGroupObjectId(identityProviderGroupObjectId)
-                .applicationCategory(applicationCategory)
-                .status(status)
-                .needApproval(needApproval)
-                .build();
-    }
-
+    @Builder.Default
+    private Set<String> applicationCategory = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         ApplicationResource that = (ApplicationResource) o;
         return hasCost == that.hasCost
                 && Objects.equals(applicationAccessType, that.applicationAccessType)
@@ -105,6 +79,7 @@ public class ApplicationResource extends Resource {
     @Override
     public int hashCode() {
         return Objects.hash(
+                super.hashCode(),
                 applicationAccessType,
                 applicationAccessRole,
                 platform,

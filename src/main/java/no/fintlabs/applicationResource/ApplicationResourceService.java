@@ -27,6 +27,7 @@ import static no.fintlabs.OrgUnitType.ALLORGUNITS;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ApplicationResourceService {
 
@@ -36,36 +37,32 @@ public class ApplicationResourceService {
     private final AuthorizationUtil authorizationUtil;
     private final OpaService opaService;
 
-    public void save(ApplicationResource incomingApplicationResource) {
-        log.info("Trying to save application resource {} with resourceId {}", incomingApplicationResource.getResourceName(), incomingApplicationResource.getResourceId());
+    public void save(ApplicationResource applicationResource) {
+        String resourceId = applicationResource.getResourceId();
+        log.info("Trying to save application resource {} with resourceId {}",
+                applicationResource.getResourceName(), resourceId);
 
-        Optional<ApplicationResource> existingApplicationResource = getApplicationResource(incomingApplicationResource);
-        if (existingApplicationResource.isPresent()) {
-            saveExistingApplicationResource(incomingApplicationResource);
-        } else {
-            saveNewApplicationResource(incomingApplicationResource);
-        }
+        getApplicationResourceByResourceId(resourceId)
+                .ifPresentOrElse(existing -> {
+                    log.info("Application resource with resourceId {} already exists. Updating existing resource", resourceId);
+                    saveExistingApplicationResource(applicationResource);
+                }, () -> {
+                    log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
+                    applicationResourceRepository.save(applicationResource);
+                });
     }
 
     public Optional<ApplicationResource> getApplicationResourceByResourceId(String resourceId) {
-        return applicationResourceRepository.getApplicationResourceByResourceId(resourceId);
-    }
-
-    private Optional<ApplicationResource> getApplicationResource(ApplicationResource applicationResource) {
-        return applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId());
-    }
-
-    private void saveNewApplicationResource(ApplicationResource applicationResource) {
-        log.info("Application resource with resourceId {} does not exist. Saving new resource", applicationResource.getResourceId());
-        applicationResourceRepository.save(applicationResource);
+        return applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId);
     }
 
     private void saveExistingApplicationResource(ApplicationResource incoming) {
         log.info("Application resource with resourceId {} already exists. Updating existing resource", incoming.getResourceId());
         ApplicationResource existingApplicationResource = applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(incoming.getId()));
+
         mapApplicationResource(incoming, existingApplicationResource);
+
 
         Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(existingApplicationResource.getId());
 
@@ -95,24 +92,17 @@ public class ApplicationResourceService {
         existingApplicationResource.setResourceName(incoming.getResourceName());
         existingApplicationResource.setResourceType(incoming.getResourceType());
         existingApplicationResource.getValidForOrgUnits().clear();
-        for (ApplicationResourceLocation applicationResourceLocation : incoming.getValidForOrgUnits()) {
-            applicationResourceLocation.setApplicationResource(existingApplicationResource);
-            existingApplicationResource.getValidForOrgUnits().add(applicationResourceLocation);
-        }
+        updateApplicationResourceLocations(existingApplicationResource, incoming);
     }
 
-    @Transactional
     public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
         List<String> validOrgUnits = authorizationUtil.getAllAuthorizedOrgUnitIDs();
         ModelMapper modelMapper = new ModelMapper();
 
-        Optional<ApplicationResource> applicationResourceOptional = applicationResourceRepository.findById(id);
+        ApplicationResource applicationResource = applicationResourceRepository.findById(id).orElseThrow(() -> new ApplicationResourceNotFoundException(id));
 
-        if (applicationResourceOptional.isEmpty()) {
-            return null;
-        }
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail =
-                modelMapper.map(applicationResourceOptional.get(), ApplicationResourceDTOFrontendDetail.class);
+                modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);
 
         List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
         List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
@@ -123,7 +113,7 @@ public class ApplicationResourceService {
         String licenseEnforcement = applicationResourceDTOFrontendDetail.getLicenseEnforcement();
         if (validOrgUnits.contains(ALLORGUNITS.name())
                 || validOrgUnits.contains(applicationResourceDTOFrontendDetail.getResourceOwnerOrgUnitId())
-                || licenseEnforcement != null && isLicenseEnforcementIsUnRestricted(licenseEnforcement)
+                || licenseEnforcement != null && isLicenseEnforcementUnrestricted(licenseEnforcement)
         ) {
             return applicationResourceDTOFrontendDetail;
         }
@@ -139,7 +129,7 @@ public class ApplicationResourceService {
         }
     }
 
-    private boolean isLicenseEnforcementIsUnRestricted(String licenseEnforcementType) {
+    private boolean isLicenseEnforcementUnrestricted(String licenseEnforcementType) {
         Set<String> unlimitedLicenceEnforcementTypes = Set.of(
                 HandhevingstypeLabels.NOTSET.name(),
                 HandhevingstypeLabels.FREEALL.name(),
@@ -149,13 +139,11 @@ public class ApplicationResourceService {
         return unlimitedLicenceEnforcementTypes.contains(licenseEnforcementType);
     }
 
-    public Optional<ApplicationResource> getApplicationResourceFromId(Long applicationResourceId) {
-
+    public Optional<ApplicationResource> findApplicationResourceById(Long applicationResourceId) {
         return applicationResourceRepository.findById(applicationResourceId);
     }
 
     public List<ApplicationResource> getAllApplicationResources() {
-
         return applicationResourceRepository.findAll();
     }
 
@@ -174,13 +162,50 @@ public class ApplicationResourceService {
 
         mapApplicationResource(applicationResource, applicationResourceToUpdate);
 
-
         ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
 
         return updatedApplicationResource;
     }
+
+    private void updateApplicationResourceLocations(ApplicationResource applicationResourceToUpdate, ApplicationResource applicationResource) {
+        Set<ApplicationResourceLocation> existingLocations = applicationResourceToUpdate.getValidForOrgUnits();
+        Set<ApplicationResourceLocation> newLocations = applicationResource.getValidForOrgUnits();
+
+        Map<String, ApplicationResourceLocation> newLocationsByOrgUnitId = newLocations.stream()
+                .collect(Collectors.toMap(ApplicationResourceLocation::getOrgUnitId, location -> location));
+
+        Iterator<ApplicationResourceLocation> iterator = existingLocations.iterator();
+        while (iterator.hasNext()) {
+            ApplicationResourceLocation existing = iterator.next();
+            ApplicationResourceLocation updated = newLocationsByOrgUnitId.get(existing.getOrgUnitId());
+            if (updated != null) {
+                existing.setResourceLimit(updated.getResourceLimit());
+                existing.setResourceName(updated.getResourceName());
+                existing.setOrgUnitName(updated.getOrgUnitName());
+
+                newLocationsByOrgUnitId.remove(existing.getOrgUnitId());
+            } else {
+                iterator.remove();
+            }
+        }
+
+        for (ApplicationResourceLocation location : newLocationsByOrgUnitId.values()) {
+            ApplicationResourceLocation newLocation = new ApplicationResourceLocation();
+            newLocation.setOrgUnitId(location.getOrgUnitId());
+            newLocation.setResourceId(location.getResourceId());
+            newLocation.setResourceLimit(location.getResourceLimit());
+            newLocation.setResourceName(location.getResourceName());
+            newLocation.setOrgUnitName(location.getOrgUnitName());
+            newLocation.setApplicationResource(applicationResourceToUpdate);
+
+            existingLocations.add(newLocation);
+        }
+    }
+
+
+
 
     public void deleteApplicationResource(Long id) throws ApplicationResourceNotFoundException {
         ApplicationResource applicationResource = applicationResourceRepository.findById(id)
@@ -256,9 +281,9 @@ public class ApplicationResourceService {
     }
 
     public Optional<Set<Long>> getRestrictedResourcesForOrgUnitsInScope(List<String> orgUnitsInScope) {
-        return Optional.of(applicationResourceLocationRepository.getDistinctByOrOrgUnitIdIsIn(orgUnitsInScope)
+        return Optional.of(applicationResourceLocationRepository.getDistinctByOrgUnitIdIsIn(orgUnitsInScope)
                 .stream()
-                .map(ApplicationResourceLocation::getResourceRef)
+                .map(location -> location.getApplicationResource().getId())
                 .collect(Collectors.toSet())
         );
     }

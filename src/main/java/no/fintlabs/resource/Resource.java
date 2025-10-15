@@ -1,10 +1,7 @@
 package no.fintlabs.resource;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import jakarta.persistence.*;
 import lombok.experimental.SuperBuilder;
@@ -16,6 +13,7 @@ import java.util.UUID;
 @Setter
 @MappedSuperclass
 @SuperBuilder
+@EqualsAndHashCode(callSuper = false)
 public abstract class Resource extends AuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -25,6 +25,7 @@ public class ResourceAvailability {
     @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
     @JoinColumn(name = "id")
     @CollectionTable(name = "resource_availability_resource_consumer_assignments")
+    @Builder.Default
     private List<ResourceConsumerAssignment> resourceConsumerAssignments = new ArrayList<>();
 
 

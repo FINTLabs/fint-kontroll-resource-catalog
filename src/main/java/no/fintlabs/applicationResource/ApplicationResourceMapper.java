@@ -28,7 +28,7 @@ public class ApplicationResourceMapper {
                 applicationResource.getResourceType(),
                 applicationResource.getResourceLimit(),
                 applicationResource.getIdentityProviderGroupObjectId(),
-                applicationResource.getApplicationCategory()
+                applicationResource.getApplicationCategory().stream().toList()
         );
     }
     public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
@@ -54,7 +54,7 @@ public class ApplicationResourceMapper {
                 applicationResource.getStatus(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 applicationResource.isNeedApproval(),
-                applicationResource.getApplicationCategory()
+                applicationResource.getApplicationCategory().stream().toList()
         );
     }
 }

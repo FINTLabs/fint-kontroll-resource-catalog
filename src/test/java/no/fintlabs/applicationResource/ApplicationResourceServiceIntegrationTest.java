@@ -24,11 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
@@ -99,8 +95,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceId(adobek12)
             .resourceName("Adobe Creative Cloud")
             .licenseEnforcement(hardStop)
-            .validForRoles(List.of(student))
-            .validForOrgUnits(Set.of(adobek12_kompavd))
+            .validForRoles(Set.of(student))
+            .validForOrgUnits(new HashSet<>())
             .status("ACTIVE")
             .build();
 
@@ -108,7 +104,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceId(adobek12old)
             .resourceName("Adobe Creative Cloud Old")
             .licenseEnforcement(hardStop)
-            .validForRoles(List.of(student))
+            .validForRoles(Set.of(student))
             .status("INACTIVE")
             .build();
 
@@ -116,7 +112,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceId(kabal)
             .resourceName("Microsoft Kabal")
             .licenseEnforcement(freeAll)
-            .validForRoles(List.of(student, employee))
+            .validForRoles(Set.of(student, employee))
             .validForOrgUnits(Set.of(kabal_varfk))
             .status("ACTIVE")
             .build();
@@ -124,7 +120,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     ApplicationResource unrestrictedResourceForAllZip = ApplicationResource.builder()
             .resourceId(zip)
             .licenseEnforcement(freeAll)
-            .validForRoles(List.of(student, employee))
+            .validForRoles(Set.of(student, employee))
             .validForOrgUnits(Set.of(zip_varfk))
             .status("ACTIVE")
             .build();
@@ -133,7 +129,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .resourceId(m365)
             .resourceName("Microsoft 365 Student")
             .licenseEnforcement(freeStudent)
-            .validForRoles(List.of(student))
+            .validForRoles(Set.of(student))
             .validForOrgUnits(Set.of(m365_varfk))
             .status("ACTIVE")
             .build();
@@ -151,9 +147,11 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @Test
     public void searchApplicationResourcesListWithRestrictedScopeShouldReturnRestrictedResourceInScopeAndAllFreeResources() {
 
-        ApplicationResource savedRestrictedResource = applicationResourceRepository.save(restrictedResource);
-        adobek12_kompavd.setResourceRef(savedRestrictedResource.getId());
-        applicationResourceLocationRepository.save(adobek12_kompavd);
+        adobek12_kompavd.setApplicationResource(restrictedResource);
+
+        restrictedResource.getValidForOrgUnits().add(adobek12_kompavd);
+
+        applicationResourceRepository.save(restrictedResource);
 
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(unrestrictedResourceForAllZip);
@@ -220,9 +218,12 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @Test
     public void searchApplicationResourcesWithRestrictedScopeAndFilteredOrgUnitShouldReturnResourceInScope() {
 
-        ApplicationResource savedRestrictedResource = applicationResourceRepository.save(restrictedResource);
-        adobek12_kompavd.setResourceRef(savedRestrictedResource.getId());
-        applicationResourceLocationRepository.save(adobek12_kompavd);
+        adobek12_kompavd.setApplicationResource(restrictedResource);
+
+        restrictedResource.getValidForOrgUnits().add(adobek12_kompavd);
+
+        applicationResourceRepository.save(restrictedResource);
+
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
 

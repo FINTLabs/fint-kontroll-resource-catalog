@@ -7,7 +7,7 @@ import lombok.*;
 import jakarta.persistence.*;
 import no.fintlabs.applicationResource.ApplicationResource;
 
-import java.util.Objects;
+import java.io.Serializable;
 
 @Getter
 @Setter
@@ -16,12 +16,12 @@ import java.util.Objects;
 @Builder
 @Entity
 @Table(name = "application_resource_location")
+@EntityListeners(ApplicationResourceLocationListener.class)
+@EqualsAndHashCode
 public class ApplicationResourceLocation {
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "resource_ref")
-    private Long resourceRef;
     private String resourceId;
     private String resourceName;
     @Column(name = "orgunit_id")
@@ -32,29 +32,9 @@ public class ApplicationResourceLocation {
     @ManyToOne(fetch = FetchType.LAZY,
             cascade = {CascadeType.MERGE}
     )
-    @JoinColumn(name="resource_ref",
-            insertable = false,
-            updatable = false
-    )
+    @JoinColumn(name="resource_ref")
     @JsonBackReference(value = "resource-location")
+    @EqualsAndHashCode.Exclude
     private ApplicationResource applicationResource;
 
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        ApplicationResourceLocation that = (ApplicationResourceLocation) o;
-//        return Objects.equals(id, that.id)
-//                && Objects.equals(resourceRef, that.resourceRef)
-//                && Objects.equals(resourceId, that.resourceId)
-//                && Objects.equals(resourceName, that.resourceName)
-//                && Objects.equals(orgUnitId, that.orgUnitId)
-//                && Objects.equals(orgUnitName, that.orgUnitName)
-//                && Objects.equals(resourceLimit, that.resourceLimit);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash( id, resourceRef, resourceId, resourceName, orgUnitId, orgUnitName, resourceLimit);
-//    }
 }

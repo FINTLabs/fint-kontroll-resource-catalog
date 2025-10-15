@@ -60,28 +60,28 @@ class ApplicationResourceSpesificationIntegrationTest extends DatabaseIntegratio
     ApplicationResource restrictedResource = ApplicationResource.builder()
             .resourceId("res1")
             .licenseEnforcement("HARDSTOP")
-            .validForRoles(List.of("Student"))
+            .validForRoles(Set.of("Student"))
             .validForOrgUnits(Set.of(res1_orgUnitId1))
             .build();
 
     ApplicationResource unrestrictedResourceForAll = ApplicationResource.builder()
             .resourceId("res2")
             .licenseEnforcement("FREEALL")
-            .validForRoles(List.of("Student","Employee"))
+            .validForRoles(Set.of("Student","Employee"))
             .validForOrgUnits(resourceLocationsRes2)
             .build();
 
     ApplicationResource unRestrictedResourceForStudents = ApplicationResource.builder()
             .resourceId("res3")
             .licenseEnforcement("FREESTUDENT")
-            .validForRoles(List.of("Student"))
+            .validForRoles(Set.of("Student"))
             .validForOrgUnits(resourceLocationsRes3)
             .build();
 
     ApplicationResource restrictedResourceFloating = ApplicationResource.builder()
             .resourceId("res4")
             .licenseEnforcement("FLOATING")
-            .validForRoles(List.of("Employee"))
+            .validForRoles(Set.of("Employee"))
             .validForOrgUnits(Set.of(res4_OrgUnitId1))
             .build();
 

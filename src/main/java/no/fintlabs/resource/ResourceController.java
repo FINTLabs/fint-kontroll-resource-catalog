@@ -52,22 +52,14 @@ public class ResourceController {
         log.info("Fetching applicationResourse by id: {}", id);
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
                 .getApplicationResourceDTOFrontendDetailById(id);
-        if (applicationResourceDTOFrontendDetail !=null) {
-            return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
+        return new ResponseEntity<>(applicationResourceDTOFrontendDetail, HttpStatus.OK);
     }
 
     @GetMapping("/applicationcategories")
     public ResponseEntity<List<String>> getApplicationCategories() {
         List<String> applicationCategories = applicationCategoryService.getAllApplicationCategories();
+        return new ResponseEntity<>(applicationCategories, HttpStatus.OK);
 
-        if (!applicationCategories.isEmpty()) {
-            return new ResponseEntity<>(applicationCategories, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-        }
     }
 
     @GetMapping("/accesstypes")

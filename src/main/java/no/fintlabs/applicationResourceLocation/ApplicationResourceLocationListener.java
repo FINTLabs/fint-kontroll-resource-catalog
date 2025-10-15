@@ -1,0 +1,21 @@
+package no.fintlabs.applicationResourceLocation;
+
+import jakarta.persistence.PreRemove;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ApplicationResourceLocationListener {
+
+    private static ApplicationResourceLocationExtendedProduserService kafkaProducer;
+
+    @Autowired
+    public void init(ApplicationResourceLocationExtendedProduserService producer) {
+        ApplicationResourceLocationListener.kafkaProducer = producer;
+    }
+
+    @PreRemove
+    public void onRemove(ApplicationResourceLocation entity) {
+        kafkaProducer.onRemove(entity);
+    }
+}

@@ -1,6 +1,7 @@
 package no.fintlabs.applicationResource;
 
 import no.fintlabs.exception.KontrollException;
+import org.springframework.http.HttpStatus;
 
 public class ApplicationResourceNotFoundException extends KontrollException {
 
@@ -11,5 +12,10 @@ public class ApplicationResourceNotFoundException extends KontrollException {
     @Override
     public String getTypeIdentifier() {
         return "application-resource-not-found";
+    }
+
+    @Override
+    public HttpStatus getStatus() {
+        return HttpStatus.NOT_FOUND;
     }
 }
