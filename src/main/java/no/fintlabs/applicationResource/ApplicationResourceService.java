@@ -91,7 +91,6 @@ public class ApplicationResourceService {
         existingApplicationResource.setApplicationCategory(incoming.getApplicationCategory());
         existingApplicationResource.setResourceName(incoming.getResourceName());
         existingApplicationResource.setResourceType(incoming.getResourceType());
-        existingApplicationResource.getValidForOrgUnits().clear();
         updateApplicationResourceLocations(existingApplicationResource, incoming);
     }
 
