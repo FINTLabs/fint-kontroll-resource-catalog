@@ -197,6 +197,7 @@ public class ApplicationResourceService {
             newLocation.setResourceLimit(location.getResourceLimit());
             newLocation.setResourceName(location.getResourceName());
             newLocation.setOrgUnitName(location.getOrgUnitName());
+            newLocation.setIsTopOrgunit(location.getIsTopOrgunit());
             newLocation.setApplicationResource(applicationResourceToUpdate);
 
             existingLocations.add(newLocation);
