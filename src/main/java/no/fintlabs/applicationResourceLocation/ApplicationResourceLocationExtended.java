@@ -6,5 +6,6 @@ public record ApplicationResourceLocationExtended(
         String resourceId,
         String orgUnitId,
         String orgUnitName,
-        Long resourceLimit){
+        Long resourceLimit,
+        boolean isTopOrgunit){
 }
