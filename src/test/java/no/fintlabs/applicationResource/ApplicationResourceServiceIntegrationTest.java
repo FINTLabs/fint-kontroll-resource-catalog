@@ -167,6 +167,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 null,
+                null,
                 statusListActive,
                 pageable);
 
@@ -194,6 +195,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
         Page<ApplicationResource> applicationResourcesPage = applicationResourceService.searchApplicationResources(
                 fintJwtEndUserPrincipal,
+                null,
                 null,
                 null,
                 null,
@@ -237,6 +239,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 null,
+                null,
                 statusListActive,
                 pageable);
 
@@ -260,6 +263,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
         Page<ApplicationResource> findBySearchCriteria = applicationResourceService.searchApplicationResources(
                 fintJwtEndUserPrincipal,
+                null,
                 null,
                 null,
                 null,
