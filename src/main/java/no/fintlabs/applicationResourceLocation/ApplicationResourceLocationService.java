@@ -54,7 +54,7 @@ public class ApplicationResourceLocationService {
             existingAppResLocation.setResourceLimit(appResLocationFromKafka.getResourceLimit());
             existingAppResLocation.setResourceName(appResLocationFromKafka.getResourceName());
             existingAppResLocation.setOrgUnitName(appResLocationFromKafka.getOrgUnitName());
-            existingAppResLocation.setIsTopOrgunit(appResLocationFromKafka.getIsTopOrgunit());
+            existingAppResLocation.setTopOrgunit(appResLocationFromKafka.isTopOrgunit());
             appResLocationFromKafka = existingAppResLocation;
             updated = true;
         } else {

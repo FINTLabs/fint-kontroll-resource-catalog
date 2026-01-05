@@ -83,7 +83,7 @@ public class ApplicationResourceLocationExtendedProduserService {
                 applicationResourceLocation.getOrgUnitId(),
                 applicationResourceLocation.getOrgUnitName(),
                 applicationResourceLocation.getResourceLimit(),
-                applicationResourceLocation.getIsTopOrgunit());
+                applicationResourceLocation.isTopOrgunit());
 
     }
 }
