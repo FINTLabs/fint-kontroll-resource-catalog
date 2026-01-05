@@ -29,7 +29,7 @@ public class ApplicationResourceLocation {
     private String orgUnitName;
     private Long resourceLimit;
     @Column(name = "is_top_orgunit")
-    private Boolean isTopOrgunit;
+    private boolean isTopOrgunit;
 
     @ManyToOne(fetch = FetchType.LAZY,
             cascade = {CascadeType.MERGE}
