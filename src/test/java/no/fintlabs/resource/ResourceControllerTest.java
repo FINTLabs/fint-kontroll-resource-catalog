@@ -119,6 +119,7 @@ public class ResourceControllerTest  {
                 null,
                 null,
                 null,
+                null,
                 List.of("ACTIVE"),
                 pageable))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));

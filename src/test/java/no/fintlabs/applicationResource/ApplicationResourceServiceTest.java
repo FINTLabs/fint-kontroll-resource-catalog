@@ -11,6 +11,7 @@ import no.fintlabs.resourceGroup.AzureGroup;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -479,6 +481,59 @@ class ApplicationResourceServiceTest {
         // identity provider fields must remain unchanged
         assertEquals(testUUID, saved.getIdentityProviderGroupObjectId());
         assertEquals("OLD_NAME", saved.getIdentityProviderGroupName());
+    }
+
+    @DisplayName("Test for getOrgUnitsValidAndInScope - validOrgUnits is null")
+    @Test
+    public void givenNullValidOrgUnits_whenGetOrgUnitsValidAndInScope_thenReturnOrgUnitsInScope() {
+        List<String> orgUnitsInScope = List.of("198", "205", "211");
+
+        List<String> result = ApplicationResourceService.getOrgUnitsValidAndInScope(orgUnitsInScope, null);
+
+        assertThat(result).isEqualTo(orgUnitsInScope);
+    }
+
+    @DisplayName("Test for getOrgUnitsValidAndInScope - validOrgUnits is empty")
+    @Test
+    public void givenEmptyValidOrgUnits_whenGetOrgUnitsValidAndInScope_thenReturnOrgUnitsInScope() {
+        List<String> orgUnitsInScope = List.of("198", "205", "211");
+
+        List<String> result = ApplicationResourceService.getOrgUnitsValidAndInScope(orgUnitsInScope, new ArrayList<>());
+
+        assertThat(result).isEqualTo(orgUnitsInScope);
+    }
+
+    @DisplayName("Test for getOrgUnitsValidAndInScope - orgUnitsInScope contains ALLORGUNITS")
+    @Test
+    public void givenOrgUnitsInScopeContainsALLORGUNITS_whenGetOrgUnitsValidAndInScope_thenReturnValidOrgUnits() {
+        List<String> orgUnitsInScope = List.of("ALLORGUNITS", "198", "205");
+        List<String> validOrgUnits = List.of("211", "218");
+
+        List<String> result = ApplicationResourceService.getOrgUnitsValidAndInScope(orgUnitsInScope, validOrgUnits);
+
+        assertThat(result).isEqualTo(validOrgUnits);
+    }
+
+    @DisplayName("Test for getOrgUnitsValidAndInScope - intersection of orgUnitsInScope and validOrgUnits")
+    @Test
+    public void givenNonEmptyOrgUnitsInScopeAndValidOrgUnits_whenGetOrgUnitsValidAndInScope_thenReturnIntersection() {
+        List<String> orgUnitsInScope = List.of("198", "205", "211", "218");
+        List<String> validOrgUnits = List.of("211", "218", "219");
+
+        List<String> result = ApplicationResourceService.getOrgUnitsValidAndInScope(orgUnitsInScope, validOrgUnits);
+
+        assertThat(result).isEqualTo(List.of("211", "218"));
+    }
+
+    @DisplayName("Test for getOrgUnitsValidAndInScope - no intersection between orgUnitsInScope and validOrgUnits")
+    @Test
+    public void givenNoIntersectionBetweenOrgUnitsInScopeAndValidOrgUnits_whenGetOrgUnitsValidAndInScope_thenReturnEmptyList() {
+        List<String> orgUnitsInScope = List.of("198", "205");
+        List<String> validOrgUnits = List.of("211", "218");
+
+        List<String> result = ApplicationResourceService.getOrgUnitsValidAndInScope(orgUnitsInScope, validOrgUnits);
+
+        assertThat(result).isEqualTo(new ArrayList<>());
     }
 }
 
