@@ -161,9 +161,12 @@ public class ApplicationResourceService {
 
         mapApplicationResource(applicationResource, applicationResourceToUpdate);
 
-        ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
+        saveExistingApplicationResource(applicationResourceToUpdate);
+        ApplicationResource updatedApplicationResource = applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResourceToUpdate.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
+
 
         return updatedApplicationResource;
     }
@@ -183,6 +186,7 @@ public class ApplicationResourceService {
                 existing.setResourceLimit(updated.getResourceLimit());
                 existing.setResourceName(updated.getResourceName());
                 existing.setOrgUnitName(updated.getOrgUnitName());
+                existing.setTopOrgunit(updated.isTopOrgunit());
 
                 newLocationsByOrgUnitId.remove(existing.getOrgUnitId());
             } else {

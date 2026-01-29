@@ -8,7 +8,7 @@ fint:
   kontroll:
     resource-catalog:
       pagesize: 50
-      source: fint
+      source: gui
     opa:
       url: http://localhost:8181/v1/data/accessmanagement
 spring:
