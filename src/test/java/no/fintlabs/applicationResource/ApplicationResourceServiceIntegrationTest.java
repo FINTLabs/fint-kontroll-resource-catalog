@@ -55,6 +55,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
     private final String zip = "zip";
     private final String kabal = "kabal";
+    private final String minesveiper ="minesveiper";
     private final String adobek12 = "adobek12";
     private final String m365 = "m365";
     private final String adobek12old = "adobek12old";
@@ -100,6 +101,13 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .status("ACTIVE")
             .build();
 
+    ApplicationResource resourceMissingValidOrgUnits = ApplicationResource.builder()
+            .resourceId(minesveiper)
+            .resourceName("Minesveiper uten validOrgUnits")
+            .validForOrgUnits(new HashSet<>())
+            .status("ACTIVE")
+            .build();
+
     ApplicationResource inactiveResource = ApplicationResource.builder()
             .resourceId(adobek12old)
             .resourceName("Adobe Creative Cloud Old")
@@ -138,6 +146,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     public void setUp() {
         applicationResourceRepository.deleteAll();
         applicationResourceRepository.save(inactiveResource);
+        applicationResourceRepository.save(resourceMissingValidOrgUnits);
 
         fintJwtEndUserPrincipal.setMail("test@novari.no");
         sort = Sort.by(Sort.Order.asc("resourceName"));
@@ -210,14 +219,15 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
         List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
 
-        assertEquals(5, applicationResourcesList.size());
-        assertEquals(Set.of(adobek12old, zip, kabal, adobek12, m365),
+        assertEquals(6, applicationResourcesList.size());
+        assertEquals(Set.of(adobek12old, zip, kabal, adobek12, m365, minesveiper),
                 Set.of(
                         applicationResourcesList.get(0).getResourceId(),
                         applicationResourcesList.get(1).getResourceId(),
                         applicationResourcesList.get(2).getResourceId(),
                         applicationResourcesList.get(3).getResourceId(),
-                        applicationResourcesList.get(4).getResourceId())
+                        applicationResourcesList.get(4).getResourceId(),
+                        applicationResourcesList.get(5).getResourceId())
         );
     }
     @Test
