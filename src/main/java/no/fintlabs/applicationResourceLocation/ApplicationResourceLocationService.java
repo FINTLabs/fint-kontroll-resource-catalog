@@ -27,12 +27,12 @@ public class ApplicationResourceLocationService {
         this.applicationResourceLocationRepository = applicationResourceLocationRepository;
     }
 
-    public void save(ApplicationResourceLocation location) {
-        String orgUnitId = location.getOrgUnitId();
-        String resourceId = location.getResourceId();
+    public void save(ApplicationResourceLocation appResLocationFromKafka) {
+        String orgUnitId = appResLocationFromKafka.getOrgUnitId();
+        String resourceId = appResLocationFromKafka.getResourceId();
 
         log.info("Trying to save application resource location - resource: {} {} orgunit: {} {}",
-                resourceId, location.getResourceName(), orgUnitId, location.getOrgUnitName());
+                resourceId, appResLocationFromKafka.getResourceName(), orgUnitId, appResLocationFromKafka.getOrgUnitName());
 
         Optional<ApplicationResource> optionalResource = applicationResourceService.getApplicationResourceByResourceId(resourceId);
 
@@ -42,25 +42,26 @@ public class ApplicationResourceLocationService {
         }
 
         ApplicationResource resource = optionalResource.get();
-        location.setApplicationResource(resource);
+        appResLocationFromKafka.setApplicationResource(resource);
 
-        Optional<ApplicationResourceLocation> existingOptional =
+        Optional<ApplicationResourceLocation> AppResLocationOptionalFromDB =
                 applicationResourceLocationRepository.findByApplicationResourceAndOrgUnitId(resource, orgUnitId);
 
         final boolean updated;
 
-        if (existingOptional.isPresent()) {
-            ApplicationResourceLocation existing = existingOptional.get();
-            existing.setResourceLimit(location.getResourceLimit());
-            existing.setResourceName(location.getResourceName());
-            existing.setOrgUnitName(location.getOrgUnitName());
-            location = existing;
+        if (AppResLocationOptionalFromDB.isPresent()) {
+            ApplicationResourceLocation existingAppResLocation = AppResLocationOptionalFromDB.get();
+            existingAppResLocation.setResourceLimit(appResLocationFromKafka.getResourceLimit());
+            existingAppResLocation.setResourceName(appResLocationFromKafka.getResourceName());
+            existingAppResLocation.setOrgUnitName(appResLocationFromKafka.getOrgUnitName());
+            existingAppResLocation.setTopOrgunit(appResLocationFromKafka.isTopOrgunit());
+            appResLocationFromKafka = existingAppResLocation;
             updated = true;
         } else {
             updated = false;
         }
 
-        ApplicationResourceLocation saved = applicationResourceLocationRepository.save(location);
+        ApplicationResourceLocation saved = applicationResourceLocationRepository.save(appResLocationFromKafka);
 
         log.info("{} application resource location - resource: {} ({}) {} orgunit: {} {}",
                 updated ? "Updated existing" : "Saved new",

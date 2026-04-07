@@ -7,8 +7,6 @@ import lombok.*;
 import jakarta.persistence.*;
 import no.fintlabs.applicationResource.ApplicationResource;
 
-import java.io.Serializable;
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -28,6 +26,8 @@ public class ApplicationResourceLocation {
     private String orgUnitId;
     private String orgUnitName;
     private Long resourceLimit;
+    @Column(name = "top_orgunit")
+    private boolean topOrgunit;
 
     @ManyToOne(fetch = FetchType.LAZY,
             cascade = {CascadeType.MERGE}

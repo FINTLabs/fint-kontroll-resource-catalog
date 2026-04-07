@@ -161,9 +161,12 @@ public class ApplicationResourceService {
 
         mapApplicationResource(applicationResource, applicationResourceToUpdate);
 
-        ApplicationResource updatedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResourceToUpdate);
+        saveExistingApplicationResource(applicationResourceToUpdate);
+        ApplicationResource updatedApplicationResource = applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResourceToUpdate.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
+
 
         return updatedApplicationResource;
     }
@@ -183,6 +186,7 @@ public class ApplicationResourceService {
                 existing.setResourceLimit(updated.getResourceLimit());
                 existing.setResourceName(updated.getResourceName());
                 existing.setOrgUnitName(updated.getOrgUnitName());
+                existing.setTopOrgunit(updated.isTopOrgunit());
 
                 newLocationsByOrgUnitId.remove(existing.getOrgUnitId());
             } else {
@@ -197,6 +201,7 @@ public class ApplicationResourceService {
             newLocation.setResourceLimit(location.getResourceLimit());
             newLocation.setResourceName(location.getResourceName());
             newLocation.setOrgUnitName(location.getOrgUnitName());
+            newLocation.setTopOrgunit(location.isTopOrgunit());
             newLocation.setApplicationResource(applicationResourceToUpdate);
 
             existingLocations.add(newLocation);
@@ -219,6 +224,7 @@ public class ApplicationResourceService {
             FintJwtEndUserPrincipal jwtEndUserPrincipal,
             String search,
             List<String> orgunits,
+            List<String> validForOrgUnits,
             String resourceType,
             List<String> userTypes,
             String accessType,
@@ -231,6 +237,7 @@ public class ApplicationResourceService {
                 jwtEndUserPrincipal,
                 search,
                 orgunits,
+                validForOrgUnits,
                 resourceType,
                 userTypes,
                 accessType,
@@ -244,6 +251,7 @@ public class ApplicationResourceService {
             FintJwtEndUserPrincipal principal,
             String searchString,
             List<String> orgUnits,
+            List<String> validOrgUnits,
             String resourceType,
             List<String> userType,
             String accessType,
@@ -254,10 +262,12 @@ public class ApplicationResourceService {
         List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
         log.info("Org units returned from scope: {}", orgUnitsInScope);
 
+        List<String> validOrgUnitsInScope = getOrgUnitsValidAndInScope(orgUnitsInScope, validOrgUnits);
+
         Set<Long> accessableRestrictedResourceIds = new HashSet<>();
 
         if (!orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name())) {
-            Optional<Set<Long>> optionalestrictedResourcesForOrgUnitsInScope = getRestrictedResourcesForOrgUnitsInScope(orgUnitsInScope);
+            Optional<Set<Long>> optionalestrictedResourcesForOrgUnitsInScope = getRestrictedResourcesForOrgUnitsInScope(validOrgUnitsInScope);
 
             if (optionalestrictedResourcesForOrgUnitsInScope.isPresent()) {
                 accessableRestrictedResourceIds = optionalestrictedResourcesForOrgUnitsInScope.get();
@@ -285,5 +295,21 @@ public class ApplicationResourceService {
                 .map(location -> location.getApplicationResource().getId())
                 .collect(Collectors.toSet())
         );
+    }
+
+    public static List<String> getOrgUnitsValidAndInScope(List<String> orgUnitsInScope, List<String> validOrgUnits) {
+        log.debug("Getting intersection of {} and {}", orgUnitsInScope,  validOrgUnits);
+        if (validOrgUnits ==null || validOrgUnits.isEmpty()) {
+            log.debug("No valid orgUnits found, returning org units in scope");
+            return orgUnitsInScope;
+        }
+        if (orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name())) {
+            log.debug("org unit scope contains ALLORGUNITS, returning valid orgUnits");
+            return validOrgUnits;
+        }
+        List<String> intersection = new ArrayList<>(orgUnitsInScope);
+        intersection.retainAll(validOrgUnits);
+        log.debug("Both orgUnitsInScope and validOrgUnits are non empty subsets. Returning the actual intersection");
+        return intersection;
     }
 }
