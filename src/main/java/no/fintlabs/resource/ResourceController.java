@@ -99,7 +99,8 @@ public class ResourceController {
                     accessType,
                     applicationCategory,
                     List.of("ACTIVE"),
-                    pageable
+                    pageable,
+                        false
             );
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
