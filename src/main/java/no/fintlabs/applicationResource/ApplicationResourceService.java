@@ -243,7 +243,8 @@ public class ApplicationResourceService {
                 accessType,
                 applicationCategories,
                 statusList,
-                pageable
+                pageable,
+                true
         );
     }
 
@@ -257,7 +258,8 @@ public class ApplicationResourceService {
             String accessType,
             List<String> applicationCategory,
             List<String> statusList,
-            Pageable pageable
+            Pageable pageable,
+            boolean forAdmins
     ) {
         List<String> orgUnitsInScope = opaService.getOrgUnitsInScope("resource");
         log.info("Org units returned from scope: {}", orgUnitsInScope);
@@ -275,16 +277,19 @@ public class ApplicationResourceService {
             }
         }
         boolean hasAccessAllToAppResources = orgUnitsInScope.contains(OrgUnitType.ALLORGUNITS.name());
-
-        Specification<ApplicationResource> applicationResourceSpecification =
-                Specification.where(ApplicationResourceSpecification.hasNameLike(searchString)
+        Specification<ApplicationResource>  applicationResourceSpecification =
+                Specification.where(ApplicationResourceSpecification.hasNameLike(searchString))
                         .and(ApplicationResourceSpecification.isAccessable(hasAccessAllToAppResources, accessableRestrictedResourceIds))
-                        .and(ApplicationResourceSpecification.isInFilteredOrgUnits(orgUnits))
                         .and(ApplicationResourceSpecification.userTypeLike(userType))
                         .and(ApplicationResourceSpecification.accessTypeLike(accessType))
                         .and(ApplicationResourceSpecification.applicationCategoryLike(applicationCategory))
-                        .and(ApplicationResourceSpecification.statuslike(statusList))
-                );
+                        .and(ApplicationResourceSpecification.statuslike(statusList));
+
+        if (orgUnits != null && !orgUnits.isEmpty()) {
+            applicationResourceSpecification = applicationResourceSpecification.and(ApplicationResourceSpecification.isInFilteredOrgUnits(orgUnits));
+        } else if (!forAdmins) {
+            applicationResourceSpecification = applicationResourceSpecification.and(ApplicationResourceSpecification.hasApplicationResourceLocation());
+        }
 
         return applicationResourceRepository.findAll(applicationResourceSpecification, pageable);
     }

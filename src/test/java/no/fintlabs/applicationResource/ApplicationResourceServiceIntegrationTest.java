@@ -55,6 +55,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
     private final String zip = "zip";
     private final String kabal = "kabal";
+    private final String minesveiper ="minesveiper";
     private final String adobek12 = "adobek12";
     private final String m365 = "m365";
     private final String adobek12old = "adobek12old";
@@ -100,6 +101,13 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
             .status("ACTIVE")
             .build();
 
+    ApplicationResource resourceMissingValidOrgUnits = ApplicationResource.builder()
+            .resourceId(minesveiper)
+            .resourceName("Minesveiper uten validOrgUnits")
+            .validForOrgUnits(new HashSet<>())
+            .status("ACTIVE")
+            .build();
+
     ApplicationResource inactiveResource = ApplicationResource.builder()
             .resourceId(adobek12old)
             .resourceName("Adobe Creative Cloud Old")
@@ -138,6 +146,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     public void setUp() {
         applicationResourceRepository.deleteAll();
         applicationResourceRepository.save(inactiveResource);
+        applicationResourceRepository.save(resourceMissingValidOrgUnits);
 
         fintJwtEndUserPrincipal.setMail("test@novari.no");
         sort = Sort.by(Sort.Order.asc("resourceName"));
@@ -148,6 +157,9 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     public void searchApplicationResourcesListWithRestrictedScopeShouldReturnRestrictedResourceInScopeAndAllFreeResources() {
 
         adobek12_kompavd.setApplicationResource(restrictedResource);
+        kabal_varfk.setApplicationResource(unrestrictedResourceForAllKabal);
+        m365_varfk.setApplicationResource(unRestrictedResourceForStudents);
+        zip_varfk.setApplicationResource(unrestrictedResourceForAllZip);
 
         restrictedResource.getValidForOrgUnits().add(adobek12_kompavd);
 
@@ -169,7 +181,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 statusListActive,
-                pageable);
+                pageable,
+                false);
 
         List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
 
@@ -185,7 +198,6 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
     @Test
     public void getAllApplicationResourcesForAdminsShouldReturnAllActiveAndInactiveResources() {
-
         applicationResourceRepository.save(restrictedResource);
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(unrestrictedResourceForAllZip);
@@ -193,7 +205,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
         given((opaService.getOrgUnitsInScope(Mockito.any(String.class)))).willReturn(List.of(OrgUnitType.ALLORGUNITS.name()));
 
-        Page<ApplicationResource> applicationResourcesPage = applicationResourceService.searchApplicationResources(
+        Page<ApplicationResource> applicationResourcesPage = applicationResourceService.getAllApplicationResourcesForAdmins(
                 fintJwtEndUserPrincipal,
                 null,
                 null,
@@ -207,14 +219,15 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
 
         List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
 
-        assertEquals(5, applicationResourcesList.size());
-        assertEquals(Set.of(adobek12old, zip, kabal, adobek12, m365),
+        assertEquals(6, applicationResourcesList.size());
+        assertEquals(Set.of(adobek12old, zip, kabal, adobek12, m365, minesveiper),
                 Set.of(
                         applicationResourcesList.get(0).getResourceId(),
                         applicationResourcesList.get(1).getResourceId(),
                         applicationResourcesList.get(2).getResourceId(),
                         applicationResourcesList.get(3).getResourceId(),
-                        applicationResourcesList.get(4).getResourceId())
+                        applicationResourcesList.get(4).getResourceId(),
+                        applicationResourcesList.get(5).getResourceId())
         );
     }
     @Test
@@ -241,7 +254,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 statusListActive,
-                pageable);
+                pageable,
+                false);
 
         List<ApplicationResource> applicationResourcesList = applicationResourcesPage.getContent();
 
@@ -256,6 +270,9 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         applicationResourceRepository.save(unrestrictedResourceForAllKabal);
         applicationResourceRepository.save(restrictedResource);
         applicationResourceRepository.save(unRestrictedResourceForStudents);
+        kabal_varfk.setApplicationResource(unrestrictedResourceForAllKabal);
+        m365_varfk.setApplicationResource(unRestrictedResourceForStudents);
+
 
         PageRequest pageRequest = PageRequest.of(0, 100, Sort.by("resourceName"));
 
@@ -271,12 +288,12 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 null,
                 null,
                 statusListActive,
-                pageRequest);
+                pageRequest,
+                false);
 
-        assertEquals(3, findBySearchCriteria.getTotalElements());
-        assertEquals(adobek12, findBySearchCriteria.getContent().get(0).getResourceId());
-        assertEquals(m365, findBySearchCriteria.getContent().get(1).getResourceId());
-        assertEquals(kabal, findBySearchCriteria.getContent().get(2).getResourceId());
+        assertEquals(2, findBySearchCriteria.getTotalElements());
+        assertEquals(m365, findBySearchCriteria.getContent().get(0).getResourceId());
+        assertEquals(kabal, findBySearchCriteria.getContent().get(1).getResourceId());
     }
 
     @Test
@@ -309,4 +326,5 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         assertEquals(savedAppRes1.getIdentityProviderGroupName(), savedAppResUpdated.getIdentityProviderGroupName());
 
     }
+
 }

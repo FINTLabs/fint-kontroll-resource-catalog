@@ -121,7 +121,8 @@ public class ResourceControllerTest  {
                 null,
                 null,
                 List.of("ACTIVE"),
-                pageable))
+                pageable,
+                false))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
 
         mockMvc.perform(get("/api/resources/v1"))
