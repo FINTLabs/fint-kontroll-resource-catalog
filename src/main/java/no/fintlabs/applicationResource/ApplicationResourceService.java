@@ -57,7 +57,6 @@ public class ApplicationResourceService {
     }
 
     private void saveExistingApplicationResource(ApplicationResource incoming) {
-        log.info("Application resource with resourceId {} already exists. Updating existing resource", incoming.getResourceId());
         ApplicationResource existingApplicationResource = applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(incoming.getId()));
 
