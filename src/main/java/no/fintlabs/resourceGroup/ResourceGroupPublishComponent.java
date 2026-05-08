@@ -16,16 +16,20 @@ public class ResourceGroupPublishComponent {
     private final ResourceGroupProducerService resourceGroupProducerService;
     private final ApplicationResourceLocationService applicationResourceLocationService;
 
-    public ResourceGroupPublishComponent(ApplicationResourceService applicationResourceService, ResourceGroupProducerService resourceGroupProducerService, ApplicationResourceLocationService applicationResourceLocationService) {
+    public ResourceGroupPublishComponent(
+            ApplicationResourceService applicationResourceService,
+            ResourceGroupProducerService resourceGroupProducerService,
+            ApplicationResourceLocationService applicationResourceLocationService
+    ) {
         this.applicationResourceService = applicationResourceService;
         this.resourceGroupProducerService = resourceGroupProducerService;
         this.applicationResourceLocationService = applicationResourceLocationService;
     }
-    @Scheduled(initialDelayString = "30000",
-            fixedDelayString = "900000")
 
+    @Scheduled(
+            cron = "${fint.kontroll.resource-catalog.publishing.cron}"
+    )
     public void publishCompleteAndInCompleteResourceGroups() {
-
         List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
         if (!allApplicationResourcesInDB.isEmpty()) {
             List<ApplicationResource> applicationResourcesReadyToBePublished =
@@ -40,11 +44,9 @@ public class ResourceGroupPublishComponent {
             log.info("{} application resources added to list for publishing as resource-group", applicationResourcesReadyToBePublished.size());
             List<ApplicationResource> publishedResourceGroups = resourceGroupProducerService
                     .publishResourceGroups(applicationResourcesReadyToBePublished);
-            log.info("Published {} resource groups of total {} applicationResource objects found in database",
+            log.info("Published {} resource groups of total {} applicationResource objects found in database and different from cache",
                     publishedResourceGroups.size(),
                     applicationResourcesReadyToBePublished.size());
-
-
         }
     }
 }

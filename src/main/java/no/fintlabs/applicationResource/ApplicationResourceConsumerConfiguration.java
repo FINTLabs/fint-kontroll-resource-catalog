@@ -29,7 +29,6 @@ public class ApplicationResourceConsumerConfiguration {
     @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     public ConcurrentMessageListenerContainer<String,ApplicationResource> applicationResourceConsumer(
             ApplicationResourceService applicationResourceService,
-            ErrorHandlerFactory errorHandlerFactory,
             ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
     ){
         ParameterizedListenerContainerFactory<ApplicationResource> recordListenerContainerFactory =
@@ -53,7 +52,6 @@ public class ApplicationResourceConsumerConfiguration {
     @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     public ConcurrentMessageListenerContainer<String, ApplicationResourceUserType> userTypeConsumer(
             BrukertypeService brukertypeService,
-            ErrorHandlerFactory errorHandlerFactory,
             ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
     ) {
         ParameterizedListenerContainerFactory<ApplicationResourceUserType> recordListenerContainerFactory =

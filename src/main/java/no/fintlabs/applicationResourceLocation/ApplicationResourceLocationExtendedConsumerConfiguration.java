@@ -1,41 +1,47 @@
 package no.fintlabs.applicationResourceLocation;
 
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.cache.FintCache;
-import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
-import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
+import no.novari.kafka.consuming.*;
+import no.novari.kafka.topic.name.EntityTopicNameParameters;
+import no.fintlabs.KafkaConsumerConfigurationDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class ApplicationResourceLocationExtendedConsumerConfiguration {
 
-    private final EntityConsumerFactoryService entityConsumerFactoryService;
+    private final KafkaConsumerConfigurationDefaults kafkaConsumerConfigurationDefaults;
 
-    public ApplicationResourceLocationExtendedConsumerConfiguration(EntityConsumerFactoryService entityConsumerFactoryService) {
-        this.entityConsumerFactoryService = entityConsumerFactoryService;
-    }
 
     @Bean
     public ConcurrentMessageListenerContainer<String, ApplicationResourceLocationExtended> applicationResourceLocationExtendedConsumer(
-            FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocationCache
+            FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocationCache,
+            ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
     ) {
-
-        return entityConsumerFactoryService.createFactory(
+        ParameterizedListenerContainerFactory<ApplicationResourceLocationExtended> recordListenerContainerFactory =
+                parameterizedListenerContainerFactoryService.createRecordListenerContainerFactory(
                         ApplicationResourceLocationExtended.class,
-                        consumerRecord
-                                -> {
+                        consumerRecord -> {
                             Long recordId = Long.valueOf(consumerRecord.key());
                             if (consumerRecord.value() != null) {
                                 publishedExtendedApplicationResourceLocationCache.put(
                                         recordId,
                                         consumerRecord.value());
                             } else publishedExtendedApplicationResourceLocationCache.remove(recordId);
+                        },
+                        kafkaConsumerConfigurationDefaults.seekToBeginningListenerConfiguration(),
+                        kafkaConsumerConfigurationDefaults.defaultErrorHandler()
+                );
+        EntityTopicNameParameters entityTopicNameParameters =
+                kafkaConsumerConfigurationDefaults.defaultEntityTopic("applicationresourcelocation-extended");
 
-                        })
-                .createContainer(EntityTopicNameParameters.builder().resource("applicationresourcelocation-extended").build());
+
+        return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
     }
 }

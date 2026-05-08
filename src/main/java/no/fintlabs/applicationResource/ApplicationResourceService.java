@@ -11,6 +11,7 @@ import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,7 @@ public class ApplicationResourceService {
     private final FintCache<Long, AzureGroup> azureGroupCache;
     private final AuthorizationUtil authorizationUtil;
     private final OpaService opaService;
+    private final ResourceGroupProducerService resourceGroupProducerService;
 
     public void save(ApplicationResource applicationResource) {
         String resourceId = applicationResource.getResourceId();
@@ -48,7 +50,8 @@ public class ApplicationResourceService {
                     saveExistingApplicationResource(applicationResource);
                 }, () -> {
                     log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
-                    applicationResourceRepository.save(applicationResource);
+                    ApplicationResource newResource = applicationResourceRepository.save(applicationResource);
+                    resourceGroupProducerService.publish(newResource);
                 });
     }
 
@@ -58,11 +61,10 @@ public class ApplicationResourceService {
 
     private void saveExistingApplicationResource(ApplicationResource incoming) {
         ApplicationResource existingApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(incoming.getId()));
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(()
+                        -> new ApplicationResourceNotFoundException(incoming.getId()));
 
         mapApplicationResource(incoming, existingApplicationResource);
-
-
         Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(existingApplicationResource.getId());
 
         if (azureGroup.isPresent()) {
@@ -70,6 +72,7 @@ public class ApplicationResourceService {
             existingApplicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
         }
         applicationResourceRepository.save(existingApplicationResource);
+        resourceGroupProducerService.publish(existingApplicationResource);
     }
 
     private void mapApplicationResource(ApplicationResource incoming, ApplicationResource existingApplicationResource) {

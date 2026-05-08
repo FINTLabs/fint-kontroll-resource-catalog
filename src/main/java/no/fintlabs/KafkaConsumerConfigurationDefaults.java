@@ -36,6 +36,16 @@ public class KafkaConsumerConfigurationDefaults {
                 .build();
     }
 
+    public ListenerConfiguration seekToBeginningListenerConfiguration() {
+
+        return ListenerConfiguration.stepBuilder()
+                .groupIdApplicationDefault()
+                .maxPollRecordsKafkaDefault()
+                .maxPollIntervalKafkaDefault()
+                .seekToBeginningOnAssignment()
+                .build();
+    }
+
     public TopicNamePrefixParameters defaultTopicNamePrefixParameters() {
 
         return TopicNamePrefixParameters.stepBuilder()

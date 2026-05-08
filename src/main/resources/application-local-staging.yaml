@@ -4,6 +4,8 @@ fint:
     resource-catalog:
       pagesize: 50
       source: gui
+      publishing:
+        cron: "0 30 1 * * 0"
     opa:
       url: http://localhost:8181/v1/data/accessmanagement
 
