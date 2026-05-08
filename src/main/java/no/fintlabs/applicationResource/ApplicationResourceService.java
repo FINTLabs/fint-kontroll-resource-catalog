@@ -12,6 +12,7 @@ import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
+import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,7 @@ public class ApplicationResourceService {
     private final AuthorizationUtil authorizationUtil;
     private final OpaService opaService;
     private final ResourceGroupProducerService resourceGroupProducerService;
+    //private final ResourceGroupPublishComponent resourceGroupPublishComponent;
 
     public void save(ApplicationResource applicationResource) {
         String resourceId = applicationResource.getResourceId();
@@ -211,8 +213,6 @@ public class ApplicationResourceService {
     }
 
 
-
-
     public void deleteApplicationResource(Long id) throws ApplicationResourceNotFoundException {
         ApplicationResource applicationResource = applicationResourceRepository.findById(id)
                 .orElseThrow(() -> new ApplicationResourceNotFoundException(id));
@@ -319,4 +319,9 @@ public class ApplicationResourceService {
         log.debug("Both orgUnitsInScope and validOrgUnits are non empty subsets. Returning the actual intersection");
         return intersection;
     }
+
+//    public void publishAll() {
+//        resourceGroupPublishComponent.publishCompleteAndInCompleteResourceGroups();
+//        log.info("Publishing of all resource groups triggered");
+//    }
 }

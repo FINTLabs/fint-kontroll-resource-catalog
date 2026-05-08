@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
+import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class ResourceController {
     private final ApplicationCategoryService applicationCategoryService;
     private final AccessTypeService accessTypeService;
     private final ServiceConfiguration serviceConfiguration;
+    private final ResourceGroupPublishComponent resourceGroupPublishComponent;
 
 
     public ResourceController(
@@ -39,11 +41,12 @@ public class ResourceController {
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
             BrukertypeService brukertypeService,
-            ServiceConfiguration serviceConfiguration) {
+            ServiceConfiguration serviceConfiguration, ResourceGroupPublishComponent resourceGroupPublishComponent) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
         this.serviceConfiguration = serviceConfiguration;
+        this.resourceGroupPublishComponent = resourceGroupPublishComponent;
     }
 
 
@@ -233,6 +236,16 @@ public class ResourceController {
 
         return new ResponseEntity<>(source, HttpStatus.OK);
     }
+
+    @PostMapping("admin/publishall")
+    public ResponseEntity<HttpStatus> publishAll() {
+
+        //applicationResourceService.publishAll();
+        resourceGroupPublishComponent.publishCompleteAndInCompleteResourceGroups();
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 
     @GetMapping("/source/v1")
     public ResponseEntity<String> getSourceConfigPublic() {

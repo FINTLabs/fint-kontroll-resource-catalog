@@ -10,6 +10,7 @@ import no.fintlabs.cache.FintCache;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
+import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     private AuthorizationUtil authorizationUtil;
     @MockBean
     private ResourceGroupProducerService resourceGroupProducerService;
+    @MockBean
+    private ResourceGroupPublishComponent resourceGroupPublishComponent;
     @MockBean
     private OpaService opaService;
 
