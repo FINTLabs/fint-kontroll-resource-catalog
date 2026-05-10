@@ -74,8 +74,8 @@ public class ApplicationResourceConsumerConfiguration {
     public ConcurrentMessageListenerContainer<String, AzureGroup> azureGroupConsumer(
             FintCache<Long, AzureGroup> azureGroupCache,
             ApplicationResourceService applicationResourceService,
-            ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService,
-            ErrorHandlerFactory errorHandlerFactory){
+            ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
+    ){
         ParameterizedListenerContainerFactory<AzureGroup> recordListenerContainerFactory =
                 parameterizedListenerContainerFactoryService.createRecordListenerContainerFactory(
                         AzureGroup.class,
@@ -98,7 +98,7 @@ public class ApplicationResourceConsumerConfiguration {
                         kafkaConsumerConfigurationDefaults.defaultErrorHandler()
                 );
         EntityTopicNameParameters entityTopicNameParameters =
-                kafkaConsumerConfigurationDefaults.defaultEntityTopic("azuregroup");
+                kafkaConsumerConfigurationDefaults.defaultEntityTopic("azuread-resource-group");
 
         return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
     }
