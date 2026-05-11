@@ -29,7 +29,7 @@ public class ApplicationResourceLocationConsumerConfiguration {
                         ApplicationResourceLocation.class,
                         (ConsumerRecord<String, ApplicationResourceLocation> consumerRecord)
                                 -> applicationResourceLocationService.save(consumerRecord.value()),
-                        kafkaConsumerConfigurationDefaults.defaultListenerConfiguration(),
+                        kafkaConsumerConfigurationDefaults.seekToBeginningListenerConfiguration(),
                         kafkaConsumerConfigurationDefaults.defaultErrorHandler()
                 );
         EntityTopicNameParameters entityTopicNameParameters =

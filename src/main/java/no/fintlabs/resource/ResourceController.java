@@ -5,6 +5,7 @@ import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
+import no.fintlabs.util.OnlyDevelopers;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -237,6 +238,7 @@ public class ResourceController {
         return new ResponseEntity<>(source, HttpStatus.OK);
     }
 
+    @OnlyDevelopers
     @PostMapping("admin/publishall")
     public ResponseEntity<HttpStatus> publishAll() {
 

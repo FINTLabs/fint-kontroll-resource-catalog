@@ -44,6 +44,7 @@ public class ResourceGroupPublishComponent {
             log.info("{} application resources added to list for publishing as resource-group", applicationResourcesReadyToBePublished.size());
             List<ApplicationResource> publishedResourceGroups = resourceGroupProducerService
                     .publishResourceGroups(applicationResourcesReadyToBePublished);
+            applicationResourcesReadyToBePublished.forEach(applicationResourceLocationService::extractAndSendToPublish);
             log.info("Published {} resource groups of total {} applicationResource objects found in database and different from cache",
                     publishedResourceGroups.size(),
                     applicationResourcesReadyToBePublished.size());
