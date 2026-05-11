@@ -2,8 +2,9 @@ package no.fintlabs.applicationResourceLocation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.kafka.entity.EntityConsumerFactoryService;
-import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
+import no.novari.kafka.consuming.*;
+import no.novari.kafka.topic.name.EntityTopicNameParameters;
+import no.fintlabs.KafkaConsumerConfigurationDefaults;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -15,27 +16,27 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 @RequiredArgsConstructor
 public class ApplicationResourceLocationConsumerConfiguration {
 
-    private final EntityConsumerFactoryService entityConsumerFactoryService;
+    private final KafkaConsumerConfigurationDefaults kafkaConsumerConfigurationDefaults;
 
     @Bean
     @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
     public ConcurrentMessageListenerContainer<String, ApplicationResourceLocation> applicationResourceLocationConsumer(
             ApplicationResourceLocationService applicationResourceLocationService,
-            EntityConsumerFactoryService entityConsumerFactoryService
+            ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
     ) {
-        EntityTopicNameParameters entityTopicNameParameters = EntityTopicNameParameters
-                .builder()
-                .resource("applicationresource-location")
-                .build();
-
-        log.info("Source is FINT. Creating application resource location consumer for {}", entityTopicNameParameters);
-
-        return entityConsumerFactoryService.createFactory(
+        ParameterizedListenerContainerFactory<ApplicationResourceLocation> recordListenerContainerFactory =
+                parameterizedListenerContainerFactoryService.createRecordListenerContainerFactory(
                         ApplicationResourceLocation.class,
                         (ConsumerRecord<String, ApplicationResourceLocation> consumerRecord)
-                                -> applicationResourceLocationService.save(consumerRecord.value()))
-                .createContainer(entityTopicNameParameters);
-    }
+                                -> applicationResourceLocationService.save(consumerRecord.value()),
+                        kafkaConsumerConfigurationDefaults.seekToBeginningListenerConfiguration(),
+                        kafkaConsumerConfigurationDefaults.defaultErrorHandler()
+                );
+        EntityTopicNameParameters entityTopicNameParameters =
+                kafkaConsumerConfigurationDefaults.defaultEntityTopic("applicationresource-location");
 
+
+        return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
+    }
 }
 
