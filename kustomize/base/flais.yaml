@@ -36,7 +36,7 @@ spec:
     - name: fint.kontroll.resource-catalog.source
       value: gui
     - name: novari.kafka.topic.org-id
-      value: "No 5 - orgid with - and not ."
+      value: "fintlabs-no"
   envFrom:
     - configMapRef:
         name: fint-kontroll-access-management-config
