@@ -5,8 +5,7 @@ import no.fintlabs.applicationResource.ApplicationResourceUserType;
 import no.fintlabs.applicationResource.ApplicationResourceUserTypeToBrukerMapping;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -51,7 +50,7 @@ public class BrukertypeService {
         Brukertype currentBrukertype = brukertypeRepository.findById(brukertype.getId()).orElse(null);
 
         if (currentBrukertype != null) {
-            log.info("Brukertype updated: {} - {} - {}", brukertype.getId(),brukertype.getFkLabel(),brukertype.getLabel());
+            log.info("Brukertype updated: {} - {} - {}", brukertype.getId(), brukertype.getFkLabel(), brukertype.getLabel());
             currentBrukertype.setFkLabel(brukertype.getFkLabel());
             return brukertypeRepository.saveAndFlush(currentBrukertype);
         }
@@ -63,11 +62,22 @@ public class BrukertypeService {
 
         if (currentBrukertype != null) {
             currentBrukertype.setFkLabel(fkLabel);
-            log.info("Brukertype updated: {} - {} - {}", currentBrukertype.getId(),currentBrukertype.getFkLabel(),currentBrukertype.getLabel());
+            log.info("Brukertype updated: {} - {} - {}", currentBrukertype.getId(), currentBrukertype.getFkLabel(), currentBrukertype.getLabel());
 
             return brukertypeRepository.saveAndFlush(currentBrukertype);
         }
 
         return null;
+    }
+
+    public List<Brukertype> updateMultipleBrukertypes(Map<Long, BrukertypePatchDTO> brukertypePatchDTOs) {
+        List<Brukertype> updatedBrukertypes = new ArrayList<>();
+        brukertypePatchDTOs.forEach((id, brukertypePatchDTO) -> {
+                    Brukertype brukertype = updateBrukertype(id, brukertypePatchDTO.getFkLabel());
+                    updatedBrukertypes.add(brukertype);
+                }
+        );
+
+        return updatedBrukertypes;
     }
 }
