@@ -2,43 +2,60 @@ package no.fintlabs.applicationResourceLocation;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.cache.FintCache;
-import no.fintlabs.kafka.entity.EntityProducer;
-import no.fintlabs.kafka.entity.EntityProducerFactory;
-import no.fintlabs.kafka.entity.EntityProducerRecord;
-import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
-import no.fintlabs.kafka.entity.topic.EntityTopicService;
+import no.novari.kafka.producing.ParameterizedProducerRecord;
+import no.novari.kafka.producing.ParameterizedTemplate;
+import no.novari.kafka.producing.ParameterizedTemplateFactory;
+import no.novari.kafka.topic.EntityTopicService;
+import no.novari.kafka.topic.configuration.EntityCleanupFrequency;
+import no.novari.kafka.topic.configuration.EntityTopicConfiguration;
+import no.novari.kafka.topic.name.EntityTopicNameParameters;
+import no.novari.kafka.topic.name.TopicNamePrefixParameters;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
 @Slf4j
 public class ApplicationResourceLocationExtendedProduserService {
-    private final EntityProducer entityProducer;
+    private final ParameterizedTemplate<ApplicationResourceLocationExtended> parameterizedTemplate;
     private final EntityTopicNameParameters entityTopicNameParameters;
-    private final FintCache<Long, ApplicationResourceLocationExtended> applicationResourceLocationExtendedCache;
+    //private final FintCache<Long, ApplicationResourceLocationExtended> applicationResourceLocationExtendedCache;
     private final FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocation;
 
     public ApplicationResourceLocationExtendedProduserService(
-            EntityProducerFactory entityProducerFactory,
+            ParameterizedTemplateFactory parameterizedTemplateFactory,
             EntityTopicService entityTopicService,
-            FintCache<Long, ApplicationResourceLocationExtended> publishedApplicationResourceLocationExtendedCache,
-            FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocation) {
-        entityProducer = entityProducerFactory.createProducer(ApplicationResourceLocationExtended.class);
-        this.applicationResourceLocationExtendedCache = publishedApplicationResourceLocationExtendedCache;
+            //FintCache<Long, ApplicationResourceLocationExtended> publishedApplicationResourceLocationExtendedCache,
+            FintCache<Long, ApplicationResourceLocationExtended> publishedExtendedApplicationResourceLocation
+    ) {
+        this.parameterizedTemplate = parameterizedTemplateFactory.createTemplate(ApplicationResourceLocationExtended.class);
+        //this.applicationResourceLocationExtendedCache = publishedApplicationResourceLocationExtendedCache;
+        this.publishedExtendedApplicationResourceLocation = publishedExtendedApplicationResourceLocation;
         entityTopicNameParameters = EntityTopicNameParameters
                 .builder()
-                .resource("applicationresourcelocation-extended")
+                .topicNamePrefixParameters(TopicNamePrefixParameters
+                        .stepBuilder()
+                        .orgIdApplicationDefault()
+                        .domainContextApplicationDefault()
+                        .build())
+                .resourceName("applicationresourcelocation-extended")
                 .build();
-        entityTopicService.ensureTopic(entityTopicNameParameters, 0);
-        this.publishedExtendedApplicationResourceLocation = publishedExtendedApplicationResourceLocation;
+        entityTopicService.createOrModifyTopic(entityTopicNameParameters,EntityTopicConfiguration.stepBuilder()
+                .partitions(1)
+                .lastValueRetainedForever()
+                .nullValueRetentionTime(Duration.ofDays(7))
+                .cleanupFrequency(EntityCleanupFrequency.NORMAL)
+                .build()
+        );
+
     }
 
     public void publish(ApplicationResourceLocationExtended applicationResourceLocationExtended) {
         String key = applicationResourceLocationExtended.id().toString();
-        log.info("Publishing extended applicationResourceLocation entity with id: {}", key);
-        entityProducer.send(
-                EntityProducerRecord.<ApplicationResourceLocationExtended>builder()
+        log.debug("Publishing extended applicationResourceLocation entity with id: {}", key);
+        parameterizedTemplate.send(
+                ParameterizedProducerRecord.<ApplicationResourceLocationExtended>builder()
                         .topicNameParameters(entityTopicNameParameters)
                         .key(key)
                         .value(applicationResourceLocationExtended)
@@ -49,8 +66,8 @@ public class ApplicationResourceLocationExtendedProduserService {
     public void onRemove(ApplicationResourceLocation applicationResourceLocation) {
         String key = applicationResourceLocation.getId().toString();
         log.info("Publishing removal of extended applicationResourceLocation entity with id: {}", key);
-        entityProducer.send(
-                EntityProducerRecord.<ApplicationResourceLocationExtended>builder()
+        parameterizedTemplate.send(
+                ParameterizedProducerRecord.<ApplicationResourceLocationExtended>builder()
                         .topicNameParameters(entityTopicNameParameters)
                         .key(key)
                         .value(null)

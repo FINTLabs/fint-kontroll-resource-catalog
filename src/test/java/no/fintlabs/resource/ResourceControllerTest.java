@@ -12,6 +12,7 @@ import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
+import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,6 +73,8 @@ public class ResourceControllerTest  {
     private Tracer tracer;
     @MockBean
     private ProblemDetailFactory problemDetailFactory;
+    @MockBean
+    private ResourceGroupPublishComponent resourceGroupPublishComponent;
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;

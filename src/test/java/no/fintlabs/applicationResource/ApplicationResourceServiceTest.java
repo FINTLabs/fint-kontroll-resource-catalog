@@ -8,6 +8,8 @@ import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.ResourceGroupProducerService;
+import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +45,9 @@ class ApplicationResourceServiceTest {
     @Mock
     private OpaService opaService;
 
+    @Mock
+    private ResourceGroupProducerService resourceGroupProducerService;
+
     private ApplicationResourceService applicationResourceService;
 
     @Captor
@@ -55,7 +60,8 @@ class ApplicationResourceServiceTest {
                 applicationResourceLocationRepository,
                 azureGroupCache,
                 authorizationUtil,
-                opaService
+                opaService,
+                resourceGroupProducerService
         );
     }
 

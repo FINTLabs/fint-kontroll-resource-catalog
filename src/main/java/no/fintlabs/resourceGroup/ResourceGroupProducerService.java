@@ -3,49 +3,66 @@ package no.fintlabs.resourceGroup;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.cache.FintCache;
-import no.fintlabs.kafka.entity.EntityProducer;
-import no.fintlabs.kafka.entity.EntityProducerFactory;
-import no.fintlabs.kafka.entity.EntityProducerRecord;
-import no.fintlabs.kafka.entity.topic.EntityTopicNameParameters;
-import no.fintlabs.kafka.entity.topic.EntityTopicService;
+import no.novari.kafka.producing.ParameterizedProducerRecord;
+import no.novari.kafka.producing.ParameterizedTemplate;
+import no.novari.kafka.producing.ParameterizedTemplateFactory;
+import no.novari.kafka.topic.EntityTopicService;
+import no.novari.kafka.topic.configuration.EntityCleanupFrequency;
+import no.novari.kafka.topic.configuration.EntityTopicConfiguration;
+import no.novari.kafka.topic.name.EntityTopicNameParameters;
+import no.novari.kafka.topic.name.TopicNamePrefixParameters;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
 @Slf4j
 @Service
 public class ResourceGroupProducerService {
-    private final EntityProducer<ApplicationResource> entityProducer;
+    private final ParameterizedTemplate<ApplicationResource> parameterizedTemplate;
     private final EntityTopicNameParameters entityTopicNameParameters;
     private final FintCache<Long, Integer> publishedApplicationResourceCache;
 
     public ResourceGroupProducerService(
-            EntityProducerFactory entityProducerFactory,
             EntityTopicService entityTopicService,
-            FintCache<Long, Integer> publishedApplicationResourceCache
+            FintCache<Long, Integer> publishedApplicationResourceCache,
+            ParameterizedTemplateFactory parameterizedTemplateFactory
     ) {
-        entityProducer = entityProducerFactory.createProducer(ApplicationResource.class);
+        this.parameterizedTemplate = parameterizedTemplateFactory.createTemplate(ApplicationResource.class);
         this.publishedApplicationResourceCache = publishedApplicationResourceCache;
         entityTopicNameParameters = EntityTopicNameParameters
                 .builder()
-                .resource("resource-group")
+                .topicNamePrefixParameters(TopicNamePrefixParameters
+                        .stepBuilder()
+                        .orgIdApplicationDefault()
+                        .domainContextApplicationDefault()
+                        .build())
+                .resourceName("resource-group")
                 .build();
-        entityTopicService.ensureTopic(entityTopicNameParameters, 0);
+        entityTopicService.createOrModifyTopic(entityTopicNameParameters,EntityTopicConfiguration.stepBuilder()
+                .partitions(1)
+                .lastValueRetainedForever()
+                .nullValueRetentionTime(Duration.ofDays(7))
+                .cleanupFrequency(EntityCleanupFrequency.NORMAL)
+                .build()
+        );
     }
+
     public void publish(ApplicationResource applicationResource) {
         String key = applicationResource.getId().toString();
         log.debug("Publishing resourceGroup with id: {}", key);
-        entityProducer.send(
-                EntityProducerRecord.<ApplicationResource>builder()
+        parameterizedTemplate.send(
+                ParameterizedProducerRecord.<ApplicationResource>builder()
                         .topicNameParameters(entityTopicNameParameters)
                         .key(key)
                         .value(applicationResource)
                         .build()
         );
     }
+
     public List<ApplicationResource> publishResourceGroups(List<ApplicationResource> applicationResources) {
-        log.info("Number of entities in cache: {}", publishedApplicationResourceCache.getNumberOfEntries());
+       log.debug("Number of entities in cache: {}", publishedApplicationResourceCache.getNumberOfEntries());
 
         List<ApplicationResource> toPublish = applicationResources.stream()
                 .filter(ar -> {
@@ -59,9 +76,7 @@ public class ResourceGroupProducerService {
                 .peek(this::publish)
                 .toList();
 
-        log.info("Published application resources: {}", toPublish.size());
+        log.debug("Published application resources: {}", toPublish.size());
         return toPublish;
     }
-
-
 }
