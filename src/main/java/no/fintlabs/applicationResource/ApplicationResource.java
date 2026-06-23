@@ -36,7 +36,7 @@ public class ApplicationResource extends Resource {
 
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")
-    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Setter(AccessLevel.NONE)
     @Builder.Default
     private Set<ApplicationResourceLocation> validForOrgUnits = new HashSet<>();
