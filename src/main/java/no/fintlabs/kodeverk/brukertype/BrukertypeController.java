@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -44,6 +45,18 @@ public class BrukertypeController {
         if (updatedBrukertype != null) {
 
             return new ResponseEntity<>(updatedBrukertype, HttpStatus.OK);
+        } else {
+
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
+    @PatchMapping("/v1/")
+    public ResponseEntity<List<Brukertype>> updateAllBrukerTyper(@RequestBody Map<Long, BrukertypePatchDTO> brukertypePatchDTOs) {
+        List<Brukertype> updatedBrukertypes = brukertypeService.updateMultipleBrukertypes(brukertypePatchDTOs);
+        if (updatedBrukertypes != null) {
+
+            return new ResponseEntity<>(updatedBrukertypes, HttpStatus.OK);
         } else {
 
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
