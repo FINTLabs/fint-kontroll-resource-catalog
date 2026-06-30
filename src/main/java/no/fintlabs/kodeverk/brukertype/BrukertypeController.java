@@ -51,7 +51,7 @@ public class BrukertypeController {
         }
     }
 
-    @PatchMapping("/v1/")
+    @PatchMapping("/v1")
     public ResponseEntity<List<Brukertype>> updateAllBrukerTyper(@RequestBody Map<Long, BrukertypePatchDTO> brukertypePatchDTOs) {
         List<Brukertype> updatedBrukertypes = brukertypeService.updateMultipleBrukertypes(brukertypePatchDTOs);
         if (updatedBrukertypes != null) {
