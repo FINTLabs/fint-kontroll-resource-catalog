@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.resource.Resource;
+import org.hibernate.annotations.DynamicUpdate;
 
 
 import java.util.*;
@@ -17,6 +18,7 @@ import java.util.*;
 @Entity
 @Table(name="application_resource")
 @NoArgsConstructor
+@DynamicUpdate
 public class ApplicationResource extends Resource {
     private String applicationAccessType;
     private String applicationAccessRole;
@@ -34,6 +36,7 @@ public class ApplicationResource extends Resource {
     private String status;
     private Date statusChanged;
     private boolean needApproval;
+    private String entraState;
 
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")

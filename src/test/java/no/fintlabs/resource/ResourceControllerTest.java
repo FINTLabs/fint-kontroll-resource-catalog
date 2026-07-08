@@ -18,6 +18,7 @@ import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -51,12 +52,14 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -211,6 +214,37 @@ public class ResourceControllerTest  {
                 .andExpect(status().isOk());
 
         verify(resourceGroupPublishComponent).publishResourceGroups(true);
+    }
+
+    @Test
+    public void updateApplicationResource_ShouldCreateMutableSetsWhenCollectionsAreOmitted() throws Exception {
+        when(applikasjonskategoriService.getApplikasjonskategoriByNames(null))
+                .thenReturn(Set.of());
+        when(applicationResourceService.updateApplicationResource(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        mockMvc.perform(put("/api/resources/v1")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "id": 1,
+                                  "resourceId": "app-1",
+                                  "resourceName": "Resource A",
+                                  "resourceType": "APPLICATION",
+                                  "status": "ACTIVE"
+                                }
+                                """))
+                .andExpect(status().isAccepted());
+
+        ArgumentCaptor<ApplicationResource> applicationResourceCaptor =
+                ArgumentCaptor.forClass(ApplicationResource.class);
+        verify(applicationResourceService).updateApplicationResource(applicationResourceCaptor.capture());
+
+        ApplicationResource applicationResource = applicationResourceCaptor.getValue();
+        assertDoesNotThrow(() -> applicationResource.getPlatform().clear());
+        assertDoesNotThrow(() -> applicationResource.getValidForRoles().clear());
+        assertDoesNotThrow(() -> applicationResource.getValidForOrgUnits().clear());
+        assertDoesNotThrow(() -> applicationResource.getApplicationCategory().clear());
     }
 
     private void createSecurityContext(Jwt jwt) throws ServletException {

@@ -32,6 +32,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private boolean hasCost;
     private Long unitCost;
     private String status;
+    private String entraState;
     private Date statusChanged;
     private String createdBy;
     private Date dateCreated;

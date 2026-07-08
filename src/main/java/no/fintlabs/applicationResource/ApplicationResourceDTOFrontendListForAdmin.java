@@ -17,6 +17,7 @@ public class ApplicationResourceDTOFrontendListForAdmin {
     private String resourceType;
     private Long resourceLimit;
     private String status;
+    private String entraState;
     private UUID identityProviderGroupObjectId;
     private boolean needApproval;
     private List<String> applicationCategory;

@@ -55,4 +55,29 @@ public class ResourceGroupPublishComponent {
                     publishAll);
         }
     }
+
+    public List<ApplicationResource> publishAllResourceGroupsMsGraph() {
+        List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
+        log.info("Publishing {} resource groups to event.resource-group", allApplicationResourcesInDB.size());
+        return resourceGroupProducerService.publishResourceGroupsMsGraph(allApplicationResourcesInDB);
+    }
+
+    @Scheduled(
+            cron = "${fint.kontroll.resource-catalog.publishing.failed-cron}"
+    )
+    public List<ApplicationResource> publishFailedResourceGroupsMsGraph() {
+        List<ApplicationResource> failedApplicationResources =
+                applicationResourceService.getApplicationResourcesWithFailedEntraState();
+
+        if (failedApplicationResources.isEmpty()) {
+            log.info("No resource groups with failed Entra state found for publishing to event.resource-group");
+            return failedApplicationResources;
+        }
+
+        log.info(
+                "Publishing {} resource groups with failed Entra state to event.resource-group",
+                failedApplicationResources.size()
+        );
+        return resourceGroupProducerService.publishResourceGroupsMsGraph(failedApplicationResources);
+    }
 }
