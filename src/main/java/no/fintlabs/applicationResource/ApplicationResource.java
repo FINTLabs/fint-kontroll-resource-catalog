@@ -2,6 +2,7 @@ package no.fintlabs.applicationResource;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
@@ -30,6 +31,8 @@ public class ApplicationResource extends Resource {
     private String licenseEnforcement;
     private boolean hasCost;
     private Long unitCost;
+    @NotNull
+    @Column(nullable = false)
     private String status;
     private Date statusChanged;
     private boolean needApproval;
@@ -98,4 +101,3 @@ public class ApplicationResource extends Resource {
                 needApproval);
     }
 }
-
