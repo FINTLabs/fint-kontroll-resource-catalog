@@ -1,7 +1,9 @@
 package no.fintlabs.applicationResource;
 
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +30,7 @@ public class ApplicationResourceMapper {
                 applicationResource.getResourceType(),
                 applicationResource.getResourceLimit(),
                 applicationResource.getIdentityProviderGroupObjectId(),
-                applicationResource.getApplicationCategory().stream().toList()
+                toApplicationCategoryNames(applicationResource)
         );
     }
     public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
@@ -54,7 +56,14 @@ public class ApplicationResourceMapper {
                 applicationResource.getStatus(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 applicationResource.isNeedApproval(),
-                applicationResource.getApplicationCategory().stream().toList()
+                toApplicationCategoryNames(applicationResource)
         );
+    }
+
+    public static List<String> toApplicationCategoryNames(ApplicationResource applicationResource) {
+        return applicationResource.getApplicationCategory()
+                .stream()
+                .map(Applikasjonskategori::getName)
+                .toList();
     }
 }

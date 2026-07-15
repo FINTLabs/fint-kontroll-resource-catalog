@@ -4,6 +4,7 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
@@ -269,7 +270,11 @@ class ApplicationResourceServiceTest {
         validForRoles.add("ROLE_B");
         incoming.setValidForRoles(validForRoles);
 
-        incoming.setApplicationCategory(Set.of("NEW_CATEGORY"));
+        Applikasjonskategori newCategory = Applikasjonskategori.builder()
+                .id(1L)
+                .name("New category")
+                .build();
+        incoming.setApplicationCategory(Set.of(newCategory));
         incoming.setResourceName("New Resource Name");
         incoming.setResourceType("NEW_TYPE");
 
@@ -375,7 +380,7 @@ class ApplicationResourceServiceTest {
         assertTrue(saved.getValidForRoles().contains("ROLE_B"));
 
         // 8) applicationCategory / resourceName / resourceType
-        assertEquals(Set.of("NEW_CATEGORY"), saved.getApplicationCategory());
+        assertEquals(Set.of(newCategory), saved.getApplicationCategory());
         assertEquals("New Resource Name", saved.getResourceName());
         assertEquals("NEW_TYPE", saved.getResourceType());
 
@@ -440,7 +445,10 @@ class ApplicationResourceServiceTest {
         oldValidRoles.add("ROLE_OLD");
         existing.setValidForRoles(oldValidRoles);
 
-        existing.setApplicationCategory(Set.of("OLD_CATEGORY"));
+        existing.setApplicationCategory(Set.of(Applikasjonskategori.builder()
+                .id(2L)
+                .name("Old category")
+                .build()));
         existing.setResourceName("Old Resource Name");
         existing.setResourceType("OLD_TYPE");
         return existing;
@@ -542,7 +550,6 @@ class ApplicationResourceServiceTest {
         assertThat(result).isEqualTo(new ArrayList<>());
     }
 }
-
 
 
 

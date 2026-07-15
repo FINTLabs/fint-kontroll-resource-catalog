@@ -46,7 +46,6 @@ public class ApplikasjonskategoriController {
                 .builder()
                 .name(applikasjonskategori.getName())
                 .description(applikasjonskategori.getDescription())
-                .category(applikasjonskategori.getCategory())
                 .build();
         Applikasjonskategori createdApplikasjonskategori = applikasjonskategoriService.saveApplikasjonskategori(newApplikasjonskategori);
 
@@ -67,7 +66,6 @@ public class ApplikasjonskategoriController {
                 .id(applikasjonskategori.getId())
                 .name(applikasjonskategori.getName())
                 .description(applikasjonskategori.getDescription())
-                .category(applikasjonskategori.getCategory())
                 .build();
 
         Applikasjonskategori updatedApplikasjonskategori = applikasjonskategoriService.saveApplikasjonskategori(newApplikasjonskategori);
