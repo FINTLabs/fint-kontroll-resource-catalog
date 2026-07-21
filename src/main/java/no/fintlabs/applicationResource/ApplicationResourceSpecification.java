@@ -3,6 +3,7 @@ package no.fintlabs.applicationResource;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Join;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -71,9 +72,9 @@ public class ApplicationResourceSpecification {
                     criteriaBuilder.conjunction();
         }
         return (root, query, criteriaBuilder) -> {
-            Join<ApplicationResource, String> applicationCategoryJoin = root.join("applicationCategory");
+            Join<ApplicationResource, Applikasjonskategori> applicationCategoryJoin = root.join("applicationCategory");
 
-            return applicationCategoryJoin.in(applicationCategories);
+            return applicationCategoryJoin.get("name").in(applicationCategories);
         };
     }
 

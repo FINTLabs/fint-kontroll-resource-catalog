@@ -9,6 +9,8 @@ import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
 import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResource.ApplicationResourceService;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
@@ -31,6 +33,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -44,12 +48,19 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebMvcTest(ResourceController.class)
 @Testcontainers
@@ -63,6 +74,8 @@ public class ResourceControllerTest  {
     private OpaService opaService;
     @MockBean
     private ApplicationCategoryService applicationCategoryService;
+    @MockBean
+    private ApplikasjonskategoriService applikasjonskategoriService;
     @MockBean
     private AccessTypeService accessTypeService;
     @MockBean
@@ -132,6 +145,55 @@ public class ResourceControllerTest  {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resources", hasSize(2)))
                 .andReturn();
+    }
+
+    @Test
+    public void createApplicationResource_ShouldResolveApplicationCategoryNames() throws Exception {
+        Applikasjonskategori category = Applikasjonskategori.builder()
+                .id(1L)
+                .name("Saksbehandling")
+                .build();
+
+        when(applikasjonskategoriService.getApplikasjonskategoriByNames(List.of("Saksbehandling")))
+                .thenReturn(Set.of(category));
+        when(applicationResourceService.createApplicationResource(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        mockMvc.perform(post("/api/resources/v1")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceName": "Resource A",
+                                  "resourceType": "APPLICATION",
+                                  "applicationCategory": ["Saksbehandling"],
+                                  "platform": ["WEB"],
+                                  "validForRoles": ["STUDENT"],
+                                  "status": "ACTIVE"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        verify(applicationResourceService).createApplicationResource(argThat(applicationResource ->
+                applicationResource.getApplicationCategory().contains(category)
+        ));
+    }
+
+    @Test
+    public void createApplicationResource_ShouldReturnBadRequestWhenApplicationCategoryNameDoesNotExist() throws Exception {
+        when(applikasjonskategoriService.getApplikasjonskategoriByNames(List.of("Ukjent")))
+                .thenThrow(new IllegalArgumentException("Unknown application categories: Ukjent"));
+        when(problemDetailFactory.createProblemDetail(any(Throwable.class), any()))
+                .thenReturn(ProblemDetail.forStatus(HttpStatus.BAD_REQUEST));
+
+        mockMvc.perform(post("/api/resources/v1")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceName": "Resource A",
+                                  "applicationCategory": ["Ukjent"]
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
     }
 
     private void createSecurityContext(Jwt jwt) throws ServletException {

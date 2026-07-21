@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.resource.Resource;
 
 
@@ -47,10 +48,14 @@ public class ApplicationResource extends Resource {
     @Builder.Default
     private Set<String> validForRoles = new HashSet<>();
 
-    @ElementCollection
-    @CollectionTable(name = "application_resource_application_category", joinColumns = @JoinColumn(name = "id"))
+    @ManyToMany
+    @JoinTable(
+            name = "application_resource_application_category",
+            joinColumns = @JoinColumn(name = "id"),
+            inverseJoinColumns = @JoinColumn(name = "applikasjonskategori_id")
+    )
     @Builder.Default
-    private Set<String> applicationCategory = new HashSet<>();
+    private Set<Applikasjonskategori> applicationCategory = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {
@@ -98,4 +103,3 @@ public class ApplicationResource extends Resource {
                 needApproval);
     }
 }
-
