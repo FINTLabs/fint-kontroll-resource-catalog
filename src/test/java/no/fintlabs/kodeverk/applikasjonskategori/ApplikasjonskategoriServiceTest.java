@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -75,6 +76,33 @@ class ApplikasjonskategoriServiceTest {
         );
 
         assertThat(exception.getMessage()).contains("Ukjent");
+    }
+
+    @Test
+    void shouldCreateMissingApplikasjonskategoriByNames() {
+        Applikasjonskategori existingCategory = Applikasjonskategori.builder()
+                .id(1L)
+                .name("Saksbehandling")
+                .build();
+        Applikasjonskategori createdCategory = Applikasjonskategori.builder()
+                .id(2L)
+                .name("Pedagogisk programvare")
+                .build();
+
+        when(applikasjonskategoriRepository.findByNameIn(java.util.Set.of("Saksbehandling", "Pedagogisk programvare")))
+                .thenReturn(java.util.List.of(existingCategory));
+        when(applikasjonskategoriRepository.saveAllAndFlush(anyList())).thenReturn(java.util.List.of(createdCategory));
+
+        java.util.Set<Applikasjonskategori> categories = applikasjonskategoriService.getOrCreateApplikasjonskategoriByNames(
+                java.util.List.of("Saksbehandling", "Pedagogisk programvare")
+        );
+
+        assertThat(categories)
+                .extracting(Applikasjonskategori::getName)
+                .containsExactly("Saksbehandling", "Pedagogisk programvare");
+        assertThat(categories)
+                .extracting(Applikasjonskategori::getId)
+                .containsExactly(1L, 2L);
     }
 
     @Test

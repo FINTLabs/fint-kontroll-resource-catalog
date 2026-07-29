@@ -35,16 +35,7 @@ public class ApplikasjonskategoriService {
     }
 
     public Set<Applikasjonskategori> getApplikasjonskategoriByNames(List<String> names) {
-        if (names == null || names.isEmpty()) {
-            return Set.of();
-        }
-
-        Set<String> requestedNames = names.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(name -> !name.isEmpty())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-
+        Set<String> requestedNames = normalizeNames(names);
         if (requestedNames.isEmpty()) {
             return Set.of();
         }
@@ -63,6 +54,49 @@ public class ApplikasjonskategoriService {
         }
 
         return new LinkedHashSet<>(applikasjonskategorier);
+    }
+
+    @Transactional
+    public Set<Applikasjonskategori> getOrCreateApplikasjonskategoriByNames(List<String> names) {
+        Set<String> requestedNames = normalizeNames(names);
+        if (requestedNames.isEmpty()) {
+            return Set.of();
+        }
+
+        List<Applikasjonskategori> existingCategories = applikasjonskategoriRepository.findByNameIn(requestedNames);
+        Set<String> existingNames = existingCategories.stream()
+                .map(Applikasjonskategori::getName)
+                .collect(Collectors.toSet());
+
+        List<Applikasjonskategori> missingCategories = requestedNames.stream()
+                .filter(name -> !existingNames.contains(name))
+                .map(name -> Applikasjonskategori.builder()
+                        .name(name)
+                        .build())
+                .toList();
+
+        List<Applikasjonskategori> createdCategories = missingCategories.isEmpty()
+                ? List.of()
+                : applikasjonskategoriRepository.saveAllAndFlush(missingCategories);
+        createdCategories.forEach(category ->
+                log.info("Created applikasjonskategori from application resource import: {}", category.getName()));
+
+        Set<Applikasjonskategori> categories = new LinkedHashSet<>(existingCategories);
+        categories.addAll(createdCategories);
+
+        return categories;
+    }
+
+    private Set<String> normalizeNames(List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return Set.of();
+        }
+
+        return names.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public Applikasjonskategori saveApplikasjonskategori(Applikasjonskategori applikasjonskategori) {

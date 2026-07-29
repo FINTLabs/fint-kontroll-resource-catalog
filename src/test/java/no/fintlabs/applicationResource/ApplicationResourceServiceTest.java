@@ -5,6 +5,7 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationReposi
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
@@ -49,6 +50,9 @@ class ApplicationResourceServiceTest {
     @Mock
     private ResourceGroupProducerService resourceGroupProducerService;
 
+    @Mock
+    private ApplikasjonskategoriService applikasjonskategoriService;
+
     private ApplicationResourceService applicationResourceService;
 
     @Captor
@@ -62,7 +66,8 @@ class ApplicationResourceServiceTest {
                 azureGroupCache,
                 authorizationUtil,
                 opaService,
-                resourceGroupProducerService
+                resourceGroupProducerService,
+                applikasjonskategoriService
         );
     }
 
@@ -275,6 +280,8 @@ class ApplicationResourceServiceTest {
                 .name("New category")
                 .build();
         incoming.setApplicationCategory(Set.of(newCategory));
+        when(applikasjonskategoriService.getOrCreateApplikasjonskategoriByNames(List.of("New category")))
+                .thenReturn(Set.of(newCategory));
         incoming.setResourceName("New Resource Name");
         incoming.setResourceType("NEW_TYPE");
 
@@ -550,8 +557,6 @@ class ApplicationResourceServiceTest {
         assertThat(result).isEqualTo(new ArrayList<>());
     }
 }
-
-
 
 
 

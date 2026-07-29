@@ -1,5 +1,6 @@
 package no.fintlabs.kodeverk.applikasjonskategori;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,4 +21,9 @@ public class Applikasjonskategori {
     @Column(nullable = false, unique = true)
     private String name;
     private String description;
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public Applikasjonskategori(String name) {
+        this.name = name;
+    }
 }

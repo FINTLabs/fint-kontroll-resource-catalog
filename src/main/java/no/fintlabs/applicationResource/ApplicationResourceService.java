@@ -8,6 +8,8 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
@@ -39,6 +41,7 @@ public class ApplicationResourceService {
     private final AuthorizationUtil authorizationUtil;
     private final OpaService opaService;
     private final ResourceGroupProducerService resourceGroupProducerService;
+    private final ApplikasjonskategoriService applikasjonskategoriService;
     //private final ResourceGroupPublishComponent resourceGroupPublishComponent;
 
     public void save(ApplicationResource applicationResource) {
@@ -52,6 +55,7 @@ public class ApplicationResourceService {
                     saveExistingApplicationResource(applicationResource);
                 }, () -> {
                     log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
+                    resolveApplicationCategories(applicationResource);
                     ApplicationResource newResource = applicationResourceRepository.save(applicationResource);
                     resourceGroupProducerService.publish(newResource);
                 });
@@ -78,6 +82,8 @@ public class ApplicationResourceService {
     }
 
     private void mapApplicationResource(ApplicationResource incoming, ApplicationResource existingApplicationResource) {
+        resolveApplicationCategories(incoming);
+
         existingApplicationResource.setApplicationAccessType(incoming.getApplicationAccessType());
         existingApplicationResource.setApplicationAccessRole(incoming.getApplicationAccessRole());
         existingApplicationResource.setPlatform(incoming.getPlatform());
@@ -96,6 +102,20 @@ public class ApplicationResourceService {
         existingApplicationResource.setResourceName(incoming.getResourceName());
         existingApplicationResource.setResourceType(incoming.getResourceType());
         updateApplicationResourceLocations(existingApplicationResource, incoming);
+    }
+
+    private void resolveApplicationCategories(ApplicationResource applicationResource) {
+        Set<Applikasjonskategori> applicationCategories = applicationResource.getApplicationCategory();
+        if (applicationCategories == null || applicationCategories.isEmpty()) {
+            return;
+        }
+
+        List<String> categoryNames = applicationCategories.stream()
+                .map(Applikasjonskategori::getName)
+                .filter(Objects::nonNull)
+                .toList();
+
+        applicationResource.setApplicationCategory(applikasjonskategoriService.getOrCreateApplikasjonskategoriByNames(categoryNames));
     }
 
     public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
@@ -152,6 +172,7 @@ public class ApplicationResourceService {
     }
 
     public ApplicationResource createApplicationResource(ApplicationResource applicationResource) {
+        resolveApplicationCategories(applicationResource);
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
         log.info("Created new application resource: {}", newApplicationResource.getResourceId());
 
