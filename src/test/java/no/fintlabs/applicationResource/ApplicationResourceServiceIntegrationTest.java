@@ -7,6 +7,7 @@ import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.AzureGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
@@ -34,7 +35,7 @@ import static org.mockito.BDDMockito.given;
 @DataJpaTest
 @Testcontainers
 @ActiveProfiles("test")
-@Import({ApplicationResourceService.class})
+@Import({ApplicationResourceService.class, ApplikasjonskategoriService.class})
 class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest {
 
     @Autowired

@@ -2,7 +2,9 @@ package no.fintlabs.applicationResource;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -14,8 +16,18 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
 
     Optional<ApplicationResource> findApplicationResourceByResourceIdEqualsIgnoreCase(String resourceId);
 
-    @Query(value = "SELECT DISTINCT application_category FROM application_resource_application_category", nativeQuery = true)
+    @Query(value = """
+            SELECT DISTINCT ak.name
+            FROM application_resource_application_category arac
+            JOIN applikasjonskategori_kodeverk ak
+                ON ak.id = arac.applikasjonskategori_id
+            ORDER BY ak.name
+            """, nativeQuery = true)
     List<String> findAllDistinctApplicationCategories();
+
+    @Modifying
+    @Query(value = "DELETE FROM application_resource_application_category WHERE applikasjonskategori_id IN (:applicationCategories)", nativeQuery = true)
+    int deleteApplicationCategories(@Param("applicationCategories") Collection<Long> applicationCategories);
 
     @Query(value = "SELECT distinct access_type from application_resource", nativeQuery = true)
     List<String> findAllDistinctAccessTypes();
