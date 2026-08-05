@@ -90,6 +90,16 @@ public class ApplicationResourceLocationExtendedProduserService {
         return publishedApplicationRessourceLocationsExtended;
     }
 
+    public List<ApplicationResourceLocationExtended> publishAll(Long applicationResourceId, List<ApplicationResourceLocation> applicationResourceLocations) {
+        List<ApplicationResourceLocationExtended> publishedApplicationRessourceLocationsExtended = applicationResourceLocations
+                .stream()
+                .map(applicationResourceLocation -> createExtendedApplicationResourceLocation(applicationResourceId, applicationResourceLocation))
+                .peek(this::publish)
+                .toList();
+        log.info("Published all extended applicationResourceLocations: {} for applicationResource with id: {}", publishedApplicationRessourceLocationsExtended.size(), applicationResourceId);
+        return publishedApplicationRessourceLocationsExtended;
+    }
+
 
     public ApplicationResourceLocationExtended createExtendedApplicationResourceLocation(
             Long applicationResourceId, ApplicationResourceLocation applicationResourceLocation) {

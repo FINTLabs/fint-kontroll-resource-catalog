@@ -79,4 +79,13 @@ public class ResourceGroupProducerService {
         log.debug("Published application resources: {}", toPublish.size());
         return toPublish;
     }
+
+    public List<ApplicationResource> publishAllResourceGroups(List<ApplicationResource> applicationResources) {
+        List<ApplicationResource> publishedApplicationResources = applicationResources.stream()
+                .peek(this::publish)
+                .toList();
+
+        log.debug("Published all application resources: {}", publishedApplicationResources.size());
+        return publishedApplicationResources;
+    }
 }

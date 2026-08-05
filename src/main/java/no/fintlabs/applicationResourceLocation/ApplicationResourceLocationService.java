@@ -75,18 +75,21 @@ public class ApplicationResourceLocationService {
 
 
     public void extractAndSendToPublish(ApplicationResource applicationResource) {
+        extractAndSendToPublish(applicationResource, false);
+    }
+
+    public void extractAndSendToPublish(ApplicationResource applicationResource, boolean publishAll) {
 
         List<ApplicationResourceLocation> applicationResourceLocationsToPublishing =
                 new ArrayList<>(applicationResource.getValidForOrgUnits());
 
         List<ApplicationResourceLocationExtended> publishedApplicationResourceLocationsExtended =
-                applicationResourceLocationExtendedProduserService.publish(applicationResource.getId(),applicationResourceLocationsToPublishing);
+                publishAll
+                        ? applicationResourceLocationExtendedProduserService.publishAll(applicationResource.getId(), applicationResourceLocationsToPublishing)
+                        : applicationResourceLocationExtendedProduserService.publish(applicationResource.getId(), applicationResourceLocationsToPublishing);
 
         log.info("Published extended applicationResourceLocations: {}", publishedApplicationResourceLocationsExtended.size());
 
-    }
-    public List<ApplicationResourceLocation> saveAll(List<ApplicationResourceLocation> applicationResourceLocations) {
-        return applicationResourceLocationRepository.saveAll(applicationResourceLocations);
     }
 
 }

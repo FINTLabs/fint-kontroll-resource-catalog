@@ -341,9 +341,4 @@ public class ApplicationResourceService {
         log.debug("Both orgUnitsInScope and validOrgUnits are non empty subsets. Returning the actual intersection");
         return intersection;
     }
-
-//    public void publishAll() {
-//        resourceGroupPublishComponent.publishCompleteAndInCompleteResourceGroups();
-//        log.info("Publishing of all resource groups triggered");
-//    }
 }

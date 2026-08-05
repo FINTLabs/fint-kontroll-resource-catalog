@@ -29,25 +29,30 @@ public class ResourceGroupPublishComponent {
     @Scheduled(
             cron = "${fint.kontroll.resource-catalog.publishing.cron}"
     )
-    public void publishCompleteAndInCompleteResourceGroups() {
+    public void publishScheduledResourceGroups() {
+        publishResourceGroups(false);
+    }
+
+    public void publishResourceGroups(boolean publishAll) {
         List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
         if (!allApplicationResourcesInDB.isEmpty()) {
             List<ApplicationResource> applicationResourcesReadyToBePublished =
                     allApplicationResourcesInDB
                             .stream()
-                            .peek(applicationResource -> {
-                                log.debug("Application resource {} from database added to list for publishing as resource-group", applicationResource.getId());
-                                applicationResourceLocationService.extractAndSendToPublish(applicationResource);
-                            })
+                            .filter(applicationResource -> !"DELETED".equalsIgnoreCase(applicationResource.getStatus()))
                             .toList();
 
             log.info("{} application resources added to list for publishing as resource-group", applicationResourcesReadyToBePublished.size());
-            List<ApplicationResource> publishedResourceGroups = resourceGroupProducerService
-                    .publishResourceGroups(applicationResourcesReadyToBePublished);
-            applicationResourcesReadyToBePublished.forEach(applicationResourceLocationService::extractAndSendToPublish);
-            log.info("Published {} resource groups of total {} applicationResource objects found in database and different from cache",
+            List<ApplicationResource> publishedResourceGroups = publishAll
+                    ? resourceGroupProducerService.publishAllResourceGroups(applicationResourcesReadyToBePublished)
+                    : resourceGroupProducerService.publishResourceGroups(applicationResourcesReadyToBePublished);
+            applicationResourcesReadyToBePublished.forEach(applicationResource ->
+                    applicationResourceLocationService.extractAndSendToPublish(applicationResource, publishAll)
+            );
+            log.info("Published {} resource groups of total {} applicationResource objects found in database. publishAll={}",
                     publishedResourceGroups.size(),
-                    applicationResourcesReadyToBePublished.size());
+                    applicationResourcesReadyToBePublished.size(),
+                    publishAll);
         }
     }
 }

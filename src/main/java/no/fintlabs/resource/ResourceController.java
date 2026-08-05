@@ -245,10 +245,11 @@ public class ResourceController {
 
     @OnlyDevelopers
     @PostMapping("admin/publishall")
-    public ResponseEntity<HttpStatus> publishAll() {
+    public ResponseEntity<HttpStatus> publishAll(
+            @RequestParam(defaultValue = "false") boolean publishAll
+    ) {
 
-        //applicationResourceService.publishAll();
-        resourceGroupPublishComponent.publishCompleteAndInCompleteResourceGroups();
+        resourceGroupPublishComponent.publishResourceGroups(publishAll);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

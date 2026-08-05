@@ -196,6 +196,23 @@ public class ResourceControllerTest  {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    public void publishAll_ShouldUseCacheModeByDefault() throws Exception {
+        mockMvc.perform(post("/api/resources/admin/publishall"))
+                .andExpect(status().isOk());
+
+        verify(resourceGroupPublishComponent).publishResourceGroups(false);
+    }
+
+    @Test
+    public void publishAll_ShouldForcePublishWhenPublishAllParameterIsTrue() throws Exception {
+        mockMvc.perform(post("/api/resources/admin/publishall")
+                        .param("publishAll", "true"))
+                .andExpect(status().isOk());
+
+        verify(resourceGroupPublishComponent).publishResourceGroups(true);
+    }
+
     private void createSecurityContext(Jwt jwt) throws ServletException {
         SecurityContextHolder.getContext().setAuthentication(createJwtAuthentication(jwt));
         SecurityContextHolderAwareRequestFilter authInjector = new SecurityContextHolderAwareRequestFilter();
