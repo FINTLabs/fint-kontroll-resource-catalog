@@ -952,20 +952,61 @@ class ApplicationResourceServiceTest {
     }
 
     @Test
-    void shouldIgnoreGraphGroupResponseWithNoChangesWithoutUpdatingEntraState() {
+    void shouldIgnoreGraphGroupResponseWithNoChangesWhenEntraGroupMatchesCatalogState() {
         Long applicationResourceId = 51L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setIdentityProviderGroupObjectId(entraGroupId);
+        applicationResource.setIdentityProviderGroupName("Existing Entra Group Name");
 
         EntraGroup entraGroup = new EntraGroup();
         entraGroup.setResourceGroupId(applicationResourceId);
-        entraGroup.setObjectId(UUID.randomUUID().toString());
+        entraGroup.setObjectId(entraGroupId.toString());
         entraGroup.setDisplayName("Existing Entra Group Name");
         entraGroup.setStatus(EntraStatus.NO_CHANGES);
 
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+
         applicationResourceService.saveEntraGroup(entraGroup);
 
-        verify(applicationResourceRepository, never()).findById(anyLong());
         verify(applicationResourceRepository, never()).save(any(ApplicationResource.class));
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldTreatNoChangesAsUpdatedWhenEntraGroupDiffersFromCatalogState() {
+        Long applicationResourceId = 52L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setStatus("PENDING_ACTIVE");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Existing Entra Group Name");
+        entraGroup.setStatus(EntraStatus.NO_CHANGES);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals(entraGroupId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("Existing Entra Group Name", saved.getIdentityProviderGroupName());
+        assertEquals("UPDATED", saved.getEntraState());
+        assertEquals("ACTIVE", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        verify(entraGroupCache).put(applicationResourceId, entraGroup);
         verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
     }
 

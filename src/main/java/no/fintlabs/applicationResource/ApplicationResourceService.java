@@ -234,20 +234,20 @@ public class ApplicationResourceService {
                 entraGroup.getTraceId()
         );
 
-        if (entraGroup.getStatus() == EntraStatus.NO_CHANGES) {
-            log.info(
-                    "Received graph-group NO_CHANGES response for resourceGroupId {}, objectId {}. Keeping current catalog state unchanged. traceId={}",
-                    entraGroup.getResourceGroupId(),
-                    entraGroup.getObjectId(),
-                    entraGroup.getTraceId()
-            );
-            return;
-        }
-
         findApplicationResourceForEntraGroup(entraGroup)
                 .ifPresent(applicationResource -> {
-                    EntraStatus status = entraGroup.getStatus();
+                    EntraStatus status = resolveEntraStatus(entraGroup, applicationResource);
                     applicationResource.setEntraState(status == null ? null : status.name());
+
+                    if (status == EntraStatus.NO_CHANGES) {
+                        log.info(
+                                "Received graph-group NO_CHANGES response for resourceGroupId {}, objectId {}. Keeping current catalog state unchanged. traceId={}",
+                                entraGroup.getResourceGroupId(),
+                                entraGroup.getObjectId(),
+                                entraGroup.getTraceId()
+                        );
+                        return;
+                    }
 
                     if (status == EntraStatus.ERROR || status == EntraStatus.FAILED) {
                         applicationResourceRepository.save(applicationResource);
@@ -307,6 +307,39 @@ public class ApplicationResourceService {
                     }
                     entraGroupCache.put(cacheKey, entraGroup);
                 });
+    }
+
+    private EntraStatus resolveEntraStatus(EntraGroup entraGroup, ApplicationResource applicationResource) {
+        EntraStatus status = entraGroup.getStatus();
+        if (status != EntraStatus.NO_CHANGES) {
+            return status;
+        }
+
+        if (hasEntraGroupChanged(entraGroup, applicationResource)) {
+            log.warn(
+                    "Received graph-group NO_CHANGES response for application resource {}, but returned objectId/name differs from catalog. Treating response as UPDATED. currentObjectId={}, returnedObjectId={}, currentName={}, returnedName={}, traceId={}",
+                    applicationResource.getId(),
+                    applicationResource.getIdentityProviderGroupObjectId(),
+                    entraGroup.getObjectId(),
+                    applicationResource.getIdentityProviderGroupName(),
+                    entraGroup.getDisplayName(),
+                    entraGroup.getTraceId()
+            );
+            return EntraStatus.UPDATED;
+        }
+
+        return status;
+    }
+
+    private boolean hasEntraGroupChanged(EntraGroup entraGroup, ApplicationResource applicationResource) {
+        boolean objectIdChanged = parseObjectId(entraGroup.getObjectId(), entraGroup.getTraceId())
+                .map(objectId -> !Objects.equals(applicationResource.getIdentityProviderGroupObjectId(), objectId))
+                .orElse(false);
+
+        boolean groupNameChanged = entraGroup.getDisplayName() != null
+                && !Objects.equals(applicationResource.getIdentityProviderGroupName(), entraGroup.getDisplayName());
+
+        return objectIdChanged || groupNameChanged;
     }
 
     private Optional<ApplicationResource> findApplicationResourceForEntraGroup(EntraGroup entraGroup) {
@@ -399,7 +432,7 @@ public class ApplicationResourceService {
     }
 
     private void activatePendingActiveStatus(ApplicationResource applicationResource, EntraStatus entraStatus) {
-        if (entraStatus == EntraStatus.CREATED
+        if ((entraStatus == EntraStatus.CREATED || entraStatus == EntraStatus.UPDATED)
                 && ApplicationResourceStatus.PENDING_ACTIVE.value().equals(applicationResource.getStatus())) {
             applicationResource.setStatus(ApplicationResourceStatus.ACTIVE.value());
             applicationResource.setStatusChanged(Date.from(Instant.now()));

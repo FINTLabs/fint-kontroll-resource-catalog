@@ -56,10 +56,10 @@ public class ResourceGroupPublishComponent {
         }
     }
 
-    public List<ApplicationResource> publishAllResourceGroupsMsGraph() {
+    public void publishAllResourceGroupsMsGraph() {
         List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
         log.info("Publishing {} resource groups to event.resource-group", allApplicationResourcesInDB.size());
-        return resourceGroupProducerService.publishResourceGroupsMsGraph(allApplicationResourcesInDB);
+        resourceGroupProducerService.publishResourceGroupsMsGraph(allApplicationResourcesInDB);
     }
 
     @Scheduled(
