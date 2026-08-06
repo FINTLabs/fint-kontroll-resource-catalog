@@ -1,7 +1,9 @@
 package no.fintlabs.resourceGroup;
 
 import no.fintlabs.applicationResource.ApplicationResource;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.novari.kafka.producing.ParameterizedProducerRecord;
 import no.novari.kafka.producing.ParameterizedTemplate;
 import no.novari.kafka.producing.ParameterizedTemplateFactory;
@@ -16,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -92,7 +95,7 @@ class ResourceGroupProducerServiceTest {
         assertEquals("61", resourceGroup.getResourceId());
         assertEquals(idpGroupObjectId.toString(), resourceGroup.getIdpGroupObjectId());
         assertEquals("Resource 61", resourceGroup.getResourceName());
-        verify(publishedApplicationResourceCache).put(61L, applicationResource.hashCode());
+        verify(publishedApplicationResourceCache).put(61L, ResourceGroupProducerService.publicationFingerprint(applicationResource));
     }
 
     @Test
@@ -133,7 +136,7 @@ class ResourceGroupProducerServiceTest {
 
         verify(resourceGroupTemplate).send(any());
         verify(resourceGroupMsGraphTemplate, never()).send(any());
-        verify(publishedApplicationResourceCache).put(64L, applicationResource.hashCode());
+        verify(publishedApplicationResourceCache).put(64L, ResourceGroupProducerService.publicationFingerprint(applicationResource));
     }
 
     @Test
@@ -146,7 +149,8 @@ class ResourceGroupProducerServiceTest {
         changed.setStatus("ACTIVE");
 
         when(publishedApplicationResourceCache.getNumberOfEntries()).thenReturn(2L);
-        when(publishedApplicationResourceCache.getOptional(1L)).thenReturn(Optional.of(unchanged.hashCode()));
+        when(publishedApplicationResourceCache.getOptional(1L))
+                .thenReturn(Optional.of(ResourceGroupProducerService.publicationFingerprint(unchanged)));
         when(publishedApplicationResourceCache.getOptional(2L)).thenReturn(Optional.empty());
 
         List<ApplicationResource> published =
@@ -155,7 +159,24 @@ class ResourceGroupProducerServiceTest {
         assertEquals(List.of(changed), published);
         verify(resourceGroupTemplate).send(any());
         verify(resourceGroupMsGraphTemplate, never()).send(any());
-        verify(publishedApplicationResourceCache).put(2L, changed.hashCode());
+        verify(publishedApplicationResourceCache).put(2L, ResourceGroupProducerService.publicationFingerprint(changed));
+    }
+
+    @Test
+    void publishResourceGroupsShouldNotRepublishEquivalentResourceWithDifferentJpaChildIds() {
+        ApplicationResource cached = applicationResourceWithNestedValues(3L, 10L);
+        ApplicationResource reloaded = applicationResourceWithNestedValues(3L, 20L);
+
+        when(publishedApplicationResourceCache.getNumberOfEntries()).thenReturn(1L);
+        when(publishedApplicationResourceCache.getOptional(3L))
+                .thenReturn(Optional.of(ResourceGroupProducerService.publicationFingerprint(cached)));
+
+        List<ApplicationResource> published =
+                resourceGroupProducerService.publishResourceGroups(List.of(reloaded));
+
+        assertEquals(List.of(), published);
+        verify(resourceGroupTemplate, never()).send(any());
+        verify(resourceGroupMsGraphTemplate, never()).send(any());
     }
 
     @Test
@@ -170,7 +191,7 @@ class ResourceGroupProducerServiceTest {
         assertEquals(List.of(active), published);
         verify(resourceGroupTemplate).send(any());
         verify(resourceGroupMsGraphTemplate, never()).send(any());
-        verify(publishedApplicationResourceCache).put(1L, active.hashCode());
+        verify(publishedApplicationResourceCache).put(1L, ResourceGroupProducerService.publicationFingerprint(active));
     }
 
     @Test
@@ -190,5 +211,35 @@ class ResourceGroupProducerServiceTest {
 
         assertEquals(List.of(), publishedResources);
         verify(resourceGroupMsGraphTemplate, never()).send(any());
+    }
+
+    private ApplicationResource applicationResourceWithNestedValues(Long id, Long locationId) {
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(id);
+        applicationResource.setResourceId("resource-id");
+        applicationResource.setResourceName("Resource name");
+        applicationResource.setResourceType("ApplicationResource");
+        applicationResource.setPlatform(Set.of("web", "ios"));
+        applicationResource.setValidForRoles(Set.of("student", "employee"));
+        applicationResource.setApplicationCategory(Set.of(
+                Applikasjonskategori.builder()
+                        .id(1L)
+                        .name("Category")
+                        .description("Description")
+                        .build()
+        ));
+        applicationResource.getValidForOrgUnits().add(
+                ApplicationResourceLocation.builder()
+                        .id(locationId)
+                        .resourceId("resource-id")
+                        .resourceName("Resource name")
+                        .orgUnitId("org-unit")
+                        .orgUnitName("Org unit")
+                        .resourceLimit(10L)
+                        .topOrgunit(true)
+                        .build()
+        );
+
+        return applicationResource;
     }
 }

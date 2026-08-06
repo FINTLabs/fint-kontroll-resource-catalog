@@ -2,7 +2,9 @@ package no.fintlabs.resourceGroup;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResource;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.cache.FintCache;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.novari.kafka.producing.ParameterizedProducerRecord;
 import no.novari.kafka.producing.ParameterizedTemplate;
 import no.novari.kafka.producing.ParameterizedTemplateFactory;
@@ -21,6 +23,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Service
@@ -100,7 +104,7 @@ public class ResourceGroupProducerService {
                         .value(applicationResource)
                         .build()
         );
-        publishedApplicationResourceCache.put(applicationResource.getId(), applicationResource.hashCode());
+        publishedApplicationResourceCache.put(applicationResource.getId(), publicationFingerprint(applicationResource));
     }
 
     public void publishResourceGroupMsGraph(ApplicationResource applicationResource) {
@@ -135,7 +139,7 @@ public class ResourceGroupProducerService {
         List<ApplicationResource> toPublish = applicationResources.stream()
                 .filter(ar -> {
                     Long id = ar.getId();
-                    int currentHash = ar.hashCode();
+                    int currentHash = publicationFingerprint(ar);
                     return publishedApplicationResourceCache
                             .getOptional(id)
                             .map(cachedHash -> !Objects.equals(cachedHash, currentHash))
@@ -183,6 +187,83 @@ public class ResourceGroupProducerService {
 
     private boolean shouldSkipMsGraphPublish(ApplicationResource applicationResource) {
         return "DELETED".equalsIgnoreCase(applicationResource.getStatus());
+    }
+
+    static int publicationFingerprint(ApplicationResource applicationResource) {
+        return Objects.hash(
+                applicationResource.getId(),
+                applicationResource.getResourceId(),
+                applicationResource.getResourceName(),
+                applicationResource.getResourceType(),
+                applicationResource.getIdentityProviderGroupObjectId(),
+                applicationResource.getIdentityProviderGroupName(),
+                applicationResource.getApplicationAccessType(),
+                applicationResource.getApplicationAccessRole(),
+                sortedStream(applicationResource.getPlatform()).toList(),
+                applicationResource.getAccessType(),
+                applicationResource.getResourceLimit(),
+                applicationResource.getResourceOwnerOrgUnitId(),
+                applicationResource.getResourceOwnerOrgUnitName(),
+                applicationResource.getLicenseEnforcement(),
+                applicationResource.isHasCost(),
+                applicationResource.getUnitCost(),
+                applicationResource.getStatus(),
+                applicationResource.getStatusChanged(),
+                applicationResource.isNeedApproval(),
+                sortedStream(applicationResource.getValidForRoles()).toList(),
+                sortedApplicationCategories(applicationResource),
+                sortedApplicationResourceLocations(applicationResource)
+        );
+    }
+
+    private static Stream<String> sortedStream(Iterable<String> values) {
+        if (values == null) {
+            return Stream.empty();
+        }
+
+        return StreamSupport.stream(values.spliterator(), false)
+                .sorted();
+    }
+
+    private static List<String> sortedApplicationCategories(ApplicationResource applicationResource) {
+        if (applicationResource.getApplicationCategory() == null) {
+            return List.of();
+        }
+
+        return applicationResource.getApplicationCategory().stream()
+                .map(Applikasjonskategori::getName)
+                .sorted()
+                .toList();
+    }
+
+    private static List<List<Object>> sortedApplicationResourceLocations(ApplicationResource applicationResource) {
+        if (applicationResource.getValidForOrgUnits() == null) {
+            return List.of();
+        }
+
+        return applicationResource.getValidForOrgUnits().stream()
+                .map(ResourceGroupProducerService::applicationResourceLocationFingerprint)
+                .sorted(ResourceGroupProducerService::compareLocationFingerprint)
+                .toList();
+    }
+
+    private static List<Object> applicationResourceLocationFingerprint(ApplicationResourceLocation location) {
+        return List.of(
+                nullable(location.getResourceId()),
+                nullable(location.getResourceName()),
+                nullable(location.getOrgUnitId()),
+                nullable(location.getOrgUnitName()),
+                nullable(location.getResourceLimit()),
+                location.isTopOrgunit()
+        );
+    }
+
+    private static int compareLocationFingerprint(List<Object> first, List<Object> second) {
+        return first.toString().compareTo(second.toString());
+    }
+
+    private static Object nullable(Object value) {
+        return value == null ? "" : value;
     }
 
     public List<ApplicationResource> publishAllResourceGroups(List<ApplicationResource> applicationResources) {
