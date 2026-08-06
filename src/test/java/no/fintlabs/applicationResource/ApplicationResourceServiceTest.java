@@ -493,6 +493,44 @@ class ApplicationResourceServiceTest {
     }
 
     @Test
+    void shouldSetPendingActiveAndClearEntraGroupWhenUiUpdateReactivatesDeletedResource() {
+        Long applicationResourceId = 51L;
+        String resourceId = "APP-51";
+        UUID staleIdpGroupObjectId = UUID.randomUUID();
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId(resourceId);
+        existing.setResourceName("Resource name");
+        existing.setStatus("DELETED");
+        existing.setIdentityProviderGroupObjectId(staleIdpGroupObjectId);
+        existing.setIdentityProviderGroupName("Old Entra group");
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId(resourceId);
+        incoming.setResourceName("Resource name");
+        incoming.setStatus("ACTIVE");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("PENDING_ACTIVE", saved.getStatus());
+        assertNull(saved.getIdentityProviderGroupObjectId());
+        assertNull(saved.getIdentityProviderGroupName());
+        assertNotNull(saved.getStatusChanged());
+        verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
     void shouldSetStatusDeletedAndPublishOnlyResourceGroupEntityWhenDeletingApplicationResource() {
         Long applicationResourceId = 6L;
         Date originalStatusChanged = new Date(1000L);

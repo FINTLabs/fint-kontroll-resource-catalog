@@ -74,7 +74,11 @@ public class ApplicationResourceService {
 
         ResourceGroup previousMsGraphCommand = toMsGraphCommand(existingApplicationResource);
         String previousStatus = existingApplicationResource.getStatus();
+        boolean reactivatingDeletedResource = isReactivatingDeletedResource(previousStatus, incoming.getStatus());
         mapApplicationResource(incoming, existingApplicationResource);
+        if (reactivatingDeletedResource) {
+            prepareDeletedResourceForReactivation(existingApplicationResource);
+        }
         ResourceGroup updatedMsGraphCommand = toMsGraphCommand(existingApplicationResource);
         boolean publishMsGraph = shouldPublishMsGraph(
                 existingApplicationResource,
@@ -100,6 +104,18 @@ public class ApplicationResourceService {
     private boolean changedToPendingActive(String previousStatus, String updatedStatus) {
         return !Objects.equals(previousStatus, updatedStatus)
                 && ApplicationResourceStatus.PENDING_ACTIVE.value().equals(updatedStatus);
+    }
+
+    private boolean isReactivatingDeletedResource(String previousStatus, String incomingStatus) {
+        return ApplicationResourceStatus.DELETED.value().equalsIgnoreCase(previousStatus)
+                && ApplicationResourceStatus.ACTIVE.value().equals(incomingStatus);
+    }
+
+    private void prepareDeletedResourceForReactivation(ApplicationResource applicationResource) {
+        applicationResource.setIdentityProviderGroupObjectId(null);
+        applicationResource.setIdentityProviderGroupName(null);
+        applicationResource.setStatus(ApplicationResourceStatus.PENDING_ACTIVE.value());
+        applicationResource.setStatusChanged(Date.from(Instant.now()));
     }
 
     private ResourceGroup toMsGraphCommand(ApplicationResource applicationResource) {
