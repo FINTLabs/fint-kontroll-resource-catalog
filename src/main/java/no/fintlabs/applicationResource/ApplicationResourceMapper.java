@@ -54,6 +54,7 @@ public class ApplicationResourceMapper {
                 applicationResource.getResourceType(),
                 applicationResource.getResourceLimit(),
                 applicationResource.getStatus(),
+                applicationResource.getEntraState(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 applicationResource.isNeedApproval(),
                 toApplicationCategoryNames(applicationResource)

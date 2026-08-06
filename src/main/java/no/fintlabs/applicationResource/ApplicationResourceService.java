@@ -12,9 +12,11 @@ import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
-import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.EntraGroup;
+import no.fintlabs.resourceGroup.EntraStatus;
+import no.fintlabs.resourceGroup.ResourceGroup;
+import no.fintlabs.resourceGroup.ResourceGroupOperation;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
-import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -37,12 +39,11 @@ public class ApplicationResourceService {
 
     private final ApplicationResourceRepository applicationResourceRepository;
     private final ApplicationResourceLocationRepository applicationResourceLocationRepository;
-    private final FintCache<Long, AzureGroup> azureGroupCache;
+    private final FintCache<Long, EntraGroup> entraGroupCache;
     private final AuthorizationUtil authorizationUtil;
     private final OpaService opaService;
     private final ResourceGroupProducerService resourceGroupProducerService;
     private final ApplikasjonskategoriService applikasjonskategoriService;
-    //private final ResourceGroupPublishComponent resourceGroupPublishComponent;
 
     public void save(ApplicationResource applicationResource) {
         String resourceId = applicationResource.getResourceId();
@@ -56,8 +57,9 @@ public class ApplicationResourceService {
                 }, () -> {
                     log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
                     resolveApplicationCategories(applicationResource);
+                    setPendingActiveIfIdentityProviderGroupIsMissing(applicationResource);
                     ApplicationResource newResource = applicationResourceRepository.save(applicationResource);
-                    resourceGroupProducerService.publish(newResource);
+                    resourceGroupProducerService.publish(newResource, shouldPublishMsGraph(newResource, true));
                 });
     }
 
@@ -70,23 +72,82 @@ public class ApplicationResourceService {
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(()
                         -> new ApplicationResourceNotFoundException(incoming.getId()));
 
+        ResourceGroup previousMsGraphCommand = toMsGraphCommand(existingApplicationResource);
+        String previousStatus = existingApplicationResource.getStatus();
+        boolean reactivatingDeletedResource = isReactivatingDeletedResource(previousStatus, incoming.getStatus());
         mapApplicationResource(incoming, existingApplicationResource);
-        Optional<AzureGroup> azureGroup = azureGroupCache.getOptional(existingApplicationResource.getId());
-
-        if (azureGroup.isPresent()) {
-            existingApplicationResource.setIdentityProviderGroupObjectId(azureGroup.get().getId());
-            existingApplicationResource.setIdentityProviderGroupName(azureGroup.get().getDisplayName());
+        if (reactivatingDeletedResource) {
+            prepareDeletedResourceForReactivation(existingApplicationResource);
         }
+        ResourceGroup updatedMsGraphCommand = toMsGraphCommand(existingApplicationResource);
+        boolean publishMsGraph = shouldPublishMsGraph(
+                existingApplicationResource,
+                hasMsGraphCommandChanged(previousMsGraphCommand, updatedMsGraphCommand)
+                        || changedToPendingActive(previousStatus, existingApplicationResource.getStatus())
+        );
+
         applicationResourceRepository.save(existingApplicationResource);
-        resourceGroupProducerService.publish(existingApplicationResource);
+        resourceGroupProducerService.publish(existingApplicationResource, publishMsGraph);
     }
 
-    private void mapApplicationResource(ApplicationResource incoming, ApplicationResource existingApplicationResource) {
+    private boolean shouldPublishMsGraph(ApplicationResource applicationResource, boolean publishMsGraph) {
+        return publishMsGraph && !ApplicationResourceStatus.DELETED.value().equalsIgnoreCase(applicationResource.getStatus());
+    }
+
+    private boolean hasMsGraphCommandChanged(ResourceGroup previous, ResourceGroup updated) {
+        return !Objects.equals(previous.getOperation(), updated.getOperation())
+                || !Objects.equals(previous.getResourceId(), updated.getResourceId())
+                || !Objects.equals(previous.getIdpGroupObjectId(), updated.getIdpGroupObjectId())
+                || !Objects.equals(previous.getResourceName(), updated.getResourceName());
+    }
+
+    private boolean changedToPendingActive(String previousStatus, String updatedStatus) {
+        return !Objects.equals(previousStatus, updatedStatus)
+                && ApplicationResourceStatus.PENDING_ACTIVE.value().equals(updatedStatus);
+    }
+
+    private boolean isReactivatingDeletedResource(String previousStatus, String incomingStatus) {
+        return ApplicationResourceStatus.DELETED.value().equalsIgnoreCase(previousStatus)
+                && ApplicationResourceStatus.ACTIVE.value().equals(incomingStatus);
+    }
+
+    private void prepareDeletedResourceForReactivation(ApplicationResource applicationResource) {
+        applicationResource.setIdentityProviderGroupObjectId(null);
+        applicationResource.setIdentityProviderGroupName(null);
+        applicationResource.setStatus(ApplicationResourceStatus.PENDING_ACTIVE.value());
+        applicationResource.setStatusChanged(Date.from(Instant.now()));
+    }
+
+    private ResourceGroup toMsGraphCommand(ApplicationResource applicationResource) {
+        return ResourceGroup.builder()
+                .operation(resolveMsGraphOperation(applicationResource))
+                .resourceId(applicationResource.getId().toString())
+                .idpGroupObjectId(applicationResource.getIdentityProviderGroupObjectId() == null
+                        ? null
+                        : applicationResource.getIdentityProviderGroupObjectId().toString())
+                .resourceName(applicationResource.getResourceName())
+                .build();
+    }
+
+    private ResourceGroupOperation resolveMsGraphOperation(ApplicationResource applicationResource) {
+        if ("DELETED".equalsIgnoreCase(applicationResource.getStatus())) {
+            return ResourceGroupOperation.DELETE;
+        }
+
+        return applicationResource.getIdentityProviderGroupObjectId() == null
+                ? ResourceGroupOperation.CREATE
+                : ResourceGroupOperation.UPDATE;
+    }
+
+    private void mapApplicationResource(
+            ApplicationResource incoming,
+            ApplicationResource existingApplicationResource
+    ) {
         resolveApplicationCategories(incoming);
 
         existingApplicationResource.setApplicationAccessType(incoming.getApplicationAccessType());
         existingApplicationResource.setApplicationAccessRole(incoming.getApplicationAccessRole());
-        existingApplicationResource.setPlatform(incoming.getPlatform());
+        existingApplicationResource.setPlatform(toMutableSet(incoming.getPlatform()));
         existingApplicationResource.setAccessType(incoming.getAccessType());
         existingApplicationResource.setResourceLimit(incoming.getResourceLimit());
         existingApplicationResource.setResourceOwnerOrgUnitId(incoming.getResourceOwnerOrgUnitId());
@@ -96,9 +157,10 @@ public class ApplicationResourceService {
         existingApplicationResource.setUnitCost(incoming.getUnitCost());
         existingApplicationResource.setStatus(incoming.getStatus());
         existingApplicationResource.setStatusChanged(incoming.getStatusChanged());
+        setPendingActiveIfIdentityProviderGroupIsMissing(existingApplicationResource);
         existingApplicationResource.setNeedApproval(incoming.isNeedApproval());
-        existingApplicationResource.setValidForRoles(incoming.getValidForRoles());
-        existingApplicationResource.setApplicationCategory(incoming.getApplicationCategory());
+        existingApplicationResource.setValidForRoles(toMutableSet(incoming.getValidForRoles()));
+        existingApplicationResource.setApplicationCategory(toMutableSet(incoming.getApplicationCategory()));
         existingApplicationResource.setResourceName(incoming.getResourceName());
         existingApplicationResource.setResourceType(incoming.getResourceType());
         updateApplicationResourceLocations(existingApplicationResource, incoming);
@@ -107,6 +169,7 @@ public class ApplicationResourceService {
     private void resolveApplicationCategories(ApplicationResource applicationResource) {
         Set<Applikasjonskategori> applicationCategories = applicationResource.getApplicationCategory();
         if (applicationCategories == null || applicationCategories.isEmpty()) {
+            applicationResource.setApplicationCategory(new HashSet<>());
             return;
         }
 
@@ -115,7 +178,13 @@ public class ApplicationResourceService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        applicationResource.setApplicationCategory(applikasjonskategoriService.getOrCreateApplikasjonskategoriByNames(categoryNames));
+        applicationResource.setApplicationCategory(
+                toMutableSet(applikasjonskategoriService.getOrCreateApplikasjonskategoriByNames(categoryNames))
+        );
+    }
+
+    private static <T> Set<T> toMutableSet(Collection<T> values) {
+        return values == null ? new HashSet<>() : new HashSet<>(values);
     }
 
     public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
@@ -167,14 +236,180 @@ public class ApplicationResourceService {
         return applicationResourceRepository.findById(applicationResourceId);
     }
 
+    public void saveEntraGroup(EntraGroup entraGroup) {
+        if (entraGroup == null) {
+            log.warn("Ignoring graph-group response without payload");
+            return;
+        }
+
+        log.debug(
+                "Handling graph-group response for resourceGroupId {}, objectId {}, status {}, traceId {}",
+                entraGroup.getResourceGroupId(),
+                entraGroup.getObjectId(),
+                entraGroup.getStatus(),
+                entraGroup.getTraceId()
+        );
+
+        findApplicationResourceForEntraGroup(entraGroup)
+                .ifPresent(applicationResource -> {
+                    EntraStatus status = resolveEntraStatus(entraGroup, applicationResource);
+                    applicationResource.setEntraState(status == null ? null : status.name());
+
+                    if (status == EntraStatus.NO_CHANGES) {
+                        log.info(
+                                "Received graph-group NO_CHANGES response for resourceGroupId {}, objectId {}. Keeping current catalog state unchanged. traceId={}",
+                                entraGroup.getResourceGroupId(),
+                                entraGroup.getObjectId(),
+                                entraGroup.getTraceId()
+                        );
+                        return;
+                    }
+
+                    if (status == EntraStatus.ERROR || status == EntraStatus.FAILED) {
+                        applicationResourceRepository.save(applicationResource);
+                        log.warn(
+                                "Updated application resource {} entraState to {} after graph-group response. traceId={}",
+                                applicationResource.getId(),
+                                status,
+                                entraGroup.getTraceId()
+                        );
+                        return;
+                    }
+
+                    if (status == EntraStatus.DELETED) {
+                        Long cacheKey = applicationResource.getId();
+                        applicationResource.setIdentityProviderGroupObjectId(null);
+                        applicationResource.setIdentityProviderGroupName(null);
+                        applicationResourceRepository.save(applicationResource);
+                        entraGroupCache.remove(cacheKey);
+                        log.debug(
+                                "Cleared Entra group info for application resource {} after delete response",
+                                applicationResource.getId()
+                        );
+                        return;
+                    }
+
+                    if (entraGroup.getObjectId() == null || entraGroup.getObjectId().isBlank()) {
+                        log.warn(
+                                "Ignoring graph-group response for resourceGroupId {} without objectId. status={}, traceId={}",
+                                entraGroup.getResourceGroupId(),
+                                status,
+                                entraGroup.getTraceId()
+                        );
+                        applicationResourceRepository.save(applicationResource);
+                        return;
+                    }
+
+                    Optional<UUID> objectId = parseObjectId(entraGroup.getObjectId(), entraGroup.getTraceId());
+                    if (objectId.isEmpty()) {
+                        log.warn(
+                                "Ignoring graph-group response for resourceGroupId {} with invalid objectId {}. status={}, traceId={}",
+                                entraGroup.getResourceGroupId(),
+                                entraGroup.getObjectId(),
+                                status,
+                                entraGroup.getTraceId()
+                        );
+                        applicationResourceRepository.save(applicationResource);
+                        return;
+                    }
+
+                    applicationResource.setIdentityProviderGroupObjectId(objectId.get());
+                    applicationResource.setIdentityProviderGroupName(entraGroup.getDisplayName());
+                    activatePendingActiveStatus(applicationResource, status);
+                    applicationResourceRepository.save(applicationResource);
+                    Long cacheKey = applicationResource.getId();
+                    if (entraGroup.getResourceGroupId() == null) {
+                        entraGroup.setResourceGroupId(cacheKey);
+                    }
+                    entraGroupCache.put(cacheKey, entraGroup);
+                });
+    }
+
+    private EntraStatus resolveEntraStatus(EntraGroup entraGroup, ApplicationResource applicationResource) {
+        EntraStatus status = entraGroup.getStatus();
+        if (status != EntraStatus.NO_CHANGES) {
+            return status;
+        }
+
+        if (hasEntraGroupChanged(entraGroup, applicationResource)) {
+            log.warn(
+                    "Received graph-group NO_CHANGES response for application resource {}, but returned objectId/name differs from catalog. Treating response as UPDATED. currentObjectId={}, returnedObjectId={}, currentName={}, returnedName={}, traceId={}",
+                    applicationResource.getId(),
+                    applicationResource.getIdentityProviderGroupObjectId(),
+                    entraGroup.getObjectId(),
+                    applicationResource.getIdentityProviderGroupName(),
+                    entraGroup.getDisplayName(),
+                    entraGroup.getTraceId()
+            );
+            return EntraStatus.UPDATED;
+        }
+
+        return status;
+    }
+
+    private boolean hasEntraGroupChanged(EntraGroup entraGroup, ApplicationResource applicationResource) {
+        boolean objectIdChanged = parseObjectId(entraGroup.getObjectId(), entraGroup.getTraceId())
+                .map(objectId -> !Objects.equals(applicationResource.getIdentityProviderGroupObjectId(), objectId))
+                .orElse(false);
+
+        boolean groupNameChanged = entraGroup.getDisplayName() != null
+                && !Objects.equals(applicationResource.getIdentityProviderGroupName(), entraGroup.getDisplayName());
+
+        return objectIdChanged || groupNameChanged;
+    }
+
+    private Optional<ApplicationResource> findApplicationResourceForEntraGroup(EntraGroup entraGroup) {
+        if (entraGroup.getResourceGroupId() != null) {
+            return findApplicationResourceById(entraGroup.getResourceGroupId());
+        }
+
+        log.info(
+                "graph-group response for objectId {} has no resourceGroupId. Treating it as an Entra-side reconciliation event and looking up application resource by Entra object id. traceId={}",
+                entraGroup.getObjectId(),
+                entraGroup.getTraceId()
+        );
+
+        Optional<UUID> objectId = parseObjectId(entraGroup.getObjectId(), entraGroup.getTraceId());
+        if (objectId.isEmpty()) {
+            log.warn(
+                    "Ignoring graph-group response without resourceGroupId because objectId is missing or invalid. objectId={}, status={}, traceId={}",
+                    entraGroup.getObjectId(),
+                    entraGroup.getStatus(),
+                    entraGroup.getTraceId()
+            );
+            return Optional.empty();
+        }
+
+        return applicationResourceRepository.findApplicationResourceByIdentityProviderGroupObjectId(objectId.get());
+    }
+
+    private Optional<UUID> parseObjectId(String objectId, String traceId) {
+        if (objectId == null || objectId.isBlank()) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(UUID.fromString(objectId));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid graph-group objectId {}. traceId={}", objectId, traceId);
+            return Optional.empty();
+        }
+    }
+
     public List<ApplicationResource> getAllApplicationResources() {
         return applicationResourceRepository.findAll();
     }
 
+    public List<ApplicationResource> getApplicationResourcesWithFailedEntraState() {
+        return applicationResourceRepository.findAllByEntraState(EntraStatus.FAILED.name());
+    }
+
     public ApplicationResource createApplicationResource(ApplicationResource applicationResource) {
         resolveApplicationCategories(applicationResource);
+        setPendingActiveIfIdentityProviderGroupIsMissing(applicationResource);
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
         log.info("Created new application resource: {}", newApplicationResource.getResourceId());
+        resourceGroupProducerService.publish(newApplicationResource, shouldPublishMsGraph(newApplicationResource, true));
 
         return newApplicationResource;
     }
@@ -185,16 +420,39 @@ public class ApplicationResourceService {
                 .findById(applicationResource.getId())
                 .orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
-        mapApplicationResource(applicationResource, applicationResourceToUpdate);
+        String currentStatus = applicationResourceToUpdate.getStatus();
+        String updatedStatus = ApplicationResourceStatus.pendingActiveUntilIdentityProviderGroupExists(
+                applicationResource.getStatus(),
+                applicationResourceToUpdate.getIdentityProviderGroupObjectId() != null
+        );
+        applicationResource.setStatus(updatedStatus);
+        applicationResource.setStatusChanged(Objects.equals(currentStatus, updatedStatus)
+                ? applicationResourceToUpdate.getStatusChanged()
+                : Date.from(Instant.now()));
 
-        saveExistingApplicationResource(applicationResourceToUpdate);
+        saveExistingApplicationResource(applicationResource);
         ApplicationResource updatedApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResourceToUpdate.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
 
 
         return updatedApplicationResource;
+    }
+
+    private void setPendingActiveIfIdentityProviderGroupIsMissing(ApplicationResource applicationResource) {
+        applicationResource.setStatus(ApplicationResourceStatus.pendingActiveUntilIdentityProviderGroupExists(
+                applicationResource.getStatus(),
+                applicationResource.getIdentityProviderGroupObjectId() != null
+        ));
+    }
+
+    private void activatePendingActiveStatus(ApplicationResource applicationResource, EntraStatus entraStatus) {
+        if ((entraStatus == EntraStatus.CREATED || entraStatus == EntraStatus.UPDATED)
+                && ApplicationResourceStatus.PENDING_ACTIVE.value().equals(applicationResource.getStatus())) {
+            applicationResource.setStatus(ApplicationResourceStatus.ACTIVE.value());
+            applicationResource.setStatusChanged(Date.from(Instant.now()));
+        }
     }
 
     private void updateApplicationResourceLocations(ApplicationResource applicationResourceToUpdate, ApplicationResource applicationResource) {
@@ -241,7 +499,8 @@ public class ApplicationResourceService {
 
         applicationResource.setStatus("DELETED");
         applicationResource.setStatusChanged(Date.from(Instant.now()));
-        applicationResourceRepository.saveAndFlush(applicationResource);
+        ApplicationResource deletedApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
+        resourceGroupProducerService.publish(deletedApplicationResource, false);
     }
 
     public Page<ApplicationResource> getAllApplicationResourcesForAdmins(
