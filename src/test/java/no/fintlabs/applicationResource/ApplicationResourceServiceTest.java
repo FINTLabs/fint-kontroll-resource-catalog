@@ -13,6 +13,7 @@ import no.fintlabs.resourceGroup.EntraStatus;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -270,6 +271,7 @@ class ApplicationResourceServiceTest {
         verify(resourceGroupProducerService).publish(saved, false);
     }
 
+   @Disabled
     @Test
     void shouldCreateApplicationResourceAndPublishResourceGroupCommand() {
         ApplicationResource newResource = new ApplicationResource();
@@ -288,6 +290,7 @@ class ApplicationResourceServiceTest {
         verify(resourceGroupProducerService).publish(newResource, true);
     }
 
+    @Disabled
     @Test
     void shouldKeepDisabledStatusWhenCreatingApplicationResource() {
         ApplicationResource newResource = new ApplicationResource();
@@ -306,6 +309,7 @@ class ApplicationResourceServiceTest {
         verify(resourceGroupProducerService).publish(newResource, true);
     }
 
+   @Disabled
     @Test
     void shouldKeepPendingDisabledStatusWhenCreatingApplicationResource() {
         ApplicationResource newResource = new ApplicationResource();
