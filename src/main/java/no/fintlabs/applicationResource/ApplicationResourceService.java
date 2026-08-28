@@ -409,7 +409,7 @@ public class ApplicationResourceService {
         setPendingActiveIfIdentityProviderGroupIsMissing(applicationResource);
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
         log.info("Created new application resource: {}", newApplicationResource.getResourceId());
-        resourceGroupProducerService.publish(newApplicationResource, shouldPublishMsGraph(newApplicationResource, true));
+//        resourceGroupProducerService.publish(newApplicationResource, shouldPublishMsGraph(newApplicationResource, true));
 
         return newApplicationResource;
     }
