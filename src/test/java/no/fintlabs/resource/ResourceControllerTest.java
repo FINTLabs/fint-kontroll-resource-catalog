@@ -139,7 +139,7 @@ public class ResourceControllerTest  {
                 null,
                 null,
                 null,
-                List.of("ACTIVE"),
+                List.of("ACTIVE", "PENDING_ACTIVE"),
                 pageable,
                 false))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
