@@ -110,7 +110,7 @@ public class ResourceController {
                     userType,
                     accessType,
                     applicationCategory,
-                    List.of("ACTIVE"),
+                    List.of("ACTIVE","PENDING_ACTIVE"),
                     pageable,
                         false
             );
