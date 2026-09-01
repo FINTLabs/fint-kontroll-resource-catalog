@@ -2,18 +2,16 @@ package no.fintlabs.applicationResource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.KafkaConsumerConfigurationDefaults;
-import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
-import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.EntraGroup;
 import no.novari.kafka.consuming.*;
 import no.novari.kafka.topic.name.EntityTopicNameParameters;
+import no.novari.kafka.topic.name.EventTopicNameParameters;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-
-import java.util.Optional;
 
 @Slf4j
 @Configuration
@@ -71,36 +69,20 @@ public class ApplicationResourceConsumerConfiguration {
 
 
     @Bean
-    public ConcurrentMessageListenerContainer<String, AzureGroup> azureGroupConsumer(
-            FintCache<Long, AzureGroup> azureGroupCache,
+    public ConcurrentMessageListenerContainer<String, EntraGroup> entraGroupConsumer(
             ApplicationResourceService applicationResourceService,
             ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
     ){
-        ParameterizedListenerContainerFactory<AzureGroup> recordListenerContainerFactory =
+        ParameterizedListenerContainerFactory<EntraGroup> recordListenerContainerFactory =
                 parameterizedListenerContainerFactoryService.createRecordListenerContainerFactory(
-                        AzureGroup.class,
-                        consumerRecord -> {
-                            AzureGroup azureGroup = consumerRecord.value();
-                            log.debug("Saving: " + azureGroup.getId() + " to cache");
-                            Optional<ApplicationResource> applicationResourceOptional =
-                                    applicationResourceService.findApplicationResourceById(azureGroup.getResourceGroupID());
-
-                            if (applicationResourceOptional.isPresent()) {
-                                ApplicationResource applicationResource = applicationResourceOptional.get();
-                                applicationResource.setIdentityProviderGroupObjectId(azureGroup.getId());
-                                applicationResource.setIdentityProviderGroupName(azureGroup.getDisplayName());
-                                log.debug("Saving " + applicationResource.getId() + " with Azure groupObjectId " + azureGroup.getId());
-                                applicationResourceService.save(applicationResource);
-                                azureGroupCache.put(azureGroup.getResourceGroupID(),azureGroup);
-                            }
-                        },
+                        EntraGroup.class,
+                        consumerRecord -> applicationResourceService.saveEntraGroup(consumerRecord.value()),
                         kafkaConsumerConfigurationDefaults.defaultListenerConfiguration(),
                         kafkaConsumerConfigurationDefaults.defaultErrorHandler()
                 );
-        EntityTopicNameParameters entityTopicNameParameters =
-                kafkaConsumerConfigurationDefaults.defaultEntityTopic("azuread-resource-group");
+        EventTopicNameParameters eventTopicNameParameters =
+                kafkaConsumerConfigurationDefaults.defaultEventTopic("graph-group");
 
-        return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
+        return recordListenerContainerFactory.createContainer(eventTopicNameParameters);
     }
 }
-

@@ -1,11 +1,10 @@
 package no.fintlabs;
 
-import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationExtended;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.cache.FintCacheManager;
 import no.fintlabs.kodeverk.brukertype.Brukertype;
-import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.EntraGroup;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,9 +25,9 @@ public class CacheConfiguration {
     }
 
     @Bean
-    FintCache<Long, AzureGroup> azureGroupCache() {
+    FintCache<Long, EntraGroup> entraGroupCache() {
 
-        return createCache(AzureGroup.class);
+        return createCache(EntraGroup.class);
     }
     @Bean
     FintCache<Long, Brukertype> brukertypeCache() {

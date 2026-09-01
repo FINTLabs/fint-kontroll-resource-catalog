@@ -9,7 +9,7 @@ import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
-import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -45,7 +45,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @Autowired
     private ApplicationResourceService applicationResourceService;
     @MockBean
-    private FintCache<Long, AzureGroup> azureGroupCache;
+    private FintCache<Long, EntraGroup> entraGroupCache;
     @MockBean
     private ResponseFactory responseFactory;
     @MockBean
@@ -304,7 +304,7 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     }
 
     @Test
-    public void savingExistingApplicationResource_WithExistingAzureInfoAndAzureCacheIsEmpty_ThenReturnUpdatedApplicationResourceWithAzureInfoIntact() {
+    public void savingExistingApplicationResource_WithExistingEntraInfo_ThenReturnUpdatedApplicationResourceWithEntraInfoIntactAndCacheUntouched() {
 
         UUID idpGroupObjectId = UUID.randomUUID();
         ApplicationResource appResNew = ApplicationResource.builder()
@@ -315,8 +315,6 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
                 .build();
 
         ApplicationResource savedAppRes1 = applicationResourceRepository.save(appResNew);
-
-        given(azureGroupCache.getOptional(savedAppRes1.getId())).willReturn(Optional.empty());
 
         ApplicationResource appResUpdated  = ApplicationResource.builder()
                 .resourceId(m365)
@@ -332,6 +330,9 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         assertEquals(savedAppRes1.getIdentityProviderGroupObjectId(), savedAppResUpdated.getIdentityProviderGroupObjectId());
         assertEquals(savedAppRes1.getIdentityProviderGroupName(), savedAppResUpdated.getIdentityProviderGroupName());
 
+        // The FINT/REST update path must never consult the Entra group cache anymore -
+        // it's only written to by saveEntraGroup(), which handles graph-group responses.
+        Mockito.verifyNoInteractions(entraGroupCache);
     }
 
 }

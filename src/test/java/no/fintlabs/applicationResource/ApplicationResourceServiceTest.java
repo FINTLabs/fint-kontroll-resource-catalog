@@ -7,14 +7,13 @@ import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
-import no.fintlabs.kodeverk.handhevingstype.Handhevingstype;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
-import no.fintlabs.resourceGroup.AzureGroup;
+import no.fintlabs.resourceGroup.EntraGroup;
+import no.fintlabs.resourceGroup.EntraStatus;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
-import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
-import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +38,7 @@ class ApplicationResourceServiceTest {
     private ApplicationResourceLocationRepository applicationResourceLocationRepository;
 
     @Mock
-    private FintCache<Long, AzureGroup> azureGroupCache;
+    private FintCache<Long, EntraGroup> entraGroupCache;
 
     @Mock
     private AuthorizationUtil authorizationUtil;
@@ -63,7 +62,7 @@ class ApplicationResourceServiceTest {
         applicationResourceService = new ApplicationResourceService(
                 applicationResourceRepository,
                 applicationResourceLocationRepository,
-                azureGroupCache,
+                entraGroupCache,
                 authorizationUtil,
                 opaService,
                 resourceGroupProducerService,
@@ -230,15 +229,332 @@ class ApplicationResourceServiceTest {
         newResource.setId(1L);
         newResource.setResourceId(resourceId);
         newResource.setResourceName("My New App");
+        newResource.setStatus("ACTIVE");
 
         when(applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.empty());
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         applicationResourceService.save(newResource);
 
         verify(applicationResourceRepository).save(newResource);
-        verify(azureGroupCache, never()).getOptional(anyLong());
+        assertEquals("PENDING_ACTIVE", newResource.getStatus());
+        verify(resourceGroupProducerService).publish(newResource, true);
+        verify(entraGroupCache, never()).getOptional(anyLong());
+    }
+
+    @Test
+    void shouldAcceptInactiveStatusFromKafkaUpdate() {
+        String resourceId = "APP-KAFKA-INACTIVE";
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(11L);
+        existing.setResourceId(resourceId);
+        existing.setStatus("ACTIVE");
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setResourceId(resourceId);
+        incoming.setStatus("INACTIVE");
+
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.save(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("INACTIVE", saved.getStatus());
+        verify(resourceGroupProducerService).publish(saved, false);
+    }
+
+    @Test
+    void shouldCreateApplicationResourceAndPublishResourceGroupCommand() {
+        ApplicationResource newResource = new ApplicationResource();
+        newResource.setId(1L);
+        newResource.setResourceId("APP-1");
+        newResource.setResourceName("My New App");
+        newResource.setStatus("ACTIVE");
+
+        when(applicationResourceRepository.saveAndFlush(newResource))
+                .thenReturn(newResource);
+
+        ApplicationResource saved = applicationResourceService.createApplicationResource(newResource);
+
+        assertEquals("PENDING_ACTIVE", saved.getStatus());
+        verify(applicationResourceRepository).saveAndFlush(newResource);
+        verify(resourceGroupProducerService).publish(newResource, true);
+    }
+
+    @Test
+    void shouldKeepDisabledStatusWhenCreatingApplicationResource() {
+        ApplicationResource newResource = new ApplicationResource();
+        newResource.setId(2L);
+        newResource.setResourceId("APP-2");
+        newResource.setResourceName("My Disabled App");
+        newResource.setStatus("DISABLED");
+
+        when(applicationResourceRepository.saveAndFlush(newResource))
+                .thenReturn(newResource);
+
+        ApplicationResource saved = applicationResourceService.createApplicationResource(newResource);
+
+        assertEquals("DISABLED", saved.getStatus());
+        verify(applicationResourceRepository).saveAndFlush(newResource);
+        verify(resourceGroupProducerService).publish(newResource, true);
+    }
+
+    @Test
+    void shouldKeepPendingDisabledStatusWhenCreatingApplicationResource() {
+        ApplicationResource newResource = new ApplicationResource();
+        newResource.setId(21L);
+        newResource.setResourceId("APP-21");
+        newResource.setStatus("PENDING_DISABLED");
+
+        when(applicationResourceRepository.saveAndFlush(newResource))
+                .thenReturn(newResource);
+
+        ApplicationResource saved = applicationResourceService.createApplicationResource(newResource);
+
+        assertEquals("PENDING_DISABLED", saved.getStatus());
+        verify(applicationResourceRepository).saveAndFlush(newResource);
+        verify(resourceGroupProducerService).publish(newResource, true);
+    }
+
+    @Test
+    void shouldKeepActiveStatusWhenUiUpdateDoesNotChangeStatus() {
+        Long applicationResourceId = 3L;
+        String resourceId = "APP-3";
+        Date originalStatusChanged = new Date(1000L);
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId(resourceId);
+        existing.setResourceName("Old name");
+        existing.setStatus("ACTIVE");
+        existing.setStatusChanged(originalStatusChanged);
+        existing.setIdentityProviderGroupObjectId(UUID.randomUUID());
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId(resourceId);
+        incoming.setResourceName("New name");
+        incoming.setStatus("ACTIVE");
+        incoming.setStatusChanged(new Date(2000L));
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApplicationResource updated = applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("New name", saved.getResourceName());
+        assertEquals("ACTIVE", saved.getStatus());
+        assertEquals(originalStatusChanged, saved.getStatusChanged());
+        assertEquals("ACTIVE", updated.getStatus());
+        verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
+    void shouldSetDisabledWhenUiUpdateChangesStatusFromActiveToDisabled() {
+        Long applicationResourceId = 4L;
+        String resourceId = "APP-4";
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId(resourceId);
+        existing.setStatus("ACTIVE");
+        existing.setStatusChanged(new Date(1000L));
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId(resourceId);
+        incoming.setStatus("DISABLED");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("DISABLED", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        assertNotEquals(new Date(1000L), saved.getStatusChanged());
+        verify(resourceGroupProducerService).publish(saved, false);
+    }
+
+    @Test
+    void shouldAcceptInactiveStatusFromUiUpdate() {
+        Long applicationResourceId = 41L;
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId("APP-41");
+        existing.setStatus("ACTIVE");
+        existing.setStatusChanged(new Date(1000L));
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId("APP-41");
+        incoming.setStatus("INACTIVE");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase("APP-41"))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("INACTIVE", saved.getStatus());
+        verify(resourceGroupProducerService).publish(saved, false);
+    }
+
+    @Test
+    void shouldSetPendingActiveWhenUiUpdateChangesDisabledResourceWithoutEntraGroupToActive() {
+        Long applicationResourceId = 42L;
+        String resourceId = "APP-42";
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId(resourceId);
+        existing.setStatus("DISABLED");
+        existing.setStatusChanged(new Date(1000L));
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId(resourceId);
+        incoming.setStatus("ACTIVE");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("PENDING_ACTIVE", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        assertNotEquals(new Date(1000L), saved.getStatusChanged());
+        verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
+    void shouldPublishOnlyResourceGroupEntityWhenUiUpdateChangesStatusToDeleted() {
+        Long applicationResourceId = 5L;
+        String resourceId = "APP-5";
+        UUID idpGroupObjectId = UUID.randomUUID();
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId(resourceId);
+        existing.setResourceName("Resource name");
+        existing.setStatus("ACTIVE");
+        existing.setIdentityProviderGroupObjectId(idpGroupObjectId);
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId(resourceId);
+        incoming.setResourceName("Resource name");
+        incoming.setStatus("DELETED");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("DELETED", saved.getStatus());
+        verify(resourceGroupProducerService).publish(saved, false);
+    }
+
+    @Test
+    void shouldSetPendingActiveAndClearEntraGroupWhenUiUpdateReactivatesDeletedResource() {
+        Long applicationResourceId = 51L;
+        String resourceId = "APP-51";
+        UUID staleIdpGroupObjectId = UUID.randomUUID();
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId(resourceId);
+        existing.setResourceName("Resource name");
+        existing.setStatus("DELETED");
+        existing.setIdentityProviderGroupObjectId(staleIdpGroupObjectId);
+        existing.setIdentityProviderGroupName("Old Entra group");
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId(resourceId);
+        incoming.setResourceName("Resource name");
+        incoming.setStatus("ACTIVE");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.updateApplicationResource(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("PENDING_ACTIVE", saved.getStatus());
+        assertNull(saved.getIdentityProviderGroupObjectId());
+        assertNull(saved.getIdentityProviderGroupName());
+        assertNotNull(saved.getStatusChanged());
+        verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
+    void shouldSetStatusDeletedAndPublishOnlyResourceGroupEntityWhenDeletingApplicationResource() {
+        Long applicationResourceId = 6L;
+        Date originalStatusChanged = new Date(1000L);
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId("APP-6");
+        existing.setStatus("ACTIVE");
+        existing.setStatusChanged(originalStatusChanged);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.saveAndFlush(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.deleteApplicationResource(applicationResourceId);
+
+        verify(applicationResourceRepository).saveAndFlush(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("DELETED", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        assertNotEquals(originalStatusChanged, saved.getStatusChanged());
+        verify(resourceGroupProducerService).publish(saved, false);
     }
 
 
@@ -308,6 +624,12 @@ class ApplicationResourceServiceTest {
         // ---------- EXISTING (in DB) ----------
         ApplicationResource existing = getApplicationResource(resourceId);
 
+        // Existing already has a linked Entra group from a prior graph-group response.
+        // This update must not touch it - only saveEntraGroup() is allowed to.
+        UUID existingEntraId = UUID.randomUUID();
+        existing.setIdentityProviderGroupObjectId(existingEntraId);
+        existing.setIdentityProviderGroupName("Existing Entra Group Name");
+
         // existing locations – one should get updated, one removed
         ApplicationResourceLocation existingLocToUpdate = new ApplicationResourceLocation();
         existingLocToUpdate.setOrgUnitId("OU_1");
@@ -334,14 +656,6 @@ class ApplicationResourceServiceTest {
         when(applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.of(existing));
-
-        // Azure group found in cache for existing.getId()
-        AzureGroup azureGroup = new AzureGroup();
-        UUID azureId = UUID.randomUUID();
-        azureGroup.setId(azureId);
-        azureGroup.setDisplayName("Azure Group Name");
-        when(azureGroupCache.getOptional(10L))
-                .thenReturn(Optional.of(azureGroup));
 
         // save returns same instance for convenience
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
@@ -391,9 +705,10 @@ class ApplicationResourceServiceTest {
         assertEquals("New Resource Name", saved.getResourceName());
         assertEquals("NEW_TYPE", saved.getResourceType());
 
-        // 9) Azure group fields
-        assertEquals(azureId, saved.getIdentityProviderGroupObjectId());
-        assertEquals("Azure Group Name", saved.getIdentityProviderGroupName());
+        // 9) Entra group fields: untouched by this update path, preserved from existing
+        assertEquals(existingEntraId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("Existing Entra Group Name", saved.getIdentityProviderGroupName());
+        verify(entraGroupCache, never()).getOptional(anyLong());
 
         // 10) Locations: should now contain OU_1 (updated) and OU_2 (new), OU_OLD removed
         assertNotNull(saved.getValidForOrgUnits());
@@ -461,8 +776,8 @@ class ApplicationResourceServiceTest {
         return existing;
     }
     @Test
-    void shouldUpdateExistingApplicationResourceWithoutAzureGroup() {
-        String resourceId = "APP-NO-AZURE";
+    void shouldUpdateExistingApplicationResourceWithoutEntraGroup() {
+        String resourceId = "APP-NO-ENTRA";
 
         // incoming
         ApplicationResource incoming = new ApplicationResource();
@@ -483,9 +798,6 @@ class ApplicationResourceServiceTest {
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.of(existing));
 
-        // Azure group cache returns empty → identity fields must stay as is
-        when(azureGroupCache.getOptional(20L)).thenReturn(Optional.empty());
-
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -499,9 +811,324 @@ class ApplicationResourceServiceTest {
         // applicationAccessType should be updated
         assertEquals("NEW_TYPE", saved.getApplicationAccessType());
 
-        // identity provider fields must remain unchanged
+        // identity provider fields must remain unchanged, and this path never consults the cache
         assertEquals(testUUID, saved.getIdentityProviderGroupObjectId());
         assertEquals("OLD_NAME", saved.getIdentityProviderGroupName());
+        verify(entraGroupCache, never()).getOptional(anyLong());
+    }
+
+    @Test
+    void shouldSaveEntraGroupForExistingApplicationResource() {
+        Long applicationResourceId = 30L;
+        String resourceId = "APP-WITH-ENTRA-GROUP";
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setResourceId(resourceId);
+        applicationResource.setStatus("PENDING_ACTIVE");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Entra Group Name");
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setStatus(EntraStatus.CREATED);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals(entraGroupId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("Entra Group Name", saved.getIdentityProviderGroupName());
+        assertEquals("CREATED", saved.getEntraState());
+        assertEquals("ACTIVE", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        verify(entraGroupCache).put(applicationResourceId, entraGroup);
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldSaveEntraGroupWithoutResourceGroupIdUsingResolvedApplicationResourceIdAsCacheKey() {
+        Long applicationResourceId = 32L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setIdentityProviderGroupObjectId(entraGroupId);
+        applicationResource.setStatus("ACTIVE");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Reconciled Entra Group Name");
+        entraGroup.setStatus(EntraStatus.UPDATED);
+
+        when(applicationResourceRepository.findApplicationResourceByIdentityProviderGroupObjectId(entraGroupId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals(entraGroupId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("Reconciled Entra Group Name", saved.getIdentityProviderGroupName());
+        assertEquals("UPDATED", saved.getEntraState());
+        assertEquals(applicationResourceId, entraGroup.getResourceGroupId());
+        verify(entraGroupCache).put(applicationResourceId, entraGroup);
+        verify(entraGroupCache, never()).put(org.mockito.ArgumentMatchers.<Long>isNull(), any(EntraGroup.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldKeepInactiveStatusWhenGraphGroupReturnsObjectId() {
+        Long applicationResourceId = 31L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setStatus("INACTIVE");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Entra Group Name");
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setStatus(EntraStatus.CREATED);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals(entraGroupId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("CREATED", saved.getEntraState());
+        assertEquals("INACTIVE", saved.getStatus());
+        assertNull(saved.getStatusChanged());
+    }
+
+    @Test
+    void shouldKeepDisabledStatusWhenGraphGroupReturnsObjectId() {
+        Long applicationResourceId = 33L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setStatus("DISABLED");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Entra Group Name");
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setStatus(EntraStatus.CREATED);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals(entraGroupId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("CREATED", saved.getEntraState());
+        assertEquals("DISABLED", saved.getStatus());
+        assertNull(saved.getStatusChanged());
+    }
+
+    @Test
+    void shouldIgnoreEntraGroupWhenApplicationResourceDoesNotExist() {
+        Long applicationResourceId = 40L;
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId(UUID.randomUUID().toString());
+        entraGroup.setDisplayName("Entra Group Name");
+        entraGroup.setResourceGroupId(applicationResourceId);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.empty());
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository, never()).save(any(ApplicationResource.class));
+        verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
+    }
+
+    @Test
+    void shouldSetEntraStateWhenEntraGroupResponseFailed() {
+        Long applicationResourceId = 50L;
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setStatus("ACTIVE");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setStatus(EntraStatus.FAILED);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("ACTIVE", saved.getStatus());
+        assertEquals("FAILED", saved.getEntraState());
+        assertNull(saved.getStatusChanged());
+        verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldIgnoreGraphGroupResponseWithNoChangesWhenEntraGroupMatchesCatalogState() {
+        Long applicationResourceId = 51L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setIdentityProviderGroupObjectId(entraGroupId);
+        applicationResource.setIdentityProviderGroupName("Existing Entra Group Name");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Existing Entra Group Name");
+        entraGroup.setStatus(EntraStatus.NO_CHANGES);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository, never()).save(any(ApplicationResource.class));
+        verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldTreatNoChangesAsUpdatedWhenEntraGroupDiffersFromCatalogState() {
+        Long applicationResourceId = 52L;
+        UUID entraGroupId = UUID.randomUUID();
+
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setStatus("PENDING_ACTIVE");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setObjectId(entraGroupId.toString());
+        entraGroup.setDisplayName("Existing Entra Group Name");
+        entraGroup.setStatus(EntraStatus.NO_CHANGES);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals(entraGroupId, saved.getIdentityProviderGroupObjectId());
+        assertEquals("Existing Entra Group Name", saved.getIdentityProviderGroupName());
+        assertEquals("UPDATED", saved.getEntraState());
+        assertEquals("ACTIVE", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        verify(entraGroupCache).put(applicationResourceId, entraGroup);
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldClearEntraGroupForDeletedGraphGroupResponse() {
+        Long applicationResourceId = 60L;
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setIdentityProviderGroupObjectId(UUID.randomUUID());
+        applicationResource.setIdentityProviderGroupName("Old Entra Group Name");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setStatus(EntraStatus.DELETED);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertNull(saved.getIdentityProviderGroupObjectId());
+        assertNull(saved.getIdentityProviderGroupName());
+        assertEquals("DELETED", saved.getEntraState());
+        verify(entraGroupCache).remove(applicationResourceId);
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldClearEntraGroupForDeletedGraphGroupResponseWithoutResourceGroupId() {
+        Long applicationResourceId = 61L;
+        UUID entraObjectId = UUID.randomUUID();
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+        applicationResource.setIdentityProviderGroupObjectId(entraObjectId);
+        applicationResource.setIdentityProviderGroupName("Old Entra Group Name");
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId(entraObjectId.toString());
+        entraGroup.setStatus(EntraStatus.DELETED);
+
+        when(applicationResourceRepository.findApplicationResourceByIdentityProviderGroupObjectId(entraObjectId))
+                .thenReturn(Optional.of(applicationResource));
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertNull(saved.getIdentityProviderGroupObjectId());
+        assertNull(saved.getIdentityProviderGroupName());
+        assertEquals("DELETED", saved.getEntraState());
+        verify(entraGroupCache).remove(applicationResourceId);
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+    }
+
+    @Test
+    void shouldIgnoreGraphGroupResponseWithInvalidObjectId() {
+        Long applicationResourceId = 70L;
+        ApplicationResource applicationResource = new ApplicationResource();
+        applicationResource.setId(applicationResourceId);
+
+        EntraGroup entraGroup = new EntraGroup();
+        entraGroup.setObjectId("not-a-uuid");
+        entraGroup.setDisplayName("Entra Group Name");
+        entraGroup.setResourceGroupId(applicationResourceId);
+        entraGroup.setStatus(EntraStatus.CREATED);
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(applicationResource));
+
+        applicationResourceService.saveEntraGroup(entraGroup);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+        assertEquals("CREATED", saved.getEntraState());
+        assertNull(saved.getIdentityProviderGroupObjectId());
+        verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
     }
 
     @DisplayName("Test for getOrgUnitsValidAndInScope - validOrgUnits is null")
@@ -557,6 +1184,3 @@ class ApplicationResourceServiceTest {
         assertThat(result).isEqualTo(new ArrayList<>());
     }
 }
-
-
-

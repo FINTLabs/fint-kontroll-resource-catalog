@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Date;
 import java.util.List;
@@ -109,7 +110,7 @@ public class ResourceController {
                     userType,
                     accessType,
                     applicationCategory,
-                    List.of("ACTIVE"),
+                    List.of("ACTIVE","PENDING_ACTIVE"),
                     pageable,
                         false
             );
@@ -219,21 +220,25 @@ public class ResourceController {
                 .resourceId(resourceId)
                 .resourceName(request.getResourceName())
                 .resourceType(request.getResourceType())
-                .platform(request.getPlatform() == null ? Set.of() : new HashSet<>(request.getPlatform()))
+                .platform(toMutableSet(request.getPlatform()))
                 .accessType(request.getAccessType())
                 .resourceLimit(request.getResourceLimit())
                 .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
                 .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
-                .validForRoles(request.getValidForRoles() == null ? Set.of() : new HashSet<>(request.getValidForRoles()))
-                .applicationCategory(applicationCategories)
+                .validForRoles(toMutableSet(request.getValidForRoles()))
+                .applicationCategory(toMutableSet(applicationCategories))
                 .licenseEnforcement(request.getLicenseEnforcement())
                 .unitCost(request.getUnitCost())
                 .status(request.getStatus())
                 .statusChanged(Date.from(Instant.now()))
                 .hasCost(request.isHasCost())
                 .needApproval(request.isNeedApproval())
-                .validForOrgUnits(request.getValidForOrgUnits() == null ? Set.of() : new HashSet<>(request.getValidForOrgUnits()))
+                .validForOrgUnits(toMutableSet(request.getValidForOrgUnits()))
                 .build();
+    }
+
+    private static <T> Set<T> toMutableSet(Collection<T> values) {
+        return values == null ? new HashSet<>() : new HashSet<>(values);
     }
 
     @GetMapping("admin/source/v1")
@@ -250,6 +255,22 @@ public class ResourceController {
     ) {
 
         resourceGroupPublishComponent.publishResourceGroups(publishAll);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @OnlyDevelopers
+    @PostMapping("admin/publishall-ms-graph")
+    public ResponseEntity<HttpStatus> publishAllMsGraph() {
+        resourceGroupPublishComponent.publishAllResourceGroupsMsGraph();
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @OnlyDevelopers
+    @PostMapping("admin/publishfailed-ms-graph")
+    public ResponseEntity<HttpStatus> publishFailedMsGraph() {
+        resourceGroupPublishComponent.publishFailedResourceGroupsMsGraph();
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
