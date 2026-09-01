@@ -271,7 +271,6 @@ class ApplicationResourceServiceTest {
         verify(resourceGroupProducerService).publish(saved, false);
     }
 
-   @Disabled
     @Test
     void shouldCreateApplicationResourceAndPublishResourceGroupCommand() {
         ApplicationResource newResource = new ApplicationResource();
@@ -290,7 +289,6 @@ class ApplicationResourceServiceTest {
         verify(resourceGroupProducerService).publish(newResource, true);
     }
 
-    @Disabled
     @Test
     void shouldKeepDisabledStatusWhenCreatingApplicationResource() {
         ApplicationResource newResource = new ApplicationResource();
@@ -309,7 +307,6 @@ class ApplicationResourceServiceTest {
         verify(resourceGroupProducerService).publish(newResource, true);
     }
 
-   @Disabled
     @Test
     void shouldKeepPendingDisabledStatusWhenCreatingApplicationResource() {
         ApplicationResource newResource = new ApplicationResource();
