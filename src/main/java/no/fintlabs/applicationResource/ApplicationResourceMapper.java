@@ -30,7 +30,8 @@ public class ApplicationResourceMapper {
                 applicationResource.getResourceType(),
                 applicationResource.getResourceLimit(),
                 applicationResource.getIdentityProviderGroupObjectId(),
-                toApplicationCategoryNames(applicationResource)
+                toApplicationCategoryNames(applicationResource),
+                applicationResource.getStatus()
         );
     }
     public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
