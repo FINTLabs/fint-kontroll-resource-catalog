@@ -69,7 +69,7 @@ class ResourceGroupProducerServiceTest {
     }
 
     @Test
-    void publishShouldSendApplicationResourceToOldTopicAndCommandToMsGraphTopic() {
+    void publishShouldSendApplicationResourceToOldTopicAndCommandToMsGraphTopicWhenMsGraphPublishingIsEnabled() {
         UUID idpGroupObjectId = UUID.randomUUID();
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(61L);
@@ -77,7 +77,7 @@ class ResourceGroupProducerServiceTest {
         applicationResource.setIdentityProviderGroupObjectId(idpGroupObjectId);
         applicationResource.setStatus("ACTIVE");
 
-        resourceGroupProducerService.publish(applicationResource);
+        resourceGroupProducerService.publish(applicationResource, true);
 
         ArgumentCaptor<ParameterizedProducerRecord<ApplicationResource>> oldTopicCaptor =
                 ArgumentCaptor.forClass(ParameterizedProducerRecord.class);
@@ -126,13 +126,13 @@ class ResourceGroupProducerServiceTest {
     }
 
     @Test
-    void publishShouldStillSendOldTopicAndSkipMsGraphForDeletedResourceWithoutIdpGroupObjectId() {
+    void publishShouldStillSendOldTopicAndSkipMsGraphForDeletedResourceWhenMsGraphPublishingIsEnabled() {
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(64L);
         applicationResource.setResourceName("Resource 64");
         applicationResource.setStatus("DELETED");
 
-        resourceGroupProducerService.publish(applicationResource);
+        resourceGroupProducerService.publish(applicationResource, true);
 
         verify(resourceGroupTemplate).send(any());
         verify(resourceGroupMsGraphTemplate, never()).send(any());
@@ -154,7 +154,7 @@ class ResourceGroupProducerServiceTest {
         when(publishedApplicationResourceCache.getOptional(2L)).thenReturn(Optional.empty());
 
         List<ApplicationResource> published =
-                resourceGroupProducerService.publishResourceGroups(List.of(unchanged, changed));
+                resourceGroupProducerService.publishResourceGroups(List.of(unchanged, changed), false);
 
         assertEquals(List.of(changed), published);
         verify(resourceGroupTemplate).send(any());
@@ -172,7 +172,7 @@ class ResourceGroupProducerServiceTest {
                 .thenReturn(Optional.of(ResourceGroupProducerService.publicationFingerprint(cached)));
 
         List<ApplicationResource> published =
-                resourceGroupProducerService.publishResourceGroups(List.of(reloaded));
+                resourceGroupProducerService.publishResourceGroups(List.of(reloaded), false);
 
         assertEquals(List.of(), published);
         verify(resourceGroupTemplate, never()).send(any());
@@ -186,12 +186,47 @@ class ResourceGroupProducerServiceTest {
         active.setStatus("ACTIVE");
 
         List<ApplicationResource> published =
-                resourceGroupProducerService.publishAllResourceGroups(List.of(active));
+                resourceGroupProducerService.publishAllResourceGroups(List.of(active), false);
 
         assertEquals(List.of(active), published);
         verify(resourceGroupTemplate).send(any());
         verify(resourceGroupMsGraphTemplate, never()).send(any());
         verify(publishedApplicationResourceCache).put(1L, ResourceGroupProducerService.publicationFingerprint(active));
+    }
+
+    @Test
+    void publishResourceGroupsShouldPublishChangedResourcesToMsGraphWhenEnabled() {
+        ApplicationResource changed = new ApplicationResource();
+        changed.setId(4L);
+        changed.setResourceName("Resource 4");
+        changed.setStatus("ACTIVE");
+
+        when(publishedApplicationResourceCache.getNumberOfEntries()).thenReturn(0L);
+        when(publishedApplicationResourceCache.getOptional(4L)).thenReturn(Optional.empty());
+
+        List<ApplicationResource> published =
+                resourceGroupProducerService.publishResourceGroups(List.of(changed), true);
+
+        assertEquals(List.of(changed), published);
+        verify(resourceGroupTemplate).send(any());
+        verify(resourceGroupMsGraphTemplate).send(any());
+        verify(publishedApplicationResourceCache).put(4L, ResourceGroupProducerService.publicationFingerprint(changed));
+    }
+
+    @Test
+    void publishAllResourceGroupsShouldPublishToMsGraphWhenEnabled() {
+        ApplicationResource active = new ApplicationResource();
+        active.setId(5L);
+        active.setResourceName("Resource 5");
+        active.setStatus("ACTIVE");
+
+        List<ApplicationResource> published =
+                resourceGroupProducerService.publishAllResourceGroups(List.of(active), true);
+
+        assertEquals(List.of(active), published);
+        verify(resourceGroupTemplate).send(any());
+        verify(resourceGroupMsGraphTemplate).send(any());
+        verify(publishedApplicationResourceCache).put(5L, ResourceGroupProducerService.publicationFingerprint(active));
     }
 
     @Test

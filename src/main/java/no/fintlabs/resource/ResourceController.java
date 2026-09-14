@@ -251,10 +251,11 @@ public class ResourceController {
     @OnlyDevelopers
     @PostMapping("admin/publishall")
     public ResponseEntity<HttpStatus> publishAll(
-            @RequestParam(defaultValue = "false") boolean publishAll
+            @RequestParam(defaultValue = "false") boolean publishAll,
+            @RequestParam(defaultValue = "false") boolean publishToMsGraph
     ) {
 
-        resourceGroupPublishComponent.publishResourceGroups(publishAll);
+        resourceGroupPublishComponent.publishResourceGroups(publishAll, publishToMsGraph);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

@@ -204,7 +204,7 @@ public class ResourceControllerTest  {
         mockMvc.perform(post("/api/resources/admin/publishall"))
                 .andExpect(status().isOk());
 
-        verify(resourceGroupPublishComponent).publishResourceGroups(false);
+        verify(resourceGroupPublishComponent).publishResourceGroups(false, false);
     }
 
     @Test
@@ -213,7 +213,16 @@ public class ResourceControllerTest  {
                         .param("publishAll", "true"))
                 .andExpect(status().isOk());
 
-        verify(resourceGroupPublishComponent).publishResourceGroups(true);
+        verify(resourceGroupPublishComponent).publishResourceGroups(true, false);
+    }
+
+    @Test
+    public void publishAll_ShouldPublishToMsGraphWhenPublishToMsGraphParameterIsTrue() throws Exception {
+        mockMvc.perform(post("/api/resources/admin/publishall")
+                        .param("publishToMsGraph", "true"))
+                .andExpect(status().isOk());
+
+        verify(resourceGroupPublishComponent).publishResourceGroups(false, true);
     }
 
     @Test

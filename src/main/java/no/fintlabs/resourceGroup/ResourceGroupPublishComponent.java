@@ -30,10 +30,10 @@ public class ResourceGroupPublishComponent {
             cron = "${fint.kontroll.resource-catalog.publishing.cron}"
     )
     public void publishScheduledResourceGroups() {
-        publishResourceGroups(false);
+        publishResourceGroups(false, false);
     }
 
-    public void publishResourceGroups(boolean publishAll) {
+    public void publishResourceGroups(boolean publishAll, boolean publishToMsGraph) {
         List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
         if (!allApplicationResourcesInDB.isEmpty()) {
             List<ApplicationResource> applicationResourcesReadyToBePublished =
@@ -44,15 +44,16 @@ public class ResourceGroupPublishComponent {
 
             log.info("{} application resources added to list for publishing as resource-group", applicationResourcesReadyToBePublished.size());
             List<ApplicationResource> publishedResourceGroups = publishAll
-                    ? resourceGroupProducerService.publishAllResourceGroups(applicationResourcesReadyToBePublished)
-                    : resourceGroupProducerService.publishResourceGroups(applicationResourcesReadyToBePublished);
+                    ? resourceGroupProducerService.publishAllResourceGroups(applicationResourcesReadyToBePublished, publishToMsGraph)
+                    : resourceGroupProducerService.publishResourceGroups(applicationResourcesReadyToBePublished, publishToMsGraph);
             applicationResourcesReadyToBePublished.forEach(applicationResource ->
                     applicationResourceLocationService.extractAndSendToPublish(applicationResource, publishAll)
             );
-            log.info("Published {} resource groups of total {} applicationResource objects found in database. publishAll={}",
+            log.info("Published {} resource groups of total {} applicationResource objects found in database. publishAll={}, publishToMsGraph={}",
                     publishedResourceGroups.size(),
                     applicationResourcesReadyToBePublished.size(),
-                    publishAll);
+                    publishAll,
+                    publishToMsGraph);
         }
     }
 

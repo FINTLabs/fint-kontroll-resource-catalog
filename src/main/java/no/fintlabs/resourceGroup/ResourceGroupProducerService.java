@@ -82,11 +82,6 @@ public class ResourceGroupProducerService {
         );
     }
 
-    public void publish(ApplicationResource applicationResource) {
-        publishResourceGroup(applicationResource);
-        publishResourceGroupMsGraph(applicationResource);
-    }
-
     public void publish(ApplicationResource applicationResource, boolean publishMsGraph) {
         publishResourceGroup(applicationResource);
         if (publishMsGraph) {
@@ -133,7 +128,7 @@ public class ResourceGroupProducerService {
         );
     }
 
-    public List<ApplicationResource> publishResourceGroups(List<ApplicationResource> applicationResources) {
+    public List<ApplicationResource> publishResourceGroups(List<ApplicationResource> applicationResources, boolean publishMsGraph) {
        log.debug("Number of entities in cache: {}", publishedApplicationResourceCache.getNumberOfEntries());
 
         List<ApplicationResource> toPublish = applicationResources.stream()
@@ -145,7 +140,7 @@ public class ResourceGroupProducerService {
                             .map(cachedHash -> !Objects.equals(cachedHash, currentHash))
                             .orElse(true);
                 })
-                .peek(this::publishResourceGroup)
+                .peek(applicationResource -> publish(applicationResource, publishMsGraph))
                 .toList();
 
         log.debug("Published application resources: {}", toPublish.size());
@@ -266,9 +261,9 @@ public class ResourceGroupProducerService {
         return value == null ? "" : value;
     }
 
-    public List<ApplicationResource> publishAllResourceGroups(List<ApplicationResource> applicationResources) {
+    public List<ApplicationResource> publishAllResourceGroups(List<ApplicationResource> applicationResources, boolean publishMsGraph) {
         List<ApplicationResource> publishedApplicationResources = applicationResources.stream()
-                .peek(this::publishResourceGroup)
+                .peek(applicationResource -> publish(applicationResource, publishMsGraph))
                 .toList();
 
         log.debug("Published all application resources: {}", publishedApplicationResources.size());

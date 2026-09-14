@@ -849,7 +849,7 @@ class ApplicationResourceServiceTest {
         assertEquals("ACTIVE", saved.getStatus());
         assertNotNull(saved.getStatusChanged());
         verify(entraGroupCache).put(applicationResourceId, entraGroup);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -882,7 +882,7 @@ class ApplicationResourceServiceTest {
         assertEquals(applicationResourceId, entraGroup.getResourceGroupId());
         verify(entraGroupCache).put(applicationResourceId, entraGroup);
         verify(entraGroupCache, never()).put(org.mockito.ArgumentMatchers.<Long>isNull(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -987,7 +987,7 @@ class ApplicationResourceServiceTest {
         assertEquals("FAILED", saved.getEntraState());
         assertNull(saved.getStatusChanged());
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -1013,7 +1013,7 @@ class ApplicationResourceServiceTest {
 
         verify(applicationResourceRepository, never()).save(any(ApplicationResource.class));
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -1046,7 +1046,7 @@ class ApplicationResourceServiceTest {
         assertEquals("ACTIVE", saved.getStatus());
         assertNotNull(saved.getStatusChanged());
         verify(entraGroupCache).put(applicationResourceId, entraGroup);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -1074,7 +1074,7 @@ class ApplicationResourceServiceTest {
         assertNull(saved.getIdentityProviderGroupName());
         assertEquals("DELETED", saved.getEntraState());
         verify(entraGroupCache).remove(applicationResourceId);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -1103,7 +1103,7 @@ class ApplicationResourceServiceTest {
         assertNull(saved.getIdentityProviderGroupName());
         assertEquals("DELETED", saved.getEntraState());
         verify(entraGroupCache).remove(applicationResourceId);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @Test
@@ -1128,7 +1128,7 @@ class ApplicationResourceServiceTest {
         assertEquals("CREATED", saved.getEntraState());
         assertNull(saved.getIdentityProviderGroupObjectId());
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class));
+        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
     }
 
     @DisplayName("Test for getOrgUnitsValidAndInScope - validOrgUnits is null")
