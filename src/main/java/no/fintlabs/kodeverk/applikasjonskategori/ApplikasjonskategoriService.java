@@ -37,7 +37,7 @@ public class ApplikasjonskategoriService {
     public Set<Applikasjonskategori> getApplikasjonskategoriByNames(List<String> names) {
         Set<String> requestedNames = normalizeNames(names);
         if (requestedNames.isEmpty()) {
-            return Set.of();
+            return new LinkedHashSet<>();
         }
 
         List<Applikasjonskategori> applikasjonskategorier = applikasjonskategoriRepository.findByNameIn(requestedNames);
@@ -60,7 +60,7 @@ public class ApplikasjonskategoriService {
     public Set<Applikasjonskategori> getOrCreateApplikasjonskategoriByNames(List<String> names) {
         Set<String> requestedNames = normalizeNames(names);
         if (requestedNames.isEmpty()) {
-            return Set.of();
+            return new LinkedHashSet<>();
         }
 
         List<Applikasjonskategori> existingCategories = applikasjonskategoriRepository.findByNameIn(requestedNames);
