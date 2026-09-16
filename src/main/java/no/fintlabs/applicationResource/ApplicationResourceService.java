@@ -50,15 +50,16 @@ public class ApplicationResourceService {
                 applicationResource.getResourceName(), resourceId);
 
         getApplicationResourceByResourceId(resourceId)
-                .ifPresentOrElse(existing -> {
-                    log.info("Application resource with resourceId {} already exists. Updating existing resource", resourceId);
-                    saveExistingApplicationResource(applicationResource);
-                }, () -> {
-                    log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
-                    resolveApplicationCategories(applicationResource);
-                    ApplicationResource newResource = applicationResourceRepository.save(applicationResource);
-                    resourceGroupProducerService.publish(newResource);
-                });
+            .ifPresentOrElse(existing -> {
+                log.info("Application resource with resourceId {} already exists. Updating existing resource", resourceId);
+                saveExistingApplicationResource(applicationResource);
+            }, () -> {
+                log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
+                resolveApplicationCategories(applicationResource);
+                setStatusChangedForNewResource(applicationResource);
+                ApplicationResource newResource = applicationResourceRepository.save(applicationResource);
+                resourceGroupProducerService.publish(newResource);
+            });
     }
 
     public Optional<ApplicationResource> getApplicationResourceByResourceId(String resourceId) {
@@ -94,9 +95,10 @@ public class ApplicationResourceService {
         existingApplicationResource.setLicenseEnforcement(incoming.getLicenseEnforcement());
         existingApplicationResource.setHasCost(incoming.isHasCost());
         existingApplicationResource.setUnitCost(incoming.getUnitCost());
-        existingApplicationResource.setStatus(incoming.getStatus());
-        existingApplicationResource.setStatusChanged(incoming.getStatusChanged());
+        setStatus(existingApplicationResource, incoming.getStatus());
         existingApplicationResource.setNeedApproval(incoming.isNeedApproval());
+        existingApplicationResource.setValidFrom(incoming.getValidFrom());
+        existingApplicationResource.setValidTo(incoming.getValidTo());
         existingApplicationResource.setValidForRoles(incoming.getValidForRoles());
         existingApplicationResource.setApplicationCategory(incoming.getApplicationCategory());
         existingApplicationResource.setResourceName(incoming.getResourceName());
@@ -116,6 +118,19 @@ public class ApplicationResourceService {
                 .toList();
 
         applicationResource.setApplicationCategory(applikasjonskategoriService.getOrCreateApplikasjonskategoriByNames(categoryNames));
+    }
+
+    private void setStatusChangedForNewResource(ApplicationResource applicationResource) {
+        Date statusChanged = applicationResource.getStatus() == null ? null : Date.from(Instant.now());
+        applicationResource.setStatusChanged(statusChanged);
+    }
+
+    private void setStatus(ApplicationResource existingApplicationResource, String incomingStatus) {
+        if (!Objects.equals(existingApplicationResource.getStatus(), incomingStatus)) {
+            existingApplicationResource.setStatusChanged(Date.from(Instant.now()));
+        }
+
+        existingApplicationResource.setStatus(incomingStatus);
     }
 
     public ApplicationResourceDTOFrontendDetail getApplicationResourceDTOFrontendDetailById(Long id) {
@@ -173,6 +188,7 @@ public class ApplicationResourceService {
 
     public ApplicationResource createApplicationResource(ApplicationResource applicationResource) {
         resolveApplicationCategories(applicationResource);
+        setStatusChangedForNewResource(applicationResource);
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
         log.info("Created new application resource: {}", newApplicationResource.getResourceId());
 

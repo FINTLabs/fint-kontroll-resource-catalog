@@ -230,14 +230,19 @@ class ApplicationResourceServiceTest {
         newResource.setId(1L);
         newResource.setResourceId(resourceId);
         newResource.setResourceName("My New App");
+        newResource.setStatus("ACTIVE");
+        newResource.setStatusChanged(new Date(0L));
 
         when(applicationResourceRepository
                 .findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.empty());
 
+        Date beforeSave = new Date();
         applicationResourceService.save(newResource);
+        Date afterSave = new Date();
 
         verify(applicationResourceRepository).save(newResource);
+        assertDateBetween(newResource.getStatusChanged(), beforeSave, afterSave);
         verify(azureGroupCache, never()).getOptional(anyLong());
     }
 
@@ -265,10 +270,14 @@ class ApplicationResourceServiceTest {
         incoming.setUnitCost(123L);
 
         incoming.setStatus("ACTIVE");
-        Date statusChanged = new Date();
-        incoming.setStatusChanged(statusChanged);
+        Date incomingStatusChanged = new Date(1234L);
+        incoming.setStatusChanged(incomingStatusChanged);
 
         incoming.setNeedApproval(true);
+        Date validFrom = new Date(1000L);
+        Date validTo = new Date(2000L);
+        incoming.setValidFrom(validFrom);
+        incoming.setValidTo(validTo);
 
         Set<String> validForRoles = new HashSet<>();
         validForRoles.add("ROLE_A");
@@ -348,7 +357,9 @@ class ApplicationResourceServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // ---------- WHEN ----------
+        Date beforeSave = new Date();
         applicationResourceService.save(incoming);
+        Date afterSave = new Date();
 
         // ---------- THEN ----------
         verify(applicationResourceRepository).save(appResourceCaptor.capture());
@@ -375,10 +386,13 @@ class ApplicationResourceServiceTest {
         assertEquals(123L, saved.getUnitCost());
         // 5) status + statusChanged
         assertEquals("ACTIVE", saved.getStatus());
-        assertEquals(statusChanged, saved.getStatusChanged());
+        assertDateBetween(saved.getStatusChanged(), beforeSave, afterSave);
+        assertNotEquals(incomingStatusChanged, saved.getStatusChanged());
 
         // 6) needApproval
         assertTrue(saved.isNeedApproval());
+        assertEquals(validFrom, saved.getValidFrom());
+        assertEquals(validTo, saved.getValidTo());
 
         // 7) validForRoles
         assertNotNull(saved.getValidForRoles());
@@ -460,6 +474,13 @@ class ApplicationResourceServiceTest {
         existing.setResourceType("OLD_TYPE");
         return existing;
     }
+
+    private static void assertDateBetween(Date actual, Date before, Date after) {
+        assertNotNull(actual);
+        assertFalse(actual.before(before));
+        assertFalse(actual.after(after));
+    }
+
     @Test
     void shouldUpdateExistingApplicationResourceWithoutAzureGroup() {
         String resourceId = "APP-NO-AZURE";
@@ -502,6 +523,39 @@ class ApplicationResourceServiceTest {
         // identity provider fields must remain unchanged
         assertEquals(testUUID, saved.getIdentityProviderGroupObjectId());
         assertEquals("OLD_NAME", saved.getIdentityProviderGroupName());
+    }
+
+    @Test
+    void shouldKeepStatusChangedWhenStatusDoesNotChange() {
+        String resourceId = "APP-SAME-STATUS";
+        Date existingStatusChanged = new Date(10_000L);
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(30L);
+        incoming.setResourceId(resourceId);
+        incoming.setStatus("ACTIVE");
+        incoming.setStatusChanged(new Date(20_000L));
+
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(30L);
+        existing.setResourceId(resourceId);
+        existing.setStatus("ACTIVE");
+        existing.setStatusChanged(existingStatusChanged);
+
+        when(applicationResourceRepository
+                .findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
+                .thenReturn(Optional.of(existing));
+        when(azureGroupCache.getOptional(30L)).thenReturn(Optional.empty());
+        when(applicationResourceRepository.save(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        applicationResourceService.save(incoming);
+
+        verify(applicationResourceRepository).save(appResourceCaptor.capture());
+        ApplicationResource saved = appResourceCaptor.getValue();
+
+        assertEquals("ACTIVE", saved.getStatus());
+        assertEquals(existingStatusChanged, saved.getStatusChanged());
     }
 
     @DisplayName("Test for getOrgUnitsValidAndInScope - validOrgUnits is null")
@@ -557,6 +611,4 @@ class ApplicationResourceServiceTest {
         assertThat(result).isEqualTo(new ArrayList<>());
     }
 }
-
-
 

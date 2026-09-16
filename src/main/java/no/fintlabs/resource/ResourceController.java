@@ -22,9 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
 import java.util.HashSet;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -229,7 +227,8 @@ public class ResourceController {
                 .licenseEnforcement(request.getLicenseEnforcement())
                 .unitCost(request.getUnitCost())
                 .status(request.getStatus())
-                .statusChanged(Date.from(Instant.now()))
+                .validFrom(request.getValidFrom())
+                .validTo(request.getValidTo())
                 .hasCost(request.isHasCost())
                 .needApproval(request.isNeedApproval())
                 .validForOrgUnits(request.getValidForOrgUnits() == null ? Set.of() : new HashSet<>(request.getValidForOrgUnits()))
