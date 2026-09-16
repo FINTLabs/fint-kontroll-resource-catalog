@@ -269,6 +269,14 @@ public class ResourceController {
     }
 
     @OnlyDevelopers
+    @PostMapping("admin/publishall-ms-graph-create")
+    public ResponseEntity<HttpStatus> publishAllMsGraphAsCreate() {
+        resourceGroupPublishComponent.publishAllResourceGroupsMsGraphAsCreate();
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @OnlyDevelopers
     @PostMapping("admin/publishfailed-ms-graph")
     public ResponseEntity<HttpStatus> publishFailedMsGraph() {
         resourceGroupPublishComponent.publishFailedResourceGroupsMsGraph();

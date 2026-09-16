@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -103,16 +104,20 @@ public class ResourceGroupProducerService {
     }
 
     public void publishResourceGroupMsGraph(ApplicationResource applicationResource) {
+        publishResourceGroupMsGraph(applicationResource, false);
+    }
+
+    private Optional<ApplicationResource> publishResourceGroupMsGraph(ApplicationResource applicationResource, boolean forceCreate) {
         if (shouldSkipMsGraphPublish(applicationResource)) {
             log.debug(
                     "Skipping event.resource-group command for deleted resource group with id: {} because idpGroupObjectId is empty",
                     applicationResource.getId()
             );
-            return;
+            return Optional.empty();
         }
 
         String key = UUID.randomUUID().toString();
-        ResourceGroup resourceGroup = toResourceGroup(applicationResource);
+        ResourceGroup resourceGroup = toResourceGroup(applicationResource, forceCreate);
         log.debug(
                 "Publishing event.resource-group command with traceId: {}, resourceGroupId: {}, operation: {}",
                 key,
@@ -126,10 +131,11 @@ public class ResourceGroupProducerService {
                         .value(resourceGroup)
                         .build()
         );
+        return Optional.of(applicationResource);
     }
 
     public List<ApplicationResource> publishResourceGroups(List<ApplicationResource> applicationResources, boolean publishMsGraph) {
-       log.debug("Number of entities in cache: {}", publishedApplicationResourceCache.getNumberOfEntries());
+        log.debug("Number of entities in cache: {}", publishedApplicationResourceCache.getNumberOfEntries());
 
         List<ApplicationResource> toPublish = applicationResources.stream()
                 .filter(ar -> {
@@ -149,16 +155,28 @@ public class ResourceGroupProducerService {
 
     public List<ApplicationResource> publishResourceGroupsMsGraph(List<ApplicationResource> applicationResources) {
         List<ApplicationResource> publishedApplicationResources = applicationResources.stream()
-                .filter(applicationResource -> !shouldSkipMsGraphPublish(applicationResource))
-                .peek(this::publishResourceGroupMsGraph)
+                .map(applicationResource -> publishResourceGroupMsGraph(applicationResource, false))
+                .flatMap(Optional::stream)
                 .toList();
 
         log.info("Published {} resource groups to event.resource-group", publishedApplicationResources.size());
         return publishedApplicationResources;
     }
 
-    private ResourceGroup toResourceGroup(ApplicationResource applicationResource) {
-        ResourceGroupOperation operation = resolveOperation(applicationResource);
+    public List<ApplicationResource> publishResourceGroupsMsGraphAsCreate(List<ApplicationResource> applicationResources) {
+        List<ApplicationResource> publishedApplicationResources = applicationResources.stream()
+                .map(applicationResource -> publishResourceGroupMsGraph(applicationResource, true))
+                .flatMap(Optional::stream)
+                .toList();
+
+        log.info("Published {} resource groups as CREATE to event.resource-group", publishedApplicationResources.size());
+        return publishedApplicationResources;
+    }
+
+    private ResourceGroup toResourceGroup(ApplicationResource applicationResource, boolean forceCreate) {
+        ResourceGroupOperation operation = forceCreate
+                ? ResourceGroupOperation.CREATE
+                : resolveOperation(applicationResource);
 
         return ResourceGroup.builder()
                 .operation(operation)

@@ -63,6 +63,12 @@ public class ResourceGroupPublishComponent {
         resourceGroupProducerService.publishResourceGroupsMsGraph(allApplicationResourcesInDB);
     }
 
+    public void publishAllResourceGroupsMsGraphAsCreate() {
+        List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
+        log.info("Publishing {} resource groups as CREATE to event.resource-group", allApplicationResourcesInDB.size());
+        resourceGroupProducerService.publishResourceGroupsMsGraphAsCreate(allApplicationResourcesInDB);
+    }
+
     @Scheduled(
             cron = "${fint.kontroll.resource-catalog.publishing.failed-cron}"
     )

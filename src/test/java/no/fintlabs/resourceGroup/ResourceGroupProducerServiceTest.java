@@ -248,6 +248,30 @@ class ResourceGroupProducerServiceTest {
         verify(resourceGroupMsGraphTemplate, never()).send(any());
     }
 
+    @Test
+    void publishResourceGroupsMsGraphAsCreateShouldForceCreateForExistingIdpGroupObjectId() {
+        UUID idpGroupObjectId = UUID.randomUUID();
+        ApplicationResource active = new ApplicationResource();
+        active.setId(6L);
+        active.setResourceName("Resource 6");
+        active.setStatus("ACTIVE");
+        active.setIdentityProviderGroupObjectId(idpGroupObjectId);
+
+        List<ApplicationResource> publishedResources =
+                resourceGroupProducerService.publishResourceGroupsMsGraphAsCreate(List.of(active));
+
+        assertEquals(List.of(active), publishedResources);
+
+        ArgumentCaptor<ParameterizedProducerRecord<ResourceGroup>> msGraphTopicCaptor =
+                ArgumentCaptor.forClass(ParameterizedProducerRecord.class);
+        verify(resourceGroupMsGraphTemplate).send(msGraphTopicCaptor.capture());
+        ResourceGroup resourceGroup = msGraphTopicCaptor.getValue().getValue();
+        assertEquals(ResourceGroupOperation.CREATE, resourceGroup.getOperation());
+        assertEquals("6", resourceGroup.getResourceId());
+        assertEquals(idpGroupObjectId.toString(), resourceGroup.getIdpGroupObjectId());
+        assertEquals("Resource 6", resourceGroup.getResourceName());
+    }
+
     private ApplicationResource applicationResourceWithNestedValues(Long id, Long locationId) {
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(id);

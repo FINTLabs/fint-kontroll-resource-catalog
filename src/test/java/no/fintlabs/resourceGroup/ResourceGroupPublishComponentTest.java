@@ -93,6 +93,17 @@ class ResourceGroupPublishComponentTest {
         verify(applicationResourceLocationService).extractAndSendToPublish(active, false);
     }
 
+    @Test
+    void shouldPublishAllResourceGroupsToMsGraphAsCreate() {
+        ApplicationResource active = applicationResource(1L, "ACTIVE");
+        ApplicationResource deleted = applicationResource(2L, "DELETED");
+        when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active, deleted));
+
+        resourceGroupPublishComponent.publishAllResourceGroupsMsGraphAsCreate();
+
+        verify(resourceGroupProducerService).publishResourceGroupsMsGraphAsCreate(List.of(active, deleted));
+    }
+
     private ApplicationResource applicationResource(Long id, String status) {
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(id);

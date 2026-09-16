@@ -226,6 +226,14 @@ public class ResourceControllerTest  {
     }
 
     @Test
+    public void publishAllMsGraphAsCreate_ShouldPublishAllMsGraphAsCreate() throws Exception {
+        mockMvc.perform(post("/api/resources/admin/publishall-ms-graph-create"))
+                .andExpect(status().isOk());
+
+        verify(resourceGroupPublishComponent).publishAllResourceGroupsMsGraphAsCreate();
+    }
+
+    @Test
     public void updateApplicationResource_ShouldCreateMutableSetsWhenCollectionsAreOmitted() throws Exception {
         when(applikasjonskategoriService.getApplikasjonskategoriByNames(null))
                 .thenReturn(Set.of());
