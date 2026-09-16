@@ -1,6 +1,5 @@
 package no.fintlabs.applicationResource;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 
@@ -33,12 +32,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private Long unitCost;
     private String status;
     private Date statusChanged;
-    private String createdBy;
-    private Date dateCreated;
 
-    @JsonIgnore
-    public boolean isValid(){
-        return this.id!=null;
-    }
+    private String createdBy;
 
 }

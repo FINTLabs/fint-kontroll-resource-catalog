@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -31,5 +32,7 @@ public class ApplicationResourceFrontendRequest {
     private boolean hasCost;
     private Long unitCost;
     private String status;
+    private Date validFrom;
+    private Date validTo;
     private boolean needApproval;
 }

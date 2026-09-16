@@ -34,6 +34,9 @@ public class ApplicationResource extends Resource {
     private String status;
     private Date statusChanged;
     private boolean needApproval;
+    private Date validFrom;
+    private Date validTo;
+
 
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")
@@ -75,6 +78,8 @@ public class ApplicationResource extends Resource {
                 && Objects.equals(unitCost, that.unitCost)
                 && Objects.equals(status, that.status)
                 && Objects.equals(statusChanged, that.statusChanged)
+                && Objects.equals(validFrom, that.validFrom)
+                && Objects.equals(validTo, that.validTo)
                 && Objects.equals(validForRoles, that.validForRoles)
                 && Objects.equals(validForOrgUnits, that.validForOrgUnits)
                 && Objects.equals(applicationCategory, that.applicationCategory)
@@ -97,6 +102,8 @@ public class ApplicationResource extends Resource {
                 unitCost,
                 status,
                 statusChanged,
+                validFrom,
+                validTo,
                 validForRoles,
                 validForOrgUnits,
                 applicationCategory,
