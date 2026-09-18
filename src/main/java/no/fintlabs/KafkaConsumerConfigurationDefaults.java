@@ -4,6 +4,7 @@ import no.novari.kafka.consuming.ErrorHandlerConfiguration;
 import no.novari.kafka.consuming.ErrorHandlerFactory;
 import no.novari.kafka.consuming.ListenerConfiguration;
 import no.novari.kafka.topic.name.EntityTopicNameParameters;
+import no.novari.kafka.topic.name.EventTopicNameParameters;
 import no.novari.kafka.topic.name.TopicNamePrefixParameters;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.stereotype.Component;
@@ -60,6 +61,14 @@ public class KafkaConsumerConfigurationDefaults {
         return EntityTopicNameParameters.builder()
                 .topicNamePrefixParameters(defaultTopicNamePrefixParameters())
                 .resourceName(resourceName)
+                .build();
+    }
+
+    public EventTopicNameParameters defaultEventTopic(String eventName) {
+
+        return EventTopicNameParameters.builder()
+                .topicNamePrefixParameters(defaultTopicNamePrefixParameters())
+                .eventName(eventName)
                 .build();
     }
 }

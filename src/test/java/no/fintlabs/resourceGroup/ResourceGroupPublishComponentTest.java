@@ -12,7 +12,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,14 +47,14 @@ class ResourceGroupPublishComponentTest {
         ApplicationResource active = applicationResource(1L, "ACTIVE");
         ApplicationResource deleted = applicationResource(2L, "DELETED");
         when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active, deleted));
-        when(resourceGroupProducerService.publishResourceGroups(any())).thenReturn(List.of(active));
+        when(resourceGroupProducerService.publishResourceGroups(any(), eq(false))).thenReturn(List.of(active));
 
         resourceGroupPublishComponent.publishScheduledResourceGroups();
 
         verify(resourceGroupProducerService).publishResourceGroups(argThat(resources ->
                 resources.size() == 1 && resources.get(0).getId().equals(active.getId())
-        ));
-        verify(resourceGroupProducerService, never()).publishAllResourceGroups(org.mockito.ArgumentMatchers.any());
+        ), eq(false));
+        verify(resourceGroupProducerService, never()).publishAllResourceGroups(org.mockito.ArgumentMatchers.any(), anyBoolean());
         verify(applicationResourceLocationService).extractAndSendToPublish(active, false);
         verify(applicationResourceLocationService, never()).extractAndSendToPublish(deleted, false);
     }
@@ -63,18 +65,43 @@ class ResourceGroupPublishComponentTest {
         ApplicationResource pending = applicationResource(2L, "PENDING_ACTIVE");
         ApplicationResource deleted = applicationResource(3L, "DELETED");
         when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active, pending, deleted));
-        when(resourceGroupProducerService.publishAllResourceGroups(any())).thenReturn(List.of(active, pending));
+        when(resourceGroupProducerService.publishAllResourceGroups(any(), eq(false))).thenReturn(List.of(active, pending));
 
-        resourceGroupPublishComponent.publishResourceGroups(true);
+        resourceGroupPublishComponent.publishResourceGroups(true, false);
 
         verify(resourceGroupProducerService).publishAllResourceGroups(argThat(resources ->
                 resources.size() == 2
                         && resources.stream().map(ApplicationResource::getId).toList().containsAll(List.of(1L, 2L))
-        ));
-        verify(resourceGroupProducerService, never()).publishResourceGroups(org.mockito.ArgumentMatchers.any());
+        ), eq(false));
+        verify(resourceGroupProducerService, never()).publishResourceGroups(org.mockito.ArgumentMatchers.any(), anyBoolean());
         verify(applicationResourceLocationService).extractAndSendToPublish(active, true);
         verify(applicationResourceLocationService).extractAndSendToPublish(pending, true);
         verify(applicationResourceLocationService, never()).extractAndSendToPublish(deleted, true);
+    }
+
+    @Test
+    void shouldPassPublishToMsGraphFlagWhenRequested() {
+        ApplicationResource active = applicationResource(1L, "ACTIVE");
+        when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active));
+        when(resourceGroupProducerService.publishResourceGroups(any(), eq(true))).thenReturn(List.of(active));
+
+        resourceGroupPublishComponent.publishResourceGroups(false, true);
+
+        verify(resourceGroupProducerService).publishResourceGroups(argThat(resources ->
+                resources.size() == 1 && resources.get(0).getId().equals(active.getId())
+        ), eq(true));
+        verify(applicationResourceLocationService).extractAndSendToPublish(active, false);
+    }
+
+    @Test
+    void shouldPublishAllResourceGroupsToMsGraphAsCreate() {
+        ApplicationResource active = applicationResource(1L, "ACTIVE");
+        ApplicationResource deleted = applicationResource(2L, "DELETED");
+        when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active, deleted));
+
+        resourceGroupPublishComponent.publishAllResourceGroupsMsGraphAsCreate();
+
+        verify(resourceGroupProducerService).publishResourceGroupsMsGraphAsCreate(List.of(active, deleted));
     }
 
     private ApplicationResource applicationResource(Long id, String status) {
