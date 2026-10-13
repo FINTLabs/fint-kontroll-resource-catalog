@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -249,7 +250,7 @@ class ResourceGroupProducerServiceTest {
     }
 
     @Test
-    void publishResourceGroupsMsGraphAsCreateShouldForceCreateForExistingIdpGroupObjectId() {
+    void publishResourceGroupsMsGraphAsCreateShouldOmitExistingIdpGroupObjectId() {
         UUID idpGroupObjectId = UUID.randomUUID();
         ApplicationResource active = new ApplicationResource();
         active.setId(6L);
@@ -268,7 +269,7 @@ class ResourceGroupProducerServiceTest {
         ResourceGroup resourceGroup = msGraphTopicCaptor.getValue().getValue();
         assertEquals(ResourceGroupOperation.CREATE, resourceGroup.getOperation());
         assertEquals("6", resourceGroup.getResourceId());
-        assertEquals(idpGroupObjectId.toString(), resourceGroup.getIdpGroupObjectId());
+        assertNull(resourceGroup.getIdpGroupObjectId());
         assertEquals("Resource 6", resourceGroup.getResourceName());
     }
 
