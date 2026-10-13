@@ -181,7 +181,7 @@ public class ResourceGroupProducerService {
         return ResourceGroup.builder()
                 .operation(operation)
                 .resourceId(applicationResource.getId().toString())
-                .idpGroupObjectId(applicationResource.getIdentityProviderGroupObjectId() == null
+                .idpGroupObjectId(forceCreate || applicationResource.getIdentityProviderGroupObjectId() == null
                         ? null
                         : applicationResource.getIdentityProviderGroupObjectId().toString())
                 .resourceName(applicationResource.getResourceName())
