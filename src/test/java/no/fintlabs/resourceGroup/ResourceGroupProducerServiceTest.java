@@ -113,17 +113,24 @@ class ResourceGroupProducerServiceTest {
     }
 
     @Test
-    void publishResourceGroupMsGraphShouldSkipDeletedResource() {
+    void publishResourceGroupMsGraphShouldPublishDeleteForDeletedResourceWithIdpGroupObjectId() {
+        UUID idpGroupObjectId = UUID.randomUUID();
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(63L);
         applicationResource.setResourceName("Resource 63");
         applicationResource.setStatus("DELETED");
-        applicationResource.setIdentityProviderGroupObjectId(UUID.randomUUID());
+        applicationResource.setIdentityProviderGroupObjectId(idpGroupObjectId);
 
         resourceGroupProducerService.publishResourceGroupMsGraph(applicationResource);
 
         verify(resourceGroupTemplate, never()).send(any());
-        verify(resourceGroupMsGraphTemplate, never()).send(any());
+        ArgumentCaptor<ParameterizedProducerRecord<ResourceGroup>> msGraphTopicCaptor =
+                ArgumentCaptor.forClass(ParameterizedProducerRecord.class);
+        verify(resourceGroupMsGraphTemplate).send(msGraphTopicCaptor.capture());
+        ResourceGroup resourceGroup = msGraphTopicCaptor.getValue().getValue();
+        assertEquals(ResourceGroupOperation.DELETE, resourceGroup.getOperation());
+        assertEquals("63", resourceGroup.getResourceId());
+        assertEquals(idpGroupObjectId.toString(), resourceGroup.getIdpGroupObjectId());
     }
 
     @Test
@@ -231,22 +238,30 @@ class ResourceGroupProducerServiceTest {
     }
 
     @Test
-    void publishResourceGroupsMsGraphShouldSkipDeletedResources() {
+    void publishResourceGroupsMsGraphShouldPublishDeleteForDeletedResourcesWithIdpGroupObjectId() {
         UUID idpGroupObjectId = UUID.randomUUID();
         ApplicationResource skipped = new ApplicationResource();
         skipped.setId(1L);
         skipped.setStatus("DELETED");
 
-        ApplicationResource skippedWithIdpGroupObjectId = new ApplicationResource();
-        skippedWithIdpGroupObjectId.setId(2L);
-        skippedWithIdpGroupObjectId.setStatus("DELETED");
-        skippedWithIdpGroupObjectId.setIdentityProviderGroupObjectId(idpGroupObjectId);
+        ApplicationResource deletedWithIdpGroupObjectId = new ApplicationResource();
+        deletedWithIdpGroupObjectId.setId(2L);
+        deletedWithIdpGroupObjectId.setResourceName("Resource 2");
+        deletedWithIdpGroupObjectId.setStatus("DELETED");
+        deletedWithIdpGroupObjectId.setIdentityProviderGroupObjectId(idpGroupObjectId);
 
         List<ApplicationResource> publishedResources =
-                resourceGroupProducerService.publishResourceGroupsMsGraph(List.of(skipped, skippedWithIdpGroupObjectId));
+                resourceGroupProducerService.publishResourceGroupsMsGraph(List.of(skipped, deletedWithIdpGroupObjectId));
 
-        assertEquals(List.of(), publishedResources);
-        verify(resourceGroupMsGraphTemplate, never()).send(any());
+        assertEquals(List.of(deletedWithIdpGroupObjectId), publishedResources);
+        ArgumentCaptor<ParameterizedProducerRecord<ResourceGroup>> msGraphTopicCaptor =
+                ArgumentCaptor.forClass(ParameterizedProducerRecord.class);
+        verify(resourceGroupMsGraphTemplate).send(msGraphTopicCaptor.capture());
+        ResourceGroup resourceGroup = msGraphTopicCaptor.getValue().getValue();
+        assertEquals(ResourceGroupOperation.DELETE, resourceGroup.getOperation());
+        assertEquals("2", resourceGroup.getResourceId());
+        assertEquals(idpGroupObjectId.toString(), resourceGroup.getIdpGroupObjectId());
+        assertEquals("Resource 2", resourceGroup.getResourceName());
     }
 
     @Test
@@ -271,6 +286,20 @@ class ResourceGroupProducerServiceTest {
         assertEquals("6", resourceGroup.getResourceId());
         assertNull(resourceGroup.getIdpGroupObjectId());
         assertEquals("Resource 6", resourceGroup.getResourceName());
+    }
+
+    @Test
+    void publishResourceGroupsMsGraphAsCreateShouldSkipDeletedResources() {
+        ApplicationResource deleted = new ApplicationResource();
+        deleted.setId(7L);
+        deleted.setStatus("DELETED");
+        deleted.setIdentityProviderGroupObjectId(UUID.randomUUID());
+
+        List<ApplicationResource> publishedResources =
+                resourceGroupProducerService.publishResourceGroupsMsGraphAsCreate(List.of(deleted));
+
+        assertEquals(List.of(), publishedResources);
+        verify(resourceGroupMsGraphTemplate, never()).send(any());
     }
 
     private ApplicationResource applicationResourceWithNestedValues(Long id, Long locationId) {

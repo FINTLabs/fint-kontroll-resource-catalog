@@ -2,6 +2,7 @@ package no.fintlabs.resourceGroup;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResource;
+import no.fintlabs.applicationResource.ApplicationResourceStatus;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
@@ -108,10 +109,12 @@ public class ResourceGroupProducerService {
     }
 
     private Optional<ApplicationResource> publishResourceGroupMsGraph(ApplicationResource applicationResource, boolean forceCreate) {
-        if (shouldSkipMsGraphPublish(applicationResource)) {
+        Optional<String> skipReason = getMsGraphPublishSkipReason(applicationResource, forceCreate);
+        if (skipReason.isPresent()) {
             log.debug(
-                    "Skipping event.resource-group command for deleted resource group with id: {} because idpGroupObjectId is empty",
-                    applicationResource.getId()
+                    "Skipping event.resource-group command for resource group with id: {}. Reason: {}",
+                    applicationResource.getId(),
+                    skipReason.get()
             );
             return Optional.empty();
         }
@@ -189,7 +192,7 @@ public class ResourceGroupProducerService {
     }
 
     private ResourceGroupOperation resolveOperation(ApplicationResource applicationResource) {
-        if ("DELETED".equalsIgnoreCase(applicationResource.getStatus())) {
+        if (isDeleted(applicationResource)) {
             return ResourceGroupOperation.DELETE;
         }
 
@@ -198,8 +201,21 @@ public class ResourceGroupProducerService {
                 : ResourceGroupOperation.UPDATE;
     }
 
-    private boolean shouldSkipMsGraphPublish(ApplicationResource applicationResource) {
-        return "DELETED".equalsIgnoreCase(applicationResource.getStatus());
+    private Optional<String> getMsGraphPublishSkipReason(ApplicationResource applicationResource, boolean forceCreate) {
+        if (isDeleted(applicationResource) && forceCreate) {
+            return Optional.of("Deleted resource groups are not published as CREATE");
+        }
+
+        if (isDeleted(applicationResource) && applicationResource.getIdentityProviderGroupObjectId() == null) {
+            return Optional.of("Deleted resource groups without identityProviderGroupObjectId cannot be published as DELETE");
+        }
+
+        return Optional.empty();
+    }
+
+    private static boolean isDeleted(ApplicationResource applicationResource) {
+        String status = applicationResource.getStatus();
+        return status != null && ApplicationResourceStatus.DELETED.value().equalsIgnoreCase(status.trim());
     }
 
     static int publicationFingerprint(ApplicationResource applicationResource) {

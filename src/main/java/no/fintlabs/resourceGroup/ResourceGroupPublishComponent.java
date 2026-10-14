@@ -3,6 +3,7 @@ package no.fintlabs.resourceGroup;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResource.ApplicationResourceService;
+import no.fintlabs.applicationResource.ApplicationResourceStatus;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -37,10 +38,7 @@ public class ResourceGroupPublishComponent {
         List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
         if (!allApplicationResourcesInDB.isEmpty()) {
             List<ApplicationResource> applicationResourcesReadyToBePublished =
-                    allApplicationResourcesInDB
-                            .stream()
-                            .filter(applicationResource -> !"DELETED".equalsIgnoreCase(applicationResource.getStatus()))
-                            .toList();
+                    getNonDeletedApplicationResources(allApplicationResourcesInDB);
 
             log.info("{} application resources added to list for publishing as resource-group", applicationResourcesReadyToBePublished.size());
             List<ApplicationResource> publishedResourceGroups = publishAll
@@ -64,9 +62,10 @@ public class ResourceGroupPublishComponent {
     }
 
     public void publishAllResourceGroupsMsGraphAsCreate() {
-        List<ApplicationResource> allApplicationResourcesInDB = applicationResourceService.getAllApplicationResources();
-        log.info("Publishing {} resource groups as CREATE to event.resource-group", allApplicationResourcesInDB.size());
-        resourceGroupProducerService.publishResourceGroupsMsGraphAsCreate(allApplicationResourcesInDB);
+        List<ApplicationResource> applicationResourcesReadyToBePublished =
+                getNonDeletedApplicationResources(applicationResourceService.getAllApplicationResources());
+        log.info("Publishing {} non-deleted resource groups as CREATE to event.resource-group", applicationResourcesReadyToBePublished.size());
+        resourceGroupProducerService.publishResourceGroupsMsGraphAsCreate(applicationResourcesReadyToBePublished);
     }
 
     @Scheduled(
@@ -86,5 +85,16 @@ public class ResourceGroupPublishComponent {
                 failedApplicationResources.size()
         );
         return resourceGroupProducerService.publishResourceGroupsMsGraph(failedApplicationResources);
+    }
+
+    private static List<ApplicationResource> getNonDeletedApplicationResources(List<ApplicationResource> applicationResources) {
+        return applicationResources.stream()
+                .filter(applicationResource -> !isDeleted(applicationResource))
+                .toList();
+    }
+
+    private static boolean isDeleted(ApplicationResource applicationResource) {
+        String status = applicationResource.getStatus();
+        return status != null && ApplicationResourceStatus.DELETED.value().equalsIgnoreCase(status.trim());
     }
 }
