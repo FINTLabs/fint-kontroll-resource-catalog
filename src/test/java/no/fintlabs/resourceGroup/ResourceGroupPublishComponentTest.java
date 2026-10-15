@@ -94,14 +94,26 @@ class ResourceGroupPublishComponentTest {
     }
 
     @Test
-    void shouldPublishAllResourceGroupsToMsGraphAsCreate() {
+    void shouldPublishAllResourceGroupsToMsGraphWithResolvedOperations() {
         ApplicationResource active = applicationResource(1L, "ACTIVE");
         ApplicationResource deleted = applicationResource(2L, "DELETED");
         when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active, deleted));
 
+        resourceGroupPublishComponent.publishAllResourceGroupsMsGraph();
+
+        verify(resourceGroupProducerService).publishResourceGroupsMsGraph(List.of(active, deleted));
+    }
+
+    @Test
+    void shouldPublishOnlyNonDeletedResourceGroupsToMsGraphAsCreate() {
+        ApplicationResource active = applicationResource(1L, "ACTIVE");
+        ApplicationResource deleted = applicationResource(2L, "DELETED");
+        ApplicationResource deletedWithWhitespace = applicationResource(3L, "DELETED ");
+        when(applicationResourceService.getAllApplicationResources()).thenReturn(List.of(active, deleted, deletedWithWhitespace));
+
         resourceGroupPublishComponent.publishAllResourceGroupsMsGraphAsCreate();
 
-        verify(resourceGroupProducerService).publishResourceGroupsMsGraphAsCreate(List.of(active, deleted));
+        verify(resourceGroupProducerService).publishResourceGroupsMsGraphAsCreate(List.of(active));
     }
 
     private ApplicationResource applicationResource(Long id, String status) {
