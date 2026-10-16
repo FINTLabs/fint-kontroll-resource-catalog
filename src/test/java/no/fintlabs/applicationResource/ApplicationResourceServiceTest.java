@@ -17,8 +17,13 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -849,7 +854,10 @@ class ApplicationResourceServiceTest {
         assertEquals("ACTIVE", saved.getStatus());
         assertNotNull(saved.getStatusChanged());
         verify(entraGroupCache).put(applicationResourceId, entraGroup);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        InOrder publicationOrder = inOrder(applicationResourceRepository, resourceGroupProducerService);
+        publicationOrder.verify(applicationResourceRepository).save(saved);
+        publicationOrder.verify(resourceGroupProducerService).publish(saved, false);
+        verifyNoMoreInteractions(resourceGroupProducerService);
     }
 
     @Test
@@ -882,7 +890,7 @@ class ApplicationResourceServiceTest {
         assertEquals(applicationResourceId, entraGroup.getResourceGroupId());
         verify(entraGroupCache).put(applicationResourceId, entraGroup);
         verify(entraGroupCache, never()).put(org.mockito.ArgumentMatchers.<Long>isNull(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verify(resourceGroupProducerService, only()).publish(saved, false);
     }
 
     @Test
@@ -913,6 +921,7 @@ class ApplicationResourceServiceTest {
         assertEquals("CREATED", saved.getEntraState());
         assertEquals("INACTIVE", saved.getStatus());
         assertNull(saved.getStatusChanged());
+        verify(resourceGroupProducerService, only()).publish(saved, false);
     }
 
     @Test
@@ -943,6 +952,7 @@ class ApplicationResourceServiceTest {
         assertEquals("CREATED", saved.getEntraState());
         assertEquals("DISABLED", saved.getStatus());
         assertNull(saved.getStatusChanged());
+        verify(resourceGroupProducerService, only()).publish(saved, false);
     }
 
     @Test
@@ -961,10 +971,12 @@ class ApplicationResourceServiceTest {
 
         verify(applicationResourceRepository, never()).save(any(ApplicationResource.class));
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
-    @Test
-    void shouldSetEntraStateWhenEntraGroupResponseFailed() {
+    @ParameterizedTest
+    @EnumSource(value = EntraStatus.class, names = {"ERROR", "FAILED"})
+    void shouldSetEntraStateWithoutPublishingWhenEntraGroupResponseFailed(EntraStatus status) {
         Long applicationResourceId = 50L;
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(applicationResourceId);
@@ -972,7 +984,7 @@ class ApplicationResourceServiceTest {
 
         EntraGroup entraGroup = new EntraGroup();
         entraGroup.setResourceGroupId(applicationResourceId);
-        entraGroup.setStatus(EntraStatus.FAILED);
+        entraGroup.setStatus(status);
 
         when(applicationResourceRepository.findById(applicationResourceId))
                 .thenReturn(Optional.of(applicationResource));
@@ -984,10 +996,10 @@ class ApplicationResourceServiceTest {
         verify(applicationResourceRepository).save(appResourceCaptor.capture());
         ApplicationResource saved = appResourceCaptor.getValue();
         assertEquals("ACTIVE", saved.getStatus());
-        assertEquals("FAILED", saved.getEntraState());
+        assertEquals(status.name(), saved.getEntraState());
         assertNull(saved.getStatusChanged());
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
     @Test
@@ -1013,7 +1025,7 @@ class ApplicationResourceServiceTest {
 
         verify(applicationResourceRepository, never()).save(any(ApplicationResource.class));
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
     @Test
@@ -1046,7 +1058,7 @@ class ApplicationResourceServiceTest {
         assertEquals("ACTIVE", saved.getStatus());
         assertNotNull(saved.getStatusChanged());
         verify(entraGroupCache).put(applicationResourceId, entraGroup);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verify(resourceGroupProducerService, only()).publish(saved, false);
     }
 
     @Test
@@ -1074,7 +1086,7 @@ class ApplicationResourceServiceTest {
         assertNull(saved.getIdentityProviderGroupName());
         assertEquals("DELETED", saved.getEntraState());
         verify(entraGroupCache).remove(applicationResourceId);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
     @Test
@@ -1103,17 +1115,20 @@ class ApplicationResourceServiceTest {
         assertNull(saved.getIdentityProviderGroupName());
         assertEquals("DELETED", saved.getEntraState());
         verify(entraGroupCache).remove(applicationResourceId);
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
-    @Test
-    void shouldIgnoreGraphGroupResponseWithInvalidObjectId() {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "not-a-uuid"})
+    void shouldNotPublishWhenGraphGroupResponseHasMissingOrInvalidObjectId(String objectId) {
         Long applicationResourceId = 70L;
         ApplicationResource applicationResource = new ApplicationResource();
         applicationResource.setId(applicationResourceId);
+        applicationResource.setStatus("PENDING_ACTIVE");
 
         EntraGroup entraGroup = new EntraGroup();
-        entraGroup.setObjectId("not-a-uuid");
+        entraGroup.setObjectId(objectId);
         entraGroup.setDisplayName("Entra Group Name");
         entraGroup.setResourceGroupId(applicationResourceId);
         entraGroup.setStatus(EntraStatus.CREATED);
@@ -1127,8 +1142,9 @@ class ApplicationResourceServiceTest {
         ApplicationResource saved = appResourceCaptor.getValue();
         assertEquals("CREATED", saved.getEntraState());
         assertNull(saved.getIdentityProviderGroupObjectId());
+        assertEquals("PENDING_ACTIVE", saved.getStatus());
         verify(entraGroupCache, never()).put(anyLong(), any(EntraGroup.class));
-        verify(resourceGroupProducerService, never()).publish(any(ApplicationResource.class), anyBoolean());
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
     @DisplayName("Test for getOrgUnitsValidAndInScope - validOrgUnits is null")
