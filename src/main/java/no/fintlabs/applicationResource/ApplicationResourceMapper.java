@@ -3,11 +3,43 @@ package no.fintlabs.applicationResource;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import org.springframework.data.domain.Page;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ApplicationResourceMapper {
+
+    public static ApplicationResource toApplicationResource(
+            ApplicationResourceFrontendRequest request,
+            Set<Applikasjonskategori> applicationCategories
+    ) {
+        return ApplicationResource.builder()
+                .id(request.getId())
+                .resourceId(request.getResourceId())
+                .resourceName(request.getResourceName())
+                .resourceType(request.getResourceType())
+                .platform(toMutableSet(request.getPlatform()))
+                .accessType(request.getAccessType())
+                .resourceLimit(request.getResourceLimit())
+                .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
+                .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
+                .validForRoles(toMutableSet(request.getValidForRoles()))
+                .applicationCategory(toMutableSet(applicationCategories))
+                .licenseEnforcement(request.getLicenseEnforcement())
+                .unitCost(request.getUnitCost())
+                .status(request.getStatus())
+                .hasCost(request.isHasCost())
+                .needApproval(request.isNeedApproval())
+                .validForOrgUnits(toMutableSet(request.getValidForOrgUnits()))
+                .build();
+    }
+
+    private static <T> Set<T> toMutableSet(Collection<T> values) {
+        return values == null ? new HashSet<>() : new HashSet<>(values);
+    }
 
     public static Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
         return Map.of(

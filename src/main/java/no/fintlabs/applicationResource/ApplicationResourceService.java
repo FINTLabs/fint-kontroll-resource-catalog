@@ -46,6 +46,7 @@ public class ApplicationResourceService {
     private final ApplikasjonskategoriService applikasjonskategoriService;
 
     public void save(ApplicationResource applicationResource) {
+        resolveImportedApplicationCategories(applicationResource);
         String resourceId = applicationResource.getResourceId();
         log.info("Trying to save application resource {} with resourceId {}",
                 applicationResource.getResourceName(), resourceId);
@@ -53,10 +54,9 @@ public class ApplicationResourceService {
         getApplicationResourceByResourceId(resourceId)
                 .ifPresentOrElse(existing -> {
                     log.info("Application resource with resourceId {} already exists. Updating existing resource", resourceId);
-                    saveExistingApplicationResource(applicationResource);
+                    saveExistingApplicationResource(applicationResource, existing);
                 }, () -> {
                     log.info("Application resource with resourceId {} does not exist. Saving new resource", resourceId);
-                    resolveApplicationCategories(applicationResource);
                     setPendingActiveIfIdentityProviderGroupIsMissing(applicationResource);
                     ApplicationResource newResource = applicationResourceRepository.save(applicationResource);
                     resourceGroupProducerService.publish(newResource, shouldPublishMsGraph(newResource, true));
@@ -67,11 +67,10 @@ public class ApplicationResourceService {
         return applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId);
     }
 
-    private void saveExistingApplicationResource(ApplicationResource incoming) {
-        ApplicationResource existingApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(incoming.getResourceId()).orElseThrow(()
-                        -> new ApplicationResourceNotFoundException(incoming.getId()));
-
+    private ApplicationResource saveExistingApplicationResource(
+            ApplicationResource incoming,
+            ApplicationResource existingApplicationResource
+    ) {
         ResourceGroup previousMsGraphCommand = toMsGraphCommand(existingApplicationResource);
         String previousStatus = existingApplicationResource.getStatus();
         boolean reactivatingDeletedResource = isReactivatingDeletedResource(previousStatus, incoming.getStatus());
@@ -86,8 +85,9 @@ public class ApplicationResourceService {
                         || changedToPendingActive(previousStatus, existingApplicationResource.getStatus())
         );
 
-        applicationResourceRepository.save(existingApplicationResource);
-        resourceGroupProducerService.publish(existingApplicationResource, publishMsGraph);
+        ApplicationResource savedApplicationResource = applicationResourceRepository.save(existingApplicationResource);
+        resourceGroupProducerService.publish(savedApplicationResource, publishMsGraph);
+        return savedApplicationResource;
     }
 
     private boolean shouldPublishMsGraph(ApplicationResource applicationResource, boolean publishMsGraph) {
@@ -143,8 +143,6 @@ public class ApplicationResourceService {
             ApplicationResource incoming,
             ApplicationResource existingApplicationResource
     ) {
-        resolveApplicationCategories(incoming);
-
         existingApplicationResource.setApplicationAccessType(incoming.getApplicationAccessType());
         existingApplicationResource.setApplicationAccessRole(incoming.getApplicationAccessRole());
         existingApplicationResource.setPlatform(toMutableSet(incoming.getPlatform()));
@@ -166,7 +164,7 @@ public class ApplicationResourceService {
         updateApplicationResourceLocations(existingApplicationResource, incoming);
     }
 
-    private void resolveApplicationCategories(ApplicationResource applicationResource) {
+    private void resolveImportedApplicationCategories(ApplicationResource applicationResource) {
         Set<Applikasjonskategori> applicationCategories = applicationResource.getApplicationCategory();
         if (applicationCategories == null || applicationCategories.isEmpty()) {
             applicationResource.setApplicationCategory(new HashSet<>());
@@ -407,9 +405,22 @@ public class ApplicationResourceService {
         return applicationResourceRepository.findAllByEntraState(EntraStatus.FAILED.name());
     }
 
+    private ApplicationResource toApplicationResource(ApplicationResourceFrontendRequest request) {
+        Set<Applikasjonskategori> applicationCategories =
+                applikasjonskategoriService.getApplikasjonskategoriByIds(request.getApplicationCategory());
+
+        return ApplicationResourceMapper.toApplicationResource(request, applicationCategories);
+    }
+
+    public ApplicationResource createApplicationResource(ApplicationResourceFrontendRequest request) {
+        ApplicationResource applicationResource = toApplicationResource(request);
+        applicationResource.setResourceId(UUID.randomUUID().toString());
+        return createApplicationResource(applicationResource);
+    }
+
     public ApplicationResource createApplicationResource(ApplicationResource applicationResource) {
-        resolveApplicationCategories(applicationResource);
         setPendingActiveIfIdentityProviderGroupIsMissing(applicationResource);
+        applicationResource.setStatusChanged(Date.from(Instant.now()));
         ApplicationResource newApplicationResource = applicationResourceRepository.saveAndFlush(applicationResource);
         log.info("Created new application resource: {}", newApplicationResource.getResourceId());
         resourceGroupProducerService.publish(newApplicationResource, shouldPublishMsGraph(newApplicationResource, true));
@@ -417,6 +428,10 @@ public class ApplicationResourceService {
         return newApplicationResource;
     }
 
+
+    public ApplicationResource updateApplicationResource(ApplicationResourceFrontendRequest request) throws ApplicationResourceNotFoundException {
+        return updateApplicationResource(toApplicationResource(request));
+    }
 
     public ApplicationResource updateApplicationResource(ApplicationResource applicationResource) throws ApplicationResourceNotFoundException {
         ApplicationResource applicationResourceToUpdate = applicationResourceRepository
@@ -433,12 +448,10 @@ public class ApplicationResourceService {
                 ? applicationResourceToUpdate.getStatusChanged()
                 : Date.from(Instant.now()));
 
-        saveExistingApplicationResource(applicationResource);
-        ApplicationResource updatedApplicationResource = applicationResourceRepository
-                .findApplicationResourceByResourceIdEqualsIgnoreCase(applicationResource.getResourceId()).orElseThrow(() -> new ApplicationResourceNotFoundException(applicationResource.getId()));
+        ApplicationResource updatedApplicationResource = saveExistingApplicationResource(
+                applicationResource, applicationResourceToUpdate);
 
         log.info("Updated application resource: {}", updatedApplicationResource.getResourceId());
-
 
         return updatedApplicationResource;
     }
