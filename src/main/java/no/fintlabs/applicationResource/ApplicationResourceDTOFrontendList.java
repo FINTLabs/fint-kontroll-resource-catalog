@@ -19,4 +19,5 @@ public class ApplicationResourceDTOFrontendList {
     private UUID identityProviderGroupObjectId;
     private List<String> applicationCategory;
     private String status;
+    private Long resourceUsage;
 }

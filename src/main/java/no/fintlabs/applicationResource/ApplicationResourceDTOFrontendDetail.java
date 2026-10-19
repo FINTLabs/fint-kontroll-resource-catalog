@@ -36,6 +36,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private Date statusChanged;
     private String createdBy;
     private Date dateCreated;
+    private Long resourceUsage;
 
     @JsonIgnore
     public boolean isValid(){
