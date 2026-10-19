@@ -1,6 +1,8 @@
 package no.fintlabs.applicationResource;
 
+import lombok.RequiredArgsConstructor;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import org.springframework.data.domain.Page;
 
 import java.util.Collection;
@@ -10,7 +12,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
+@RequiredArgsConstructor
 public class ApplicationResourceMapper {
+    private static ResourceAvailabilityService resourceAvailabilityService;
 
     public static ApplicationResource toApplicationResource(
             ApplicationResourceFrontendRequest request,
@@ -63,7 +68,8 @@ public class ApplicationResourceMapper {
                 applicationResource.getResourceLimit(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 toApplicationCategoryNames(applicationResource),
-                applicationResource.getStatus()
+                applicationResource.getStatus(),
+                resourceAvailabilityService.getUsage(applicationResource.getResourceId())
         );
     }
     public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
@@ -90,7 +96,8 @@ public class ApplicationResourceMapper {
                 applicationResource.getEntraState(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 applicationResource.isNeedApproval(),
-                toApplicationCategoryNames(applicationResource)
+                toApplicationCategoryNames(applicationResource),
+                resourceAvailabilityService.getUsage(applicationResource.getResourceId())
         );
     }
 

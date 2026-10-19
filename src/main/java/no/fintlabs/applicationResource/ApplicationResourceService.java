@@ -12,6 +12,7 @@ import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.EntraStatus;
 import no.fintlabs.resourceGroup.ResourceGroup;
@@ -44,6 +45,7 @@ public class ApplicationResourceService {
     private final OpaService opaService;
     private final ResourceGroupProducerService resourceGroupProducerService;
     private final ApplikasjonskategoriService applikasjonskategoriService;
+    private final ResourceAvailabilityService resourceAvailabilityService;
 
     public void save(ApplicationResource applicationResource) {
         resolveImportedApplicationCategories(applicationResource);
@@ -194,6 +196,8 @@ public class ApplicationResourceService {
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail =
                 modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);
         applicationResourceDTOFrontendDetail.setApplicationCategory(ApplicationResourceMapper.toApplicationCategoryNames(applicationResource));
+
+        applicationResourceDTOFrontendDetail.setResourceUsage(resourceAvailabilityService.getUsage(applicationResourceDTOFrontendDetail.getResourceId()));
 
         List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
         List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
