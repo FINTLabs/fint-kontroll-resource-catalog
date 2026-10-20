@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.fintlabs.util.OnlyDevelopers;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
@@ -33,6 +34,7 @@ public class ResourceController {
     private final AccessTypeService accessTypeService;
     private final ServiceConfiguration serviceConfiguration;
     private final ResourceGroupPublishComponent resourceGroupPublishComponent;
+    private final ResourceAvailabilityService resourceAvailabilityService;
 
 
     public ResourceController(
@@ -41,13 +43,14 @@ public class ResourceController {
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
             BrukertypeService brukertypeService,
-            ServiceConfiguration serviceConfiguration, ResourceGroupPublishComponent resourceGroupPublishComponent) {
+            ServiceConfiguration serviceConfiguration, ResourceGroupPublishComponent resourceGroupPublishComponent, ResourceAvailabilityService resourceAvailabilityService) {
         this.applicationResourceService = applicationResourceService;
         this.applicationResourceMapper = applicationResourceMapper;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
         this.serviceConfiguration = serviceConfiguration;
         this.resourceGroupPublishComponent = resourceGroupPublishComponent;
+        this.resourceAvailabilityService = resourceAvailabilityService;
     }
 
 
@@ -115,6 +118,12 @@ public class ResourceController {
             log.error("Error fetching application resources", e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Something went wrong when fetching application resources");
         }
+    }
+
+    @GetMapping("/usage/{resourceid}")
+    public ResponseEntity<Long> getUsageForResourceId(@PathVariable String resourceid){
+
+        return ResponseEntity.ok(resourceAvailabilityService.getUsage(resourceid));
     }
 
     @GetMapping("/admin/v1")
