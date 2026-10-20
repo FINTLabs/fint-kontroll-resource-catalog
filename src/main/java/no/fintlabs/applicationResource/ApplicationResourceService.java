@@ -193,7 +193,9 @@ public class ApplicationResourceService {
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail =
                 modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);
-        applicationResourceDTOFrontendDetail.setApplicationCategory(ApplicationResourceMapper.toApplicationCategoryNames(applicationResource));
+        applicationResourceDTOFrontendDetail.setApplicationCategory(
+                applicationResource.getApplicationCategory().stream().toList()
+        );
 
         List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
         List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
