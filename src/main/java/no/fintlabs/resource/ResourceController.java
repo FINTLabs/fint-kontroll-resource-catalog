@@ -28,6 +28,7 @@ import java.util.Map;
 @RequestMapping("/api/resources")
 public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
+    private final ApplicationResourceMapper applicationResourceMapper;
     private final ApplicationCategoryService applicationCategoryService;
     private final AccessTypeService accessTypeService;
     private final ServiceConfiguration serviceConfiguration;
@@ -36,11 +37,13 @@ public class ResourceController {
 
     public ResourceController(
             ApplicationResourceService applicationResourceService,
+            ApplicationResourceMapper applicationResourceMapper,
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
             BrukertypeService brukertypeService,
             ServiceConfiguration serviceConfiguration, ResourceGroupPublishComponent resourceGroupPublishComponent) {
         this.applicationResourceService = applicationResourceService;
+        this.applicationResourceMapper = applicationResourceMapper;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
         this.serviceConfiguration = serviceConfiguration;
@@ -106,7 +109,7 @@ public class ResourceController {
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
             }
-            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
+            return ResponseEntity.ok(applicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
         }
         catch (Exception e) {
             log.error("Error fetching application resources", e);
@@ -144,7 +147,7 @@ public class ResourceController {
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
             }
-            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceAdminDtoPage(allApplicationResources));
+            return ResponseEntity.ok(applicationResourceMapper.toApplicationResourceAdminDtoPage(allApplicationResources));
         }
         catch (Exception e) {
             log.error("Error fetching application resources", e);

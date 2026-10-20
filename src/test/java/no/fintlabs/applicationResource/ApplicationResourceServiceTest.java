@@ -8,6 +8,7 @@ import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.EntraStatus;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
@@ -55,6 +56,9 @@ class ApplicationResourceServiceTest {
     private ResourceGroupProducerService resourceGroupProducerService;
 
     @Mock
+    private ResourceAvailabilityService resourceAvailabilityService;
+
+    @Mock
     private ApplikasjonskategoriService applikasjonskategoriService;
 
     private ApplicationResourceService applicationResourceService;
@@ -71,7 +75,8 @@ class ApplicationResourceServiceTest {
                 authorizationUtil,
                 opaService,
                 resourceGroupProducerService,
-                applikasjonskategoriService
+                applikasjonskategoriService,
+                resourceAvailabilityService
         );
     }
 
@@ -101,6 +106,7 @@ class ApplicationResourceServiceTest {
 
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("1", "2", "3"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
+        when(resourceAvailabilityService.getUsage("adobek12")).thenReturn(0L);
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
                 .getApplicationResourceDTOFrontendDetailById(1L);
@@ -109,9 +115,11 @@ class ApplicationResourceServiceTest {
         String resourceIdAppres = appRes1.getResourceId();
 
         assertEquals(resourceIdDTO, resourceIdAppres, "resourceIdDTO should be adobek12");
+        assertEquals(0L, applicationResourceDTOFrontendDetail.getResourceUsage());
         System.out.println("resourceId should be adobek12: " + resourceIdDTO);
 
         verify(applicationResourceRepository, times(1)).findById(1L);
+        verify(resourceAvailabilityService).getUsage("adobek12");
     }
 
     @Test

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,8 +15,9 @@ import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
+@Component
 public class ApplicationResourceMapper {
-    private static ResourceAvailabilityService resourceAvailabilityService;
+    private final ResourceAvailabilityService resourceAvailabilityService;
 
     public static ApplicationResource toApplicationResource(
             ApplicationResourceFrontendRequest request,
@@ -46,12 +48,12 @@ public class ApplicationResourceMapper {
         return values == null ? new HashSet<>() : new HashSet<>(values);
     }
 
-    public static Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
+    public Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
         return Map.of(
                 "resources",
                     applicationResourcePage.getContent()
                         .stream()
-                        .map(ApplicationResourceMapper::toApplicationResourceDto)
+                        .map(this::toApplicationResourceDto)
                         .collect(Collectors.toList()),
                 "currentPage", applicationResourcePage.getNumber(),
                 "totalPages", applicationResourcePage.getTotalPages(),
@@ -59,7 +61,7 @@ public class ApplicationResourceMapper {
                 "totalItems", applicationResourcePage.getTotalElements()
         );
     }
-    public static ApplicationResourceDTOFrontendList toApplicationResourceDto(ApplicationResource applicationResource) {
+    public ApplicationResourceDTOFrontendList toApplicationResourceDto(ApplicationResource applicationResource) {
         return new ApplicationResourceDTOFrontendList (
                 applicationResource.getId(),
                 applicationResource.getResourceId(),
@@ -72,12 +74,12 @@ public class ApplicationResourceMapper {
                 resourceAvailabilityService.getUsage(applicationResource.getResourceId())
         );
     }
-    public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
+    public Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
         return Map.of(
                 "resources",
                 applicationResourcePage.getContent()
                         .stream()
-                        .map(ApplicationResourceMapper::toApplicationResourceAdminDto)
+                        .map(this::toApplicationResourceAdminDto)
                         .collect(Collectors.toList()),
                 "currentPage", applicationResourcePage.getNumber(),
                 "totalPages", applicationResourcePage.getTotalPages(),
@@ -85,7 +87,7 @@ public class ApplicationResourceMapper {
                 "totalItems", applicationResourcePage.getTotalElements()
         );
     }
-    public static ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(ApplicationResource applicationResource) {
+    public ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(ApplicationResource applicationResource) {
         return new ApplicationResourceDTOFrontendListForAdmin (
                 applicationResource.getId(),
                 applicationResource.getResourceId(),

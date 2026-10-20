@@ -10,11 +10,13 @@ import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
 import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResource.ApplicationResourceFrontendRequest;
+import no.fintlabs.applicationResource.ApplicationResourceMapper;
 import no.fintlabs.applicationResource.ApplicationResourceService;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,13 +67,15 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @Testcontainers
 @ActiveProfiles("test")
 @Import({
-        ApplicationResourceService.class,
+        ApplicationResourceMapper.class,
         RequestBodyLogging.class
 })
 public class ResourceControllerTest  {
     private MockMvc mockMvc;
     @MockBean
     private ApplicationResourceService applicationResourceService;
+    @MockBean
+    private ResourceAvailabilityService resourceAvailabilityService;
     @MockBean
     private OpaService opaService;
     @MockBean
@@ -140,10 +144,12 @@ public class ResourceControllerTest  {
                 pageable,
                 false))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
+        given(resourceAvailabilityService.getUsage(Mockito.anyString())).willReturn(0L);
 
         mockMvc.perform(get("/api/resources/v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resources", hasSize(2)))
+                .andExpect(jsonPath("$.resources[0].resourceUsage").value(0))
                 .andReturn();
     }
 
