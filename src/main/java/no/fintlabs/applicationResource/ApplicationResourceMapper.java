@@ -1,20 +1,59 @@
 package no.fintlabs.applicationResource;
 
+import lombok.RequiredArgsConstructor;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ApplicationResourceMapper {
 
-    public static Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
+@RequiredArgsConstructor
+@Component
+public class ApplicationResourceMapper {
+    private final ResourceAvailabilityService resourceAvailabilityService;
+
+    public static ApplicationResource toApplicationResource(
+            ApplicationResourceFrontendRequest request,
+            Set<Applikasjonskategori> applicationCategories
+    ) {
+        return ApplicationResource.builder()
+                .id(request.getId())
+                .resourceId(request.getResourceId())
+                .resourceName(request.getResourceName())
+                .resourceType(request.getResourceType())
+                .platform(toMutableSet(request.getPlatform()))
+                .accessType(request.getAccessType())
+                .resourceLimit(request.getResourceLimit())
+                .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
+                .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
+                .validForRoles(toMutableSet(request.getValidForRoles()))
+                .applicationCategory(toMutableSet(applicationCategories))
+                .licenseEnforcement(request.getLicenseEnforcement())
+                .unitCost(request.getUnitCost())
+                .status(request.getStatus())
+                .hasCost(request.isHasCost())
+                .needApproval(request.isNeedApproval())
+                .validForOrgUnits(toMutableSet(request.getValidForOrgUnits()))
+                .build();
+    }
+
+    private static <T> Set<T> toMutableSet(Collection<T> values) {
+        return values == null ? new HashSet<>() : new HashSet<>(values);
+    }
+
+    public Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
         return Map.of(
                 "resources",
                     applicationResourcePage.getContent()
                         .stream()
-                        .map(ApplicationResourceMapper::toApplicationResourceDto)
+                        .map(this::toApplicationResourceDto)
                         .collect(Collectors.toList()),
                 "currentPage", applicationResourcePage.getNumber(),
                 "totalPages", applicationResourcePage.getTotalPages(),
@@ -22,7 +61,7 @@ public class ApplicationResourceMapper {
                 "totalItems", applicationResourcePage.getTotalElements()
         );
     }
-    public static ApplicationResourceDTOFrontendList toApplicationResourceDto(ApplicationResource applicationResource) {
+    public ApplicationResourceDTOFrontendList toApplicationResourceDto(ApplicationResource applicationResource) {
         return new ApplicationResourceDTOFrontendList (
                 applicationResource.getId(),
                 applicationResource.getResourceId(),
@@ -31,15 +70,16 @@ public class ApplicationResourceMapper {
                 applicationResource.getResourceLimit(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 toApplicationCategoryNames(applicationResource),
-                applicationResource.getStatus()
+                applicationResource.getStatus(),
+                resourceAvailabilityService.getUsage(applicationResource.getResourceId())
         );
     }
-    public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
+    public Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
         return Map.of(
                 "resources",
                 applicationResourcePage.getContent()
                         .stream()
-                        .map(ApplicationResourceMapper::toApplicationResourceAdminDto)
+                        .map(this::toApplicationResourceAdminDto)
                         .collect(Collectors.toList()),
                 "currentPage", applicationResourcePage.getNumber(),
                 "totalPages", applicationResourcePage.getTotalPages(),
@@ -47,7 +87,7 @@ public class ApplicationResourceMapper {
                 "totalItems", applicationResourcePage.getTotalElements()
         );
     }
-    public static ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(ApplicationResource applicationResource) {
+    public ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(ApplicationResource applicationResource) {
         return new ApplicationResourceDTOFrontendListForAdmin (
                 applicationResource.getId(),
                 applicationResource.getResourceId(),
@@ -58,7 +98,8 @@ public class ApplicationResourceMapper {
                 applicationResource.getEntraState(),
                 applicationResource.getIdentityProviderGroupObjectId(),
                 applicationResource.isNeedApproval(),
-                toApplicationCategoryNames(applicationResource)
+                toApplicationCategoryNames(applicationResource),
+                resourceAvailabilityService.getUsage(applicationResource.getResourceId())
         );
     }
 
