@@ -3,3 +3,6 @@ CREATE TABLE plattform_kodeverk (
     name VARCHAR(255) NOT NULL
 );
 
+alter table plattform_kodeverk
+     add constraint uk_plattform_name unique (name);
+
