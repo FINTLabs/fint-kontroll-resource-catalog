@@ -8,13 +8,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +53,81 @@ class ApplikasjonskategoriServiceTest {
         applikasjonskategoriService.saveApplikasjonskategori(updatedApplikasjonskategori);
 
         verify(applikasjonskategoriRepository).saveAndFlush(updatedApplikasjonskategori);
+    }
+
+    @Test
+    void shouldFindApplikasjonskategoriByIdsWithoutUsingNames() {
+        Applikasjonskategori category = Applikasjonskategori.builder()
+                .id(1L)
+                .name("Renamed category")
+                .build();
+        when(applikasjonskategoriRepository.findAllById(List.of(1L))).thenReturn(List.of(category));
+
+        Set<Applikasjonskategori> categories = applikasjonskategoriService.getApplikasjonskategoriByIds(
+                List.of(1L, 1L));
+
+        assertThat(categories).containsExactly(category);
+        verify(applikasjonskategoriRepository).findAllById(List.of(1L));
+        verifyNoMoreInteractions(applikasjonskategoriRepository);
+    }
+
+    @Test
+    void shouldSkipUnknownCategoryIdsAndKeepExistingCategories() {
+        Applikasjonskategori category = Applikasjonskategori.builder().id(1L).name("Existing").build();
+        when(applikasjonskategoriRepository.findAllById(List.of(1L, 999L))).thenReturn(List.of(category));
+
+        Set<Applikasjonskategori> categories = applikasjonskategoriService.getApplikasjonskategoriByIds(
+                List.of(1L, 999L));
+
+        assertThat(categories).containsExactly(category);
+        verify(applikasjonskategoriRepository).findAllById(List.of(1L, 999L));
+        verifyNoMoreInteractions(applikasjonskategoriRepository);
+    }
+
+    @Test
+    void shouldSkipNullCategoryIds() {
+        Applikasjonskategori category = Applikasjonskategori.builder().id(1L).name("Existing").build();
+        when(applikasjonskategoriRepository.findAllById(List.of(1L))).thenReturn(List.of(category));
+
+        Set<Applikasjonskategori> categories = applikasjonskategoriService.getApplikasjonskategoriByIds(
+                Arrays.asList(1L, null));
+
+        assertThat(categories).containsExactly(category);
+        verify(applikasjonskategoriRepository).findAllById(List.of(1L));
+        verifyNoMoreInteractions(applikasjonskategoriRepository);
+    }
+
+    @Test
+    void shouldReturnEmptyCategoriesWhenIdsContainOnlyNull() {
+        assertThat(applikasjonskategoriService.getApplikasjonskategoriByIds(Arrays.asList((Long) null))).isEmpty();
+
+        verify(applikasjonskategoriRepository).findAllById(List.of());
+        verifyNoMoreInteractions(applikasjonskategoriRepository);
+    }
+
+    @Test
+    void shouldReturnEmptyCategoriesWhenNoIdsExist() {
+        when(applikasjonskategoriRepository.findAllById(List.of(999L))).thenReturn(List.of());
+
+        assertThat(applikasjonskategoriService.getApplikasjonskategoriByIds(List.of(999L))).isEmpty();
+        verify(applikasjonskategoriRepository).findAllById(List.of(999L));
+        verifyNoMoreInteractions(applikasjonskategoriRepository);
+    }
+
+    @Test
+    void shouldReturnMutableEmptyCategoriesWhenIdsAreOmitted() {
+        Set<Applikasjonskategori> categories = applikasjonskategoriService.getApplikasjonskategoriByIds(null);
+
+        assertThat(categories).isEmpty();
+        categories.clear();
+        verifyNoInteractions(applikasjonskategoriRepository);
+    }
+
+    @Test
+    void shouldReturnEmptyCategoriesWhenIdsAreEmpty() {
+        assertThat(applikasjonskategoriService.getApplikasjonskategoriByIds(List.of())).isEmpty();
+
+        verifyNoInteractions(applikasjonskategoriRepository);
     }
 
     @Test

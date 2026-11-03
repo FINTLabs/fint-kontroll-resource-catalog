@@ -26,7 +26,7 @@ public class ApplicationResourceFrontendRequest {
     private String resourceOwnerOrgUnitName;
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
-    private List<String> applicationCategory;
+    private List<Long> applicationCategory;
     private String licenseEnforcement;
     private boolean hasCost;
     private Long unitCost;

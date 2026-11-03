@@ -3,8 +3,6 @@ package no.fintlabs.resource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
-import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
-import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.fintlabs.util.OnlyDevelopers;
@@ -22,14 +20,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -38,7 +30,6 @@ public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
     private final ApplicationCategoryService applicationCategoryService;
     private final AccessTypeService accessTypeService;
-    private final ApplikasjonskategoriService applikasjonskategoriService;
     private final ServiceConfiguration serviceConfiguration;
     private final ResourceGroupPublishComponent resourceGroupPublishComponent;
 
@@ -47,13 +38,11 @@ public class ResourceController {
             ApplicationResourceService applicationResourceService,
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
-            ApplikasjonskategoriService applikasjonskategoriService,
             BrukertypeService brukertypeService,
             ServiceConfiguration serviceConfiguration, ResourceGroupPublishComponent resourceGroupPublishComponent) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
-        this.applikasjonskategoriService = applikasjonskategoriService;
         this.serviceConfiguration = serviceConfiguration;
         this.resourceGroupPublishComponent = resourceGroupPublishComponent;
     }
@@ -165,33 +154,18 @@ public class ResourceController {
 
     @PostMapping("v1")
     public ResponseEntity<HttpStatus> createApplicationResource(
-            @AuthenticationPrincipal Jwt jwt,
             @RequestBody ApplicationResourceFrontendRequest request
     ) {
-        ApplicationResource applicationResource = toApplicationResource(request, UUID.randomUUID().toString());
-
-        ApplicationResource newApplicationResource = applicationResourceService.createApplicationResource(applicationResource);
-        if (newApplicationResource != null) {
-            return new ResponseEntity<>(HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
-        }
+        applicationResourceService.createApplicationResource(request);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("v1")
     public ResponseEntity<HttpStatus> updateApplicationResource(
             @RequestBody ApplicationResourceFrontendRequest request
     ) throws ApplicationResourceNotFoundException {
-        ApplicationResource applicationResource = toApplicationResource(request, request.getResourceId());
-
-        ApplicationResource updateApplicationResource = applicationResourceService.updateApplicationResource(applicationResource);
-
-        if (updateApplicationResource != null) {
-            log.info("Resource updated: {}", updateApplicationResource.getResourceId());
-            return new ResponseEntity<>(HttpStatus.ACCEPTED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
-        }
+        applicationResourceService.updateApplicationResource(request);
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
     @DeleteMapping("v1/{id}")
@@ -205,40 +179,6 @@ public class ResourceController {
         }
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    private ApplicationResource toApplicationResource(ApplicationResourceFrontendRequest request, String resourceId) {
-        Set<Applikasjonskategori> applicationCategories;
-        try {
-            applicationCategories = applikasjonskategoriService.getApplikasjonskategoriByNames(request.getApplicationCategory());
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, illegalArgumentException.getMessage(), illegalArgumentException);
-        }
-
-        return ApplicationResource.builder()
-                .id(request.getId())
-                .resourceId(resourceId)
-                .resourceName(request.getResourceName())
-                .resourceType(request.getResourceType())
-                .platform(toMutableSet(request.getPlatform()))
-                .accessType(request.getAccessType())
-                .resourceLimit(request.getResourceLimit())
-                .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
-                .resourceOwnerOrgUnitName(request.getResourceOwnerOrgUnitName())
-                .validForRoles(toMutableSet(request.getValidForRoles()))
-                .applicationCategory(toMutableSet(applicationCategories))
-                .licenseEnforcement(request.getLicenseEnforcement())
-                .unitCost(request.getUnitCost())
-                .status(request.getStatus())
-                .statusChanged(Date.from(Instant.now()))
-                .hasCost(request.isHasCost())
-                .needApproval(request.isNeedApproval())
-                .validForOrgUnits(toMutableSet(request.getValidForOrgUnits()))
-                .build();
-    }
-
-    private static <T> Set<T> toMutableSet(Collection<T> values) {
-        return values == null ? new HashSet<>() : new HashSet<>(values);
     }
 
     @GetMapping("admin/source/v1")

@@ -3,6 +3,7 @@ package no.fintlabs.applicationResource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 
 import java.util.Date;
 import java.util.List;
@@ -27,7 +28,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private String resourceOwnerOrgUnitName;
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
-    private List<String> applicationCategory;
+    private List<Applikasjonskategori> applicationCategory;
     private String licenseEnforcement;
     private boolean hasCost;
     private Long unitCost;
