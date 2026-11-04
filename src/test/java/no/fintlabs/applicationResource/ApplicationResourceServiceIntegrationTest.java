@@ -12,6 +12,7 @@ import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
@@ -64,6 +65,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     private ApplicationResourceLocationExtendedProduserService applicationResourceLocationExtendedProduserService;
     @MockBean
     private OpaService opaService;
+    @MockBean
+    private ResourceAvailabilityService resourceAvailabilityService;
 
     private final String varfk = "varfk";
     private final String kompavd = "kompavd";

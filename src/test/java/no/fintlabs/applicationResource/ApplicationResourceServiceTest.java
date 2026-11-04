@@ -8,6 +8,7 @@ import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.EntraStatus;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
@@ -52,6 +53,9 @@ class ApplicationResourceServiceTest {
     @Mock
     private ApplikasjonskategoriService applikasjonskategoriService;
 
+    @Mock
+    private ResourceAvailabilityService resourceAvailabilityService;
+
     private ApplicationResourceService applicationResourceService;
 
     @Captor
@@ -66,7 +70,9 @@ class ApplicationResourceServiceTest {
                 authorizationUtil,
                 opaService,
                 resourceGroupProducerService,
-                applikasjonskategoriService
+                applikasjonskategoriService,
+                resourceAvailabilityService
+
         );
     }
 

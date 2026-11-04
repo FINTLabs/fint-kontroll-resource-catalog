@@ -5,6 +5,7 @@ import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.util.OnlyDevelopers;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.springdoc.core.annotations.ParameterObject;
@@ -32,6 +33,7 @@ public class ResourceController {
     private final AccessTypeService accessTypeService;
     private final ServiceConfiguration serviceConfiguration;
     private final ResourceGroupPublishComponent resourceGroupPublishComponent;
+    private final ResourceAvailabilityService resourceAvailabilityService;
 
 
     public ResourceController(
@@ -39,12 +41,15 @@ public class ResourceController {
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
             BrukertypeService brukertypeService,
-            ServiceConfiguration serviceConfiguration, ResourceGroupPublishComponent resourceGroupPublishComponent) {
+            ServiceConfiguration serviceConfiguration,
+            ResourceGroupPublishComponent resourceGroupPublishComponent,
+            ResourceAvailabilityService resourceAvailabilityService) {
         this.applicationResourceService = applicationResourceService;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
         this.serviceConfiguration = serviceConfiguration;
         this.resourceGroupPublishComponent = resourceGroupPublishComponent;
+        this.resourceAvailabilityService = resourceAvailabilityService;
     }
 
 
@@ -106,7 +111,10 @@ public class ResourceController {
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
             }
-            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(allApplicationResources));
+            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(
+                    allApplicationResources,
+                    resourceAvailabilityService
+            ));
         }
         catch (Exception e) {
             log.error("Error fetching application resources", e);
@@ -144,7 +152,10 @@ public class ResourceController {
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
             }
-            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceAdminDtoPage(allApplicationResources));
+            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceAdminDtoPage(
+                    allApplicationResources,
+                    resourceAvailabilityService
+            ));
         }
         catch (Exception e) {
             log.error("Error fetching application resources", e);

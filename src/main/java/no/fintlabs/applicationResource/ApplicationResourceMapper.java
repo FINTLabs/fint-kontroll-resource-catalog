@@ -1,6 +1,7 @@
 package no.fintlabs.applicationResource;
 
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import org.springframework.data.domain.Page;
 
 import java.util.Collection;
@@ -41,12 +42,15 @@ public class ApplicationResourceMapper {
         return values == null ? new HashSet<>() : new HashSet<>(values);
     }
 
-    public static Map<String, Object> toApplicationResourceDtoPage(Page<ApplicationResource> applicationResourcePage) {
+    public static Map<String, Object> toApplicationResourceDtoPage(
+            Page<ApplicationResource> applicationResourcePage,
+            ResourceAvailabilityService resourceAvailabilityService
+    ) {
         return Map.of(
                 "resources",
                     applicationResourcePage.getContent()
                         .stream()
-                        .map(ApplicationResourceMapper::toApplicationResourceDto)
+                        .map(applicationResource -> toApplicationResourceDto(applicationResource, resourceAvailabilityService))
                         .collect(Collectors.toList()),
                 "currentPage", applicationResourcePage.getNumber(),
                 "totalPages", applicationResourcePage.getTotalPages(),
@@ -54,24 +58,31 @@ public class ApplicationResourceMapper {
                 "totalItems", applicationResourcePage.getTotalElements()
         );
     }
-    public static ApplicationResourceDTOFrontendList toApplicationResourceDto(ApplicationResource applicationResource) {
-        return new ApplicationResourceDTOFrontendList (
-                applicationResource.getId(),
-                applicationResource.getResourceId(),
-                applicationResource.getResourceName(),
-                applicationResource.getResourceType(),
-                applicationResource.getResourceLimit(),
-                applicationResource.getIdentityProviderGroupObjectId(),
-                toApplicationCategoryNames(applicationResource),
-                applicationResource.getStatus()
-        );
+    public static ApplicationResourceDTOFrontendList toApplicationResourceDto(
+            ApplicationResource applicationResource,
+            ResourceAvailabilityService resourceAvailabilityService
+    ) {
+        return ApplicationResourceDTOFrontendList.builder()
+                .id(applicationResource.getId())
+                .resourceId(applicationResource.getResourceId())
+                .resourceName(applicationResource.getResourceName())
+                .resourceType(applicationResource.getResourceType())
+                .resourceLimit(applicationResource.getResourceLimit())
+                .identityProviderGroupObjectId(applicationResource.getIdentityProviderGroupObjectId())
+                .applicationCategory(toApplicationCategoryNames(applicationResource))
+                .status(applicationResource.getStatus())
+                .resourceUsage(resourceAvailabilityService.getUsage(applicationResource.getResourceId()))
+                .build();
     }
-    public static Map<String, Object> toApplicationResourceAdminDtoPage(Page<ApplicationResource> applicationResourcePage) {
+    public static Map<String, Object> toApplicationResourceAdminDtoPage(
+            Page<ApplicationResource> applicationResourcePage,
+            ResourceAvailabilityService resourceAvailabilityService
+    ) {
         return Map.of(
                 "resources",
                 applicationResourcePage.getContent()
                         .stream()
-                        .map(ApplicationResourceMapper::toApplicationResourceAdminDto)
+                        .map(applicationResource -> toApplicationResourceAdminDto(applicationResource, resourceAvailabilityService))
                         .collect(Collectors.toList()),
                 "currentPage", applicationResourcePage.getNumber(),
                 "totalPages", applicationResourcePage.getTotalPages(),
@@ -79,19 +90,24 @@ public class ApplicationResourceMapper {
                 "totalItems", applicationResourcePage.getTotalElements()
         );
     }
-    public static ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(ApplicationResource applicationResource) {
-        return new ApplicationResourceDTOFrontendListForAdmin (
-                applicationResource.getId(),
-                applicationResource.getResourceId(),
-                applicationResource.getResourceName(),
-                applicationResource.getResourceType(),
-                applicationResource.getResourceLimit(),
-                applicationResource.getStatus(),
-                applicationResource.getEntraState(),
-                applicationResource.getIdentityProviderGroupObjectId(),
-                applicationResource.isNeedApproval(),
-                toApplicationCategoryNames(applicationResource)
-        );
+    public static ApplicationResourceDTOFrontendListForAdmin toApplicationResourceAdminDto(
+            ApplicationResource applicationResource,
+            ResourceAvailabilityService resourceAvailabilityService
+    ) {
+
+        return ApplicationResourceDTOFrontendListForAdmin.builder()
+                .id(applicationResource.getId())
+                .resourceId(applicationResource.getResourceId())
+                .resourceName(applicationResource.getResourceName())
+                .resourceType(applicationResource.getResourceType())
+                .resourceLimit(applicationResource.getResourceLimit())
+                .status(applicationResource.getStatus())
+                .entraState(applicationResource.getEntraState())
+                .identityProviderGroupObjectId(applicationResource.getIdentityProviderGroupObjectId())
+                .needApproval(applicationResource.isNeedApproval())
+                .applicationCategory(toApplicationCategoryNames(applicationResource))
+                .resourceUsage(resourceAvailabilityService.getUsage(applicationResource.getResourceId()))
+                .build();
     }
 
     public static List<String> toApplicationCategoryNames(ApplicationResource applicationResource) {

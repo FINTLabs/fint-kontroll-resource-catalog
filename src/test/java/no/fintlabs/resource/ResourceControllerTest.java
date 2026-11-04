@@ -15,6 +15,7 @@ import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,6 +89,8 @@ public class ResourceControllerTest  {
     private ProblemDetailFactory problemDetailFactory;
     @MockBean
     private ResourceGroupPublishComponent resourceGroupPublishComponent;
+    @MockBean
+    private ResourceAvailabilityService resourceAvailabilityService;
 
     private ApplicationResource resource1;
     private ApplicationResource resource2;
