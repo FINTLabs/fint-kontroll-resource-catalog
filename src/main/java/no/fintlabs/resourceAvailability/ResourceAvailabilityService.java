@@ -27,6 +27,7 @@ public class ResourceAvailabilityService {
                         saveNewResourceAvailability(resourceAvailability));
     }
 
+
     private Runnable saveNewResourceAvailability(ResourceAvailability resourceAvailability) {
         return () -> {
             resourceAvailabilityRepository.save(resourceAvailability);

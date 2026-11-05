@@ -326,7 +326,10 @@ public class ApplicationResourceService {
                         entraGroup.setResourceGroupId(cacheKey);
                     }
                     entraGroupCache.put(cacheKey, entraGroup);
+                    resourceGroupProducerService.publish(applicationResource, false);
+
                 });
+
     }
 
     private EntraStatus resolveEntraStatus(EntraGroup entraGroup, ApplicationResource applicationResource) {

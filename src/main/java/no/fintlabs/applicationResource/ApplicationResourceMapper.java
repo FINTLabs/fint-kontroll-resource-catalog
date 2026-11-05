@@ -1,8 +1,10 @@
 package no.fintlabs.applicationResource;
 
+import lombok.RequiredArgsConstructor;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,7 +13,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
+@RequiredArgsConstructor
+@Component
 public class ApplicationResourceMapper {
+    private final ResourceAvailabilityService resourceAvailabilityService;
 
     public static ApplicationResource toApplicationResource(
             ApplicationResourceFrontendRequest request,
@@ -42,7 +48,7 @@ public class ApplicationResourceMapper {
         return values == null ? new HashSet<>() : new HashSet<>(values);
     }
 
-    public static Map<String, Object> toApplicationResourceDtoPage(
+    public Map<String, Object> toApplicationResourceDtoPage(
             Page<ApplicationResource> applicationResourcePage,
             ResourceAvailabilityService resourceAvailabilityService
     ) {
@@ -74,7 +80,7 @@ public class ApplicationResourceMapper {
                 .resourceUsage(resourceAvailabilityService.getUsage(applicationResource.getResourceId()))
                 .build();
     }
-    public static Map<String, Object> toApplicationResourceAdminDtoPage(
+    public Map<String, Object> toApplicationResourceAdminDtoPage(
             Page<ApplicationResource> applicationResourcePage,
             ResourceAvailabilityService resourceAvailabilityService
     ) {

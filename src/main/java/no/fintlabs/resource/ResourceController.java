@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.*;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
 import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.util.OnlyDevelopers;
@@ -29,6 +30,7 @@ import java.util.Map;
 @RequestMapping("/api/resources")
 public class ResourceController {
     private final ApplicationResourceService applicationResourceService;
+    private final ApplicationResourceMapper applicationResourceMapper;
     private final ApplicationCategoryService applicationCategoryService;
     private final AccessTypeService accessTypeService;
     private final ServiceConfiguration serviceConfiguration;
@@ -38,6 +40,7 @@ public class ResourceController {
 
     public ResourceController(
             ApplicationResourceService applicationResourceService,
+            ApplicationResourceMapper applicationResourceMapper,
             ApplicationCategoryService applicationCategoryService,
             AccessTypeService accessTypeService,
             BrukertypeService brukertypeService,
@@ -45,6 +48,7 @@ public class ResourceController {
             ResourceGroupPublishComponent resourceGroupPublishComponent,
             ResourceAvailabilityService resourceAvailabilityService) {
         this.applicationResourceService = applicationResourceService;
+        this.applicationResourceMapper = applicationResourceMapper;
         this.applicationCategoryService = applicationCategoryService;
         this.accessTypeService = accessTypeService;
         this.serviceConfiguration = serviceConfiguration;
@@ -111,7 +115,7 @@ public class ResourceController {
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
             }
-            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceDtoPage(
+            return ResponseEntity.ok(applicationResourceMapper.toApplicationResourceDtoPage(
                     allApplicationResources,
                     resourceAvailabilityService
             ));
@@ -120,6 +124,12 @@ public class ResourceController {
             log.error("Error fetching application resources", e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Something went wrong when fetching application resources");
         }
+    }
+
+    @GetMapping("/usage/{resourceid}")
+    public ResponseEntity<Long> getUsageForResourceId(@PathVariable String resourceid){
+
+        return ResponseEntity.ok(resourceAvailabilityService.getUsage(resourceid));
     }
 
     @GetMapping("/admin/v1")
@@ -152,7 +162,7 @@ public class ResourceController {
             if (allApplicationResources == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fetching application resources returned no resources");
             }
-            return ResponseEntity.ok(ApplicationResourceMapper.toApplicationResourceAdminDtoPage(
+            return ResponseEntity.ok(applicationResourceMapper.toApplicationResourceAdminDtoPage(
                     allApplicationResources,
                     resourceAvailabilityService
             ));
