@@ -55,7 +55,7 @@ dependencies {
     implementation platform('org.testcontainers:testcontainers-bom:2.0.2')
     testImplementation 'org.testcontainers:testcontainers:2.0.2'
     testImplementation 'org.testcontainers:postgresql:1.21.3'
-    testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
 
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.ehcache:ehcache:3.10.6'
