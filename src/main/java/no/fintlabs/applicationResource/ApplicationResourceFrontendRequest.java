@@ -19,7 +19,7 @@ public class ApplicationResourceFrontendRequest {
     private String resourceId;
     private String resourceName;
     private String resourceType;
-    private List<String> platform;
+    private List<Long> platform;
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;

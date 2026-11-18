@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.plattform.Plattform;
 
 import java.util.Date;
 import java.util.List;
@@ -21,7 +22,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private String identityProviderGroupName;
     private String applicationAccessType;
     private String applicationAccessRole;
-    private List<String> platform;
+    private List<Plattform> platform;
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;

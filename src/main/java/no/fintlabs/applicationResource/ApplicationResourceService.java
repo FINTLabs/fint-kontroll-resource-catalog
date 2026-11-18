@@ -11,6 +11,8 @@ import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
+import no.fintlabs.kodeverk.plattform.Plattform;
+import no.fintlabs.kodeverk.plattform.PlattformService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
@@ -46,6 +48,7 @@ public class ApplicationResourceService {
     private final ResourceGroupProducerService resourceGroupProducerService;
     private final ApplikasjonskategoriService applikasjonskategoriService;
     private final ResourceAvailabilityService resourceAvailabilityService;
+    private final PlattformService plattformService;
 
     public void save(ApplicationResource applicationResource) {
         resolveImportedApplicationCategories(applicationResource);
@@ -195,11 +198,9 @@ public class ApplicationResourceService {
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail =
                 modelMapper.map(applicationResource, ApplicationResourceDTOFrontendDetail.class);
-        applicationResourceDTOFrontendDetail.setApplicationCategory(
-                applicationResource.getApplicationCategory().stream().toList()
-        );
-
+        applicationResourceDTOFrontendDetail.setApplicationCategory(applicationResource.getApplicationCategory().stream().toList());
         applicationResourceDTOFrontendDetail.setResourceUsage(resourceAvailabilityService.getUsage(applicationResourceDTOFrontendDetail.getResourceId()));
+        applicationResourceDTOFrontendDetail.setPlatform(applicationResource.getPlatform().stream().toList());
 
         List<ApplicationResourceLocation> applicationResourceLocations = applicationResourceDTOFrontendDetail.getValidForOrgUnits();
         List<String> orgunitsInApplicationResourceLocations = new ArrayList<>();
@@ -414,8 +415,10 @@ public class ApplicationResourceService {
     private ApplicationResource toApplicationResource(ApplicationResourceFrontendRequest request) {
         Set<Applikasjonskategori> applicationCategories =
                 applikasjonskategoriService.getApplikasjonskategoriByIds(request.getApplicationCategory());
+        Set<Plattform> platforms =
+                plattformService.getPlattformByIds(request.getPlatform());
 
-        return ApplicationResourceMapper.toApplicationResource(request, applicationCategories);
+        return ApplicationResourceMapper.toApplicationResource(request, applicationCategories,platforms);
     }
 
     public ApplicationResource createApplicationResource(ApplicationResourceFrontendRequest request) {

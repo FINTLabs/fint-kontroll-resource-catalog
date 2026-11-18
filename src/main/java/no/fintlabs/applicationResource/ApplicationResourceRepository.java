@@ -34,6 +34,10 @@ public interface ApplicationResourceRepository extends JpaRepository<Application
     @Query(value = "DELETE FROM application_resource_application_category WHERE applikasjonskategori_id IN (:applicationCategories)", nativeQuery = true)
     int deleteApplicationCategories(@Param("applicationCategories") Collection<Long> applicationCategories);
 
+    @Modifying
+    @Query(value = "DELETE FROM application_resource_platform where plattform_id in (:platforms)", nativeQuery = true)
+    int deletePlattforms(@Param("platforms") Collection<Long> platforms);
+
     @Query(value = "SELECT distinct access_type from application_resource", nativeQuery = true)
     List<String> findAllDistinctAccessTypes();
 }

@@ -3,6 +3,8 @@ package no.fintlabs.applicationResource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.KafkaConsumerConfigurationDefaults;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
+import no.fintlabs.kodeverk.plattform.Plattform;
+import no.fintlabs.kodeverk.plattform.PlattformService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.novari.kafka.consuming.*;
 import no.novari.kafka.topic.name.EntityTopicNameParameters;
@@ -66,6 +68,27 @@ public class ApplicationResourceConsumerConfiguration {
 
         return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
     }
+
+//    @Bean
+//    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
+//    public ConcurrentMessageListenerContainer<String, Plattform> plattformConsumer(
+//            PlattformService plattformService,
+//            ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
+//    ) {
+//        ParameterizedListenerContainerFactory<Plattform> recordListenerContainerFactory =
+//                parameterizedListenerContainerFactoryService.createRecordListenerContainerFactory(
+//                        Plattform.class,
+//                        (ConsumerRecord<String, Plattform> consumerRecord)
+//                                -> plattformService.savePlattform(consumerRecord.value()),
+//                        kafkaConsumerConfigurationDefaults.defaultListenerConfiguration(),
+//                        kafkaConsumerConfigurationDefaults.defaultErrorHandler()
+//                );
+//
+//        EntityTopicNameParameters entityTopicNameParameters =
+//                kafkaConsumerConfigurationDefaults.defaultEntityTopic("ressurs-kodeverk-plattform");
+//
+//        return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
+//    }
 
 
     @Bean

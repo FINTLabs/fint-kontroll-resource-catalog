@@ -6,6 +6,8 @@ import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
+import no.fintlabs.kodeverk.plattform.Plattform;
+import no.fintlabs.kodeverk.plattform.PlattformService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
@@ -61,6 +63,9 @@ class ApplicationResourceServiceTest {
     @Mock
     private ApplikasjonskategoriService applikasjonskategoriService;
 
+    @Mock
+    private PlattformService plattformService;
+
     private ApplicationResourceService applicationResourceService;
 
     @Captor
@@ -76,7 +81,8 @@ class ApplicationResourceServiceTest {
                 opaService,
                 resourceGroupProducerService,
                 applikasjonskategoriService,
-                resourceAvailabilityService
+                resourceAvailabilityService,
+                plattformService
         );
     }
 
@@ -290,6 +296,10 @@ class ApplicationResourceServiceTest {
                 .id(1L)
                 .name("Saksbehandling")
                 .build();
+        Plattform platform = Plattform.builder()
+                .id(1L)
+                .name("WEB")
+                .build();
         ApplicationResourceLocation location = ApplicationResourceLocation.builder()
                 .orgUnitId("OU-1")
                 .build();
@@ -297,7 +307,7 @@ class ApplicationResourceServiceTest {
                 .resourceId("client-supplied-id")
                 .resourceName("Resource A")
                 .resourceType("APPLICATION")
-                .platform(List.of("WEB"))
+                .platform(List.of(1L))
                 .accessType("ROLE")
                 .resourceLimit(10L)
                 .resourceOwnerOrgUnitId("OU-1")
@@ -314,6 +324,8 @@ class ApplicationResourceServiceTest {
 
         when(applikasjonskategoriService.getApplikasjonskategoriByIds(List.of(1L, 1L)))
                 .thenReturn(Set.of(category));
+        when(plattformService.getPlattformByIds(List.of(1L)))
+                .thenReturn(Set.of(platform));
         when(applicationResourceRepository.saveAndFlush(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -323,7 +335,7 @@ class ApplicationResourceServiceTest {
         assertNotEquals(request.getResourceId(), saved.getResourceId());
         assertEquals("Resource A", saved.getResourceName());
         assertEquals("APPLICATION", saved.getResourceType());
-        assertEquals(Set.of("WEB"), saved.getPlatform());
+        assertEquals(Set.of(platform), saved.getPlatform());
         assertEquals("ROLE", saved.getAccessType());
         assertEquals(10L, saved.getResourceLimit());
         assertEquals("OU-1", saved.getResourceOwnerOrgUnitId());
@@ -339,6 +351,7 @@ class ApplicationResourceServiceTest {
         assertTrue(saved.isNeedApproval());
         verify(applikasjonskategoriService).getApplikasjonskategoriByIds(List.of(1L, 1L));
         verifyNoMoreInteractions(applikasjonskategoriService);
+        verify(plattformService).getPlattformByIds(List.of(1L));
         verify(resourceGroupProducerService).publish(saved, true);
     }
 
@@ -363,6 +376,7 @@ class ApplicationResourceServiceTest {
         assertDoesNotThrow(() -> saved.getApplicationCategory().clear());
         verify(applikasjonskategoriService).getApplikasjonskategoriByIds(null);
         verifyNoMoreInteractions(applikasjonskategoriService);
+        verify(plattformService).getPlattformByIds(null);
     }
 
     @Test
@@ -767,7 +781,8 @@ class ApplicationResourceServiceTest {
 
         incoming.setApplicationAccessType("NEW_ACCESS_TYPE");
         incoming.setApplicationAccessRole("NEW_ROLE");
-        incoming.setPlatform(Set.of("NEW_PLATFORM"));
+        Plattform newPlatform = Plattform.builder().id(1L).name("NEW_PLATFORM").build();
+        incoming.setPlatform(Set.of(newPlatform));
         incoming.setAccessType("NEW_ACCESS_TYPE");
         incoming.setResourceLimit(999L);
 
@@ -871,7 +886,7 @@ class ApplicationResourceServiceTest {
         // 1) applicationAccessType / Role / Platform / AccessType
         assertEquals("NEW_ACCESS_TYPE", saved.getApplicationAccessType());
         assertEquals("NEW_ROLE", saved.getApplicationAccessRole());
-        assertEquals(Set.of("NEW_PLATFORM"), saved.getPlatform());
+        assertEquals(Set.of(newPlatform), saved.getPlatform());
         assertEquals("NEW_ACCESS_TYPE", saved.getAccessType());
 
         // 2) resourceLimit
@@ -945,7 +960,7 @@ class ApplicationResourceServiceTest {
 
         existing.setApplicationAccessType("OLD_ACCESS_TYPE");
         existing.setApplicationAccessRole("OLD_ROLE");
-        existing.setPlatform(Set.of("OLD_PLATFORM"));
+        existing.setPlatform(Set.of(Plattform.builder().id(2L).name("OLD_PLATFORM").build()));
         existing.setAccessType("OLD_ACCESS_TYPE");
         existing.setResourceLimit(111L);
 

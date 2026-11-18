@@ -162,7 +162,7 @@ public class ResourceControllerTest  {
                                   "resourceName": "Resource A",
                                   "resourceType": "APPLICATION",
                                   "applicationCategory": [1],
-                                  "platform": ["WEB"],
+                                  "platform": [1],
                                   "validForRoles": ["STUDENT"],
                                   "status": "ACTIVE"
                                 }

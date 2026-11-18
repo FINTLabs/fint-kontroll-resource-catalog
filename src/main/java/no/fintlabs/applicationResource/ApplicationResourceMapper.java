@@ -2,6 +2,7 @@ package no.fintlabs.applicationResource;
 
 import lombok.RequiredArgsConstructor;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.plattform.Plattform;
 import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
@@ -21,14 +22,15 @@ public class ApplicationResourceMapper {
 
     public static ApplicationResource toApplicationResource(
             ApplicationResourceFrontendRequest request,
-            Set<Applikasjonskategori> applicationCategories
+            Set<Applikasjonskategori> applicationCategories,
+            Set<Plattform> plattforms
     ) {
         return ApplicationResource.builder()
                 .id(request.getId())
                 .resourceId(request.getResourceId())
                 .resourceName(request.getResourceName())
                 .resourceType(request.getResourceType())
-                .platform(toMutableSet(request.getPlatform()))
+                .platform(toMutableSet(plattforms))
                 .accessType(request.getAccessType())
                 .resourceLimit(request.getResourceLimit())
                 .resourceOwnerOrgUnitId(request.getResourceOwnerOrgUnitId())
