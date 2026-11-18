@@ -61,7 +61,7 @@ dependencies {
     implementation 'org.ehcache:ehcache:3.10.6'
     implementation 'net.sf.ehcache:ehcache:2.10.9.2'
     implementation 'no.fintlabs:fint-resource-server-security:1.1.0'
-    implementation 'org.modelmapper:modelmapper:2.4.5'
+    implementation 'org.modelmapper:modelmapper:3.2.8'
     implementation 'jakarta.servlet:jakarta.servlet-api'
 
     implementation 'no.novari:kafka:6.0.0'
