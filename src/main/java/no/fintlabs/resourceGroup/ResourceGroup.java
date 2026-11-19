@@ -10,4 +10,5 @@ public class ResourceGroup {
     private String resourceId;
     private String idpGroupObjectId;
     private String resourceName;
+    private String resourceType;
 }
