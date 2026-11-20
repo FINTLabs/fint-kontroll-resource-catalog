@@ -69,27 +69,6 @@ public class ApplicationResourceConsumerConfiguration {
         return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
     }
 
-//    @Bean
-//    @ConditionalOnProperty(name = "fint.kontroll.resource-catalog.source", havingValue = "fint")
-//    public ConcurrentMessageListenerContainer<String, Plattform> plattformConsumer(
-//            PlattformService plattformService,
-//            ParameterizedListenerContainerFactoryService parameterizedListenerContainerFactoryService
-//    ) {
-//        ParameterizedListenerContainerFactory<Plattform> recordListenerContainerFactory =
-//                parameterizedListenerContainerFactoryService.createRecordListenerContainerFactory(
-//                        Plattform.class,
-//                        (ConsumerRecord<String, Plattform> consumerRecord)
-//                                -> plattformService.savePlattform(consumerRecord.value()),
-//                        kafkaConsumerConfigurationDefaults.defaultListenerConfiguration(),
-//                        kafkaConsumerConfigurationDefaults.defaultErrorHandler()
-//                );
-//
-//        EntityTopicNameParameters entityTopicNameParameters =
-//                kafkaConsumerConfigurationDefaults.defaultEntityTopic("ressurs-kodeverk-plattform");
-//
-//        return recordListenerContainerFactory.createContainer(entityTopicNameParameters);
-//    }
-
 
     @Bean
     public ConcurrentMessageListenerContainer<String, EntraGroup> entraGroupConsumer(
