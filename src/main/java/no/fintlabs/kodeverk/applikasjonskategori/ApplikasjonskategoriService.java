@@ -1,5 +1,6 @@
 package no.fintlabs.kodeverk.applikasjonskategori;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.applicationResource.ApplicationResourceNotFoundException;
 import no.fintlabs.applicationResource.ApplicationResourceRepository;
@@ -14,17 +15,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ApplikasjonskategoriService {
     private final ApplikasjonskategoriRepository applikasjonskategoriRepository;
     private final ApplicationResourceRepository applicationResourceRepository;
 
-    public ApplikasjonskategoriService(
-            ApplikasjonskategoriRepository repository,
-            ApplicationResourceRepository applicationResourceRepository
-    ) {
-        this.applikasjonskategoriRepository = repository;
-        this.applicationResourceRepository = applicationResourceRepository;
-    }
 
     public List<Applikasjonskategori> getAllApplikasjonskategori() {
         return applikasjonskategoriRepository.findAll();
@@ -32,6 +27,18 @@ public class ApplikasjonskategoriService {
 
     public Applikasjonskategori getApplikasjonskategori(Long id) {
         return applikasjonskategoriRepository.findById(id).orElse(null);
+    }
+
+    public Set<Applikasjonskategori> getApplikasjonskategoriByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new LinkedHashSet<>();
+        }
+
+        return new LinkedHashSet<>(applikasjonskategoriRepository.findAllById(
+                ids.stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList()));
     }
 
     public Set<Applikasjonskategori> getApplikasjonskategoriByNames(List<String> names) {

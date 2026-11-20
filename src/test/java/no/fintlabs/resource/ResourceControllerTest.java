@@ -4,17 +4,19 @@ import io.micrometer.tracing.Tracer;
 import jakarta.servlet.ServletException;
 import no.fintlabs.OrgUnitType;
 import no.fintlabs.ProblemDetailFactory;
+import no.fintlabs.RequestBodyLogging;
 import no.fintlabs.ServiceConfiguration;
 import no.fintlabs.applicationResource.AccessTypeService;
 import no.fintlabs.applicationResource.ApplicationCategoryService;
 import no.fintlabs.applicationResource.ApplicationResource;
+import no.fintlabs.applicationResource.ApplicationResourceFrontendRequest;
+import no.fintlabs.applicationResource.ApplicationResourceMapper;
 import no.fintlabs.applicationResource.ApplicationResourceService;
-import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
-import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.vigoiks.resourceserver.security.FintJwtEndUserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +36,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -49,15 +49,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -68,17 +66,20 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @WebMvcTest(ResourceController.class)
 @Testcontainers
 @ActiveProfiles("test")
-@Import({ApplicationResourceService.class})
+@Import({
+        ApplicationResourceMapper.class,
+        RequestBodyLogging.class
+})
 public class ResourceControllerTest  {
     private MockMvc mockMvc;
     @MockBean
     private ApplicationResourceService applicationResourceService;
     @MockBean
+    private ResourceAvailabilityService resourceAvailabilityService;
+    @MockBean
     private OpaService opaService;
     @MockBean
     private ApplicationCategoryService applicationCategoryService;
-    @MockBean
-    private ApplikasjonskategoriService applikasjonskategoriService;
     @MockBean
     private AccessTypeService accessTypeService;
     @MockBean
@@ -143,32 +144,24 @@ public class ResourceControllerTest  {
                 pageable,
                 false))
                 .willReturn(new PageImpl<>(List.of(resource2, resource1)));
+        given(resourceAvailabilityService.getUsage(Mockito.anyString())).willReturn(0L);
 
         mockMvc.perform(get("/api/resources/v1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resources", hasSize(2)))
+                .andExpect(jsonPath("$.resources[0].resourceUsage").value(0))
                 .andReturn();
     }
 
     @Test
-    public void createApplicationResource_ShouldResolveApplicationCategoryNames() throws Exception {
-        Applikasjonskategori category = Applikasjonskategori.builder()
-                .id(1L)
-                .name("Saksbehandling")
-                .build();
-
-        when(applikasjonskategoriService.getApplikasjonskategoriByNames(List.of("Saksbehandling")))
-                .thenReturn(Set.of(category));
-        when(applicationResourceService.createApplicationResource(any(ApplicationResource.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
+    public void createApplicationResource_ShouldPassRequestToService() throws Exception {
         mockMvc.perform(post("/api/resources/v1")
                         .contentType(APPLICATION_JSON)
                         .content("""
                                 {
                                   "resourceName": "Resource A",
                                   "resourceType": "APPLICATION",
-                                  "applicationCategory": ["Saksbehandling"],
+                                  "applicationCategory": [1],
                                   "platform": ["WEB"],
                                   "validForRoles": ["STUDENT"],
                                   "status": "ACTIVE"
@@ -176,27 +169,27 @@ public class ResourceControllerTest  {
                                 """))
                 .andExpect(status().isCreated());
 
-        verify(applicationResourceService).createApplicationResource(argThat(applicationResource ->
-                applicationResource.getApplicationCategory().contains(category)
+        verify(applicationResourceService).createApplicationResource(argThat((ApplicationResourceFrontendRequest request) ->
+                List.of(1L).equals(request.getApplicationCategory())
+                        && "Resource A".equals(request.getResourceName())
         ));
     }
 
     @Test
-    public void createApplicationResource_ShouldReturnBadRequestWhenApplicationCategoryNameDoesNotExist() throws Exception {
-        when(applikasjonskategoriService.getApplikasjonskategoriByNames(List.of("Ukjent")))
-                .thenThrow(new IllegalArgumentException("Unknown application categories: Ukjent"));
-        when(problemDetailFactory.createProblemDetail(any(Throwable.class), any()))
-                .thenReturn(ProblemDetail.forStatus(HttpStatus.BAD_REQUEST));
-
+    public void createApplicationResource_ShouldAcceptUnknownApplicationCategoryIds() throws Exception {
         mockMvc.perform(post("/api/resources/v1")
                         .contentType(APPLICATION_JSON)
                         .content("""
                                 {
                                   "resourceName": "Resource A",
-                                  "applicationCategory": ["Ukjent"]
+                                  "applicationCategory": [999]
                                 }
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isCreated());
+
+        verify(applicationResourceService).createApplicationResource(argThat((ApplicationResourceFrontendRequest request) ->
+                List.of(999L).equals(request.getApplicationCategory())
+        ));
     }
 
     @Test
@@ -234,12 +227,7 @@ public class ResourceControllerTest  {
     }
 
     @Test
-    public void updateApplicationResource_ShouldCreateMutableSetsWhenCollectionsAreOmitted() throws Exception {
-        when(applikasjonskategoriService.getApplikasjonskategoriByNames(null))
-                .thenReturn(Set.of());
-        when(applicationResourceService.updateApplicationResource(any(ApplicationResource.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
+    public void updateApplicationResource_ShouldPassRequestToService() throws Exception {
         mockMvc.perform(put("/api/resources/v1")
                         .contentType(APPLICATION_JSON)
                         .content("""
@@ -253,15 +241,32 @@ public class ResourceControllerTest  {
                                 """))
                 .andExpect(status().isAccepted());
 
-        ArgumentCaptor<ApplicationResource> applicationResourceCaptor =
-                ArgumentCaptor.forClass(ApplicationResource.class);
-        verify(applicationResourceService).updateApplicationResource(applicationResourceCaptor.capture());
+        ArgumentCaptor<ApplicationResourceFrontendRequest> requestCaptor =
+                ArgumentCaptor.forClass(ApplicationResourceFrontendRequest.class);
+        verify(applicationResourceService).updateApplicationResource(requestCaptor.capture());
 
-        ApplicationResource applicationResource = applicationResourceCaptor.getValue();
-        assertDoesNotThrow(() -> applicationResource.getPlatform().clear());
-        assertDoesNotThrow(() -> applicationResource.getValidForRoles().clear());
-        assertDoesNotThrow(() -> applicationResource.getValidForOrgUnits().clear());
-        assertDoesNotThrow(() -> applicationResource.getApplicationCategory().clear());
+        ApplicationResourceFrontendRequest request = requestCaptor.getValue();
+        assertEquals(1L, request.getId());
+        assertEquals("app-1", request.getResourceId());
+        assertNull(request.getPlatform());
+        assertNull(request.getApplicationCategory());
+    }
+
+    @Test
+    public void updateApplicationResource_ShouldAcceptUnknownApplicationCategoryIds() throws Exception {
+        mockMvc.perform(put("/api/resources/v1")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "id": 1,
+                                  "applicationCategory": [999]
+                                }
+                                """))
+                .andExpect(status().isAccepted());
+
+        verify(applicationResourceService).updateApplicationResource(argThat((ApplicationResourceFrontendRequest request) ->
+                List.of(999L).equals(request.getApplicationCategory())
+        ));
     }
 
     private void createSecurityContext(Jwt jwt) throws ServletException {

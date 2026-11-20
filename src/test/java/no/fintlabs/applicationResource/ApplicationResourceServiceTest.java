@@ -8,6 +8,7 @@ import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
 import no.fintlabs.opa.OpaService;
 import no.fintlabs.kodeverk.handhevingstype.HandhevingstypeLabels;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.EntraStatus;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
@@ -55,6 +56,9 @@ class ApplicationResourceServiceTest {
     private ResourceGroupProducerService resourceGroupProducerService;
 
     @Mock
+    private ResourceAvailabilityService resourceAvailabilityService;
+
+    @Mock
     private ApplikasjonskategoriService applikasjonskategoriService;
 
     private ApplicationResourceService applicationResourceService;
@@ -71,7 +75,8 @@ class ApplicationResourceServiceTest {
                 authorizationUtil,
                 opaService,
                 resourceGroupProducerService,
-                applikasjonskategoriService
+                applikasjonskategoriService,
+                resourceAvailabilityService
         );
     }
 
@@ -101,6 +106,7 @@ class ApplicationResourceServiceTest {
 
         when(authorizationUtil.getAllAuthorizedOrgUnitIDs()).thenReturn(List.of("1", "2", "3"));
         when(applicationResourceRepository.findById(1L)).thenReturn(Optional.of(appRes1));
+        when(resourceAvailabilityService.getUsage("adobek12")).thenReturn(0L);
 
         ApplicationResourceDTOFrontendDetail applicationResourceDTOFrontendDetail = applicationResourceService
                 .getApplicationResourceDTOFrontendDetailById(1L);
@@ -109,9 +115,11 @@ class ApplicationResourceServiceTest {
         String resourceIdAppres = appRes1.getResourceId();
 
         assertEquals(resourceIdDTO, resourceIdAppres, "resourceIdDTO should be adobek12");
+        assertEquals(0L, applicationResourceDTOFrontendDetail.getResourceUsage());
         System.out.println("resourceId should be adobek12: " + resourceIdDTO);
 
         verify(applicationResourceRepository, times(1)).findById(1L);
+        verify(resourceAvailabilityService).getUsage("adobek12");
     }
 
     @Test
@@ -277,6 +285,152 @@ class ApplicationResourceServiceTest {
     }
 
     @Test
+    void shouldCreateApplicationResourceFromFrontendRequest() {
+        Applikasjonskategori category = Applikasjonskategori.builder()
+                .id(1L)
+                .name("Saksbehandling")
+                .build();
+        ApplicationResourceLocation location = ApplicationResourceLocation.builder()
+                .orgUnitId("OU-1")
+                .build();
+        ApplicationResourceFrontendRequest request = ApplicationResourceFrontendRequest.builder()
+                .resourceId("client-supplied-id")
+                .resourceName("Resource A")
+                .resourceType("APPLICATION")
+                .platform(List.of("WEB"))
+                .accessType("ROLE")
+                .resourceLimit(10L)
+                .resourceOwnerOrgUnitId("OU-1")
+                .resourceOwnerOrgUnitName("Owner")
+                .validForOrgUnits(List.of(location))
+                .validForRoles(List.of("STUDENT"))
+                .applicationCategory(List.of(1L, 1L))
+                .licenseEnforcement("HARDSTOP")
+                .hasCost(true)
+                .unitCost(100L)
+                .status("ACTIVE")
+                .needApproval(true)
+                .build();
+
+        when(applikasjonskategoriService.getApplikasjonskategoriByIds(List.of(1L, 1L)))
+                .thenReturn(Set.of(category));
+        when(applicationResourceRepository.saveAndFlush(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApplicationResource saved = applicationResourceService.createApplicationResource(request);
+
+        assertDoesNotThrow(() -> UUID.fromString(saved.getResourceId()));
+        assertNotEquals(request.getResourceId(), saved.getResourceId());
+        assertEquals("Resource A", saved.getResourceName());
+        assertEquals("APPLICATION", saved.getResourceType());
+        assertEquals(Set.of("WEB"), saved.getPlatform());
+        assertEquals("ROLE", saved.getAccessType());
+        assertEquals(10L, saved.getResourceLimit());
+        assertEquals("OU-1", saved.getResourceOwnerOrgUnitId());
+        assertEquals("Owner", saved.getResourceOwnerOrgUnitName());
+        assertEquals(Set.of(location), saved.getValidForOrgUnits());
+        assertEquals(Set.of("STUDENT"), saved.getValidForRoles());
+        assertEquals(Set.of(category), saved.getApplicationCategory());
+        assertEquals("HARDSTOP", saved.getLicenseEnforcement());
+        assertTrue(saved.isHasCost());
+        assertEquals(100L, saved.getUnitCost());
+        assertEquals("PENDING_ACTIVE", saved.getStatus());
+        assertNotNull(saved.getStatusChanged());
+        assertTrue(saved.isNeedApproval());
+        verify(applikasjonskategoriService).getApplikasjonskategoriByIds(List.of(1L, 1L));
+        verifyNoMoreInteractions(applikasjonskategoriService);
+        verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
+    void shouldCreateMutableEmptyCollectionsWhenFrontendCollectionsAreOmitted() {
+        ApplicationResourceFrontendRequest request = ApplicationResourceFrontendRequest.builder()
+                .resourceName("Resource A")
+                .status("ACTIVE")
+                .build();
+        when(applicationResourceRepository.saveAndFlush(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApplicationResource saved = applicationResourceService.createApplicationResource(request);
+
+        assertTrue(saved.getPlatform().isEmpty());
+        assertTrue(saved.getValidForRoles().isEmpty());
+        assertTrue(saved.getValidForOrgUnits().isEmpty());
+        assertTrue(saved.getApplicationCategory().isEmpty());
+        assertDoesNotThrow(() -> saved.getPlatform().clear());
+        assertDoesNotThrow(() -> saved.getValidForRoles().clear());
+        assertDoesNotThrow(() -> saved.getValidForOrgUnits().clear());
+        assertDoesNotThrow(() -> saved.getApplicationCategory().clear());
+        verify(applikasjonskategoriService).getApplikasjonskategoriByIds(null);
+        verifyNoMoreInteractions(applikasjonskategoriService);
+    }
+
+    @Test
+    void shouldCreateApplicationResourceWhenFrontendCategoryIdsDoNotExist() {
+        ApplicationResourceFrontendRequest request = ApplicationResourceFrontendRequest.builder()
+                .resourceName("Resource A")
+                .status("ACTIVE")
+                .applicationCategory(List.of(999L))
+                .build();
+        when(applikasjonskategoriService.getApplikasjonskategoriByIds(List.of(999L)))
+                .thenReturn(Set.of());
+        when(applicationResourceRepository.saveAndFlush(any(ApplicationResource.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApplicationResource saved = applicationResourceService.createApplicationResource(request);
+
+        assertTrue(saved.getApplicationCategory().isEmpty());
+        verify(applicationResourceRepository).saveAndFlush(saved);
+        verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
+    void shouldUpdateApplicationResourceWithExistingFrontendCategories() {
+        Long applicationResourceId = 43L;
+        Date originalStatusChanged = new Date(1000L);
+        UUID idpGroupObjectId = UUID.randomUUID();
+        Applikasjonskategori category = Applikasjonskategori.builder()
+                .id(1L)
+                .name("Saksbehandling")
+                .build();
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId("APP-43");
+        existing.setResourceName("Old name");
+        existing.setStatus("ACTIVE");
+        existing.setStatusChanged(originalStatusChanged);
+        existing.setIdentityProviderGroupObjectId(idpGroupObjectId);
+        ApplicationResourceFrontendRequest request = ApplicationResourceFrontendRequest.builder()
+                .id(applicationResourceId)
+                .resourceId("APP-43")
+                .resourceName("New name")
+                .applicationCategory(List.of(1L, 999L))
+                .status("ACTIVE")
+                .build();
+
+        when(applikasjonskategoriService.getApplikasjonskategoriByIds(List.of(1L, 999L)))
+                .thenReturn(Set.of(category));
+        when(applicationResourceRepository.findById(applicationResourceId)).thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(existing)).thenReturn(existing);
+
+        ApplicationResource updated = applicationResourceService.updateApplicationResource(request);
+
+        assertSame(existing, updated);
+        assertEquals("APP-43", updated.getResourceId());
+        assertEquals("New name", updated.getResourceName());
+        assertEquals(Set.of(category), updated.getApplicationCategory());
+        assertEquals(originalStatusChanged, updated.getStatusChanged());
+        assertEquals(idpGroupObjectId, updated.getIdentityProviderGroupObjectId());
+        assertDoesNotThrow(() -> updated.getPlatform().clear());
+        assertDoesNotThrow(() -> updated.getValidForRoles().clear());
+        assertDoesNotThrow(() -> updated.getValidForOrgUnits().clear());
+        assertDoesNotThrow(() -> updated.getApplicationCategory().clear());
+        verify(applikasjonskategoriService).getApplikasjonskategoriByIds(List.of(1L, 999L));
+        verifyNoMoreInteractions(applikasjonskategoriService);
+        verify(resourceGroupProducerService).publish(updated, true);
+    }
+
+    @Test
     void shouldCreateApplicationResourceAndPublishResourceGroupCommand() {
         ApplicationResource newResource = new ApplicationResource();
         newResource.setId(1L);
@@ -352,8 +506,6 @@ class ApplicationResourceServiceTest {
 
         when(applicationResourceRepository.findById(applicationResourceId))
                 .thenReturn(Optional.of(existing));
-        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
-                .thenReturn(Optional.of(existing));
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -364,8 +516,59 @@ class ApplicationResourceServiceTest {
         assertEquals("New name", saved.getResourceName());
         assertEquals("ACTIVE", saved.getStatus());
         assertEquals(originalStatusChanged, saved.getStatusChanged());
+        assertSame(saved, updated);
         assertEquals("ACTIVE", updated.getStatus());
         verify(resourceGroupProducerService).publish(saved, true);
+    }
+
+    @Test
+    void shouldUpdateResourceFoundByIdWhenIncomingResourceIdDiffers() {
+        Long applicationResourceId = 7L;
+        ApplicationResource existing = new ApplicationResource();
+        existing.setId(applicationResourceId);
+        existing.setResourceId("APP-7");
+        existing.setResourceName("Old name");
+        existing.setStatus("ACTIVE");
+        existing.setIdentityProviderGroupObjectId(UUID.randomUUID());
+
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId("APP-OTHER");
+        incoming.setResourceName("New name");
+        incoming.setStatus("ACTIVE");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.of(existing));
+        when(applicationResourceRepository.save(existing)).thenReturn(existing);
+
+        ApplicationResource updated = applicationResourceService.updateApplicationResource(incoming);
+
+        assertSame(existing, updated);
+        assertEquals("APP-7", updated.getResourceId());
+        assertEquals("New name", updated.getResourceName());
+        verify(applicationResourceRepository).findById(applicationResourceId);
+        verify(applicationResourceRepository).save(existing);
+        verify(applicationResourceRepository, never()).findApplicationResourceByResourceIdEqualsIgnoreCase(any());
+        verify(resourceGroupProducerService).publish(updated, true);
+    }
+
+    @Test
+    void shouldNotSaveOrPublishWhenUiUpdateResourceDoesNotExist() {
+        Long applicationResourceId = 99L;
+        ApplicationResource incoming = new ApplicationResource();
+        incoming.setId(applicationResourceId);
+        incoming.setResourceId("APP-99");
+        incoming.setStatus("ACTIVE");
+
+        when(applicationResourceRepository.findById(applicationResourceId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ApplicationResourceNotFoundException.class,
+                () -> applicationResourceService.updateApplicationResource(incoming));
+
+        verify(applicationResourceRepository).findById(applicationResourceId);
+        verifyNoMoreInteractions(applicationResourceRepository);
+        verifyNoInteractions(resourceGroupProducerService);
     }
 
     @Test
@@ -385,8 +588,6 @@ class ApplicationResourceServiceTest {
         incoming.setStatus("DISABLED");
 
         when(applicationResourceRepository.findById(applicationResourceId))
-                .thenReturn(Optional.of(existing));
-        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.of(existing));
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -418,8 +619,6 @@ class ApplicationResourceServiceTest {
 
         when(applicationResourceRepository.findById(applicationResourceId))
                 .thenReturn(Optional.of(existing));
-        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase("APP-41"))
-                .thenReturn(Optional.of(existing));
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -448,8 +647,6 @@ class ApplicationResourceServiceTest {
         incoming.setStatus("ACTIVE");
 
         when(applicationResourceRepository.findById(applicationResourceId))
-                .thenReturn(Optional.of(existing));
-        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.of(existing));
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -485,8 +682,6 @@ class ApplicationResourceServiceTest {
 
         when(applicationResourceRepository.findById(applicationResourceId))
                 .thenReturn(Optional.of(existing));
-        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
-                .thenReturn(Optional.of(existing));
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -519,8 +714,6 @@ class ApplicationResourceServiceTest {
         incoming.setStatus("ACTIVE");
 
         when(applicationResourceRepository.findById(applicationResourceId))
-                .thenReturn(Optional.of(existing));
-        when(applicationResourceRepository.findApplicationResourceByResourceIdEqualsIgnoreCase(resourceId))
                 .thenReturn(Optional.of(existing));
         when(applicationResourceRepository.save(any(ApplicationResource.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
