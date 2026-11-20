@@ -1,14 +1,19 @@
 package no.fintlabs.applicationResource;
 
+import jakarta.persistence.EntityManager;
 import no.fintlabs.DatabaseIntegrationTest;
 import no.fintlabs.OrgUnitType;
 import no.fintlabs.ResponseFactory;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationExtendedProduserService;
+import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationListener;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocationRepository;
 import no.fintlabs.authorization.AuthorizationUtil;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.ApplikasjonskategoriService;
+import no.fintlabs.kodeverk.plattform.PlattformService;
 import no.fintlabs.opa.OpaService;
+import no.fintlabs.resourceAvailability.ResourceAvailabilityService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.fintlabs.resourceGroup.ResourceGroupProducerService;
 import no.fintlabs.resourceGroup.ResourceGroupPublishComponent;
@@ -30,12 +35,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
 
 @DataJpaTest
 @Testcontainers
 @ActiveProfiles("test")
-@Import({ApplicationResourceService.class, ApplikasjonskategoriService.class})
+@Import({ApplicationResourceService.class, ApplikasjonskategoriService.class, PlattformService.class})
 class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest {
 
     @Autowired
@@ -44,6 +50,8 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     private ApplicationResourceLocationRepository applicationResourceLocationRepository;
     @Autowired
     private ApplicationResourceService applicationResourceService;
+    @Autowired
+    private EntityManager entityManager;
     @MockBean
     private FintCache<Long, EntraGroup> entraGroupCache;
     @MockBean
@@ -55,7 +63,11 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
     @MockBean
     private ResourceGroupPublishComponent resourceGroupPublishComponent;
     @MockBean
+    private ApplicationResourceLocationExtendedProduserService applicationResourceLocationExtendedProduserService;
+    @MockBean
     private OpaService opaService;
+    @MockBean
+    private ResourceAvailabilityService resourceAvailabilityService;
 
     private final String varfk = "varfk";
     private final String kompavd = "kompavd";
@@ -333,6 +345,48 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         // The FINT/REST update path must never consult the Entra group cache anymore -
         // it's only written to by saveEntraGroup(), which handles graph-group responses.
         Mockito.verifyNoInteractions(entraGroupCache);
+    }
+
+    @Test
+    void updatingValidForOrgUnitsDeletesRemovedLocationFromDatabase() {
+        new ApplicationResourceLocationListener().init(applicationResourceLocationExtendedProduserService);
+        ApplicationResource resource = ApplicationResource.builder()
+                .resourceId("APP-ORG-UNITS")
+                .resourceName("Resource")
+                .status("ACTIVE")
+                .build();
+        ApplicationResourceLocation kept = ApplicationResourceLocation.builder()
+                .resourceId(resource.getResourceId())
+                .orgUnitId("OU-KEEP")
+                .applicationResource(resource)
+                .build();
+        ApplicationResourceLocation removed = ApplicationResourceLocation.builder()
+                .resourceId(resource.getResourceId())
+                .orgUnitId("OU-REMOVE")
+                .applicationResource(resource)
+                .build();
+        resource.getValidForOrgUnits().addAll(Set.of(kept, removed));
+        resource = applicationResourceRepository.saveAndFlush(resource);
+        Long resourceId = resource.getId();
+        Long removedLocationId = removed.getId();
+        entityManager.clear();
+
+        ApplicationResource incoming = ApplicationResource.builder()
+                .id(resourceId)
+                .resourceId("APP-ORG-UNITS")
+                .resourceName("Resource")
+                .status("ACTIVE")
+                .validForOrgUnits(Set.of(ApplicationResourceLocation.builder().orgUnitId("OU-KEEP").build()))
+                .build();
+        applicationResourceService.updateApplicationResource(incoming);
+        entityManager.flush();
+        entityManager.clear();
+
+        ApplicationResource reloaded = applicationResourceRepository.findById(resourceId).orElseThrow();
+        assertEquals(Set.of("OU-KEEP"), reloaded.getValidForOrgUnits().stream()
+                .map(ApplicationResourceLocation::getOrgUnitId)
+                .collect(java.util.stream.Collectors.toSet()));
+        assertTrue(applicationResourceLocationRepository.findById(removedLocationId).isEmpty());
     }
 
 }

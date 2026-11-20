@@ -21,5 +21,6 @@ public class ApplicationResourceDTOFrontendListForAdmin {
     private UUID identityProviderGroupObjectId;
     private boolean needApproval;
     private List<String> applicationCategory;
+    private Long resourceUsage;
 
 }

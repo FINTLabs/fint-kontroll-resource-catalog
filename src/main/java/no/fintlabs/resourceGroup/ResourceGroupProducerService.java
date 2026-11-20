@@ -6,6 +6,7 @@ import no.fintlabs.applicationResource.ApplicationResourceStatus;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.plattform.Plattform;
 import no.novari.kafka.producing.ParameterizedProducerRecord;
 import no.novari.kafka.producing.ParameterizedTemplate;
 import no.novari.kafka.producing.ParameterizedTemplateFactory;
@@ -228,7 +229,7 @@ public class ResourceGroupProducerService {
                 applicationResource.getIdentityProviderGroupName(),
                 applicationResource.getApplicationAccessType(),
                 applicationResource.getApplicationAccessRole(),
-                sortedStream(applicationResource.getPlatform()).toList(),
+                sortedPlatforms(applicationResource),
                 applicationResource.getAccessType(),
                 applicationResource.getResourceLimit(),
                 applicationResource.getResourceOwnerOrgUnitId(),
@@ -261,6 +262,17 @@ public class ResourceGroupProducerService {
 
         return applicationResource.getApplicationCategory().stream()
                 .map(Applikasjonskategori::getName)
+                .sorted()
+                .toList();
+    }
+
+    private static List<String> sortedPlatforms(ApplicationResource applicationResource){
+        if (applicationResource.getPlatform() == null) {
+            return List.of();
+        }
+
+        return applicationResource.getPlatform().stream()
+                .map(Plattform::getName)
                 .sorted()
                 .toList();
     }
