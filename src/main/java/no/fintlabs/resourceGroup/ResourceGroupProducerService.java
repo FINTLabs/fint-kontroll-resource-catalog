@@ -189,6 +189,7 @@ public class ResourceGroupProducerService {
                         ? null
                         : applicationResource.getIdentityProviderGroupObjectId().toString())
                 .resourceName(applicationResource.getResourceName())
+                .resourceType(applicationResource.getResourceType())
                 .build();
     }
 
