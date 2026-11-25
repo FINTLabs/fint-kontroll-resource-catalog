@@ -3,6 +3,8 @@ package no.fintlabs.applicationResource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
+import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.plattform.Plattform;
 
 import java.util.Date;
 import java.util.List;
@@ -20,14 +22,14 @@ public class ApplicationResourceDTOFrontendDetail {
     private String identityProviderGroupName;
     private String applicationAccessType;
     private String applicationAccessRole;
-    private List<String> platform;
+    private List<Plattform> platform;
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;
     private String resourceOwnerOrgUnitName;
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
-    private List<String> applicationCategory;
+    private List<Applikasjonskategori> applicationCategory;
     private String licenseEnforcement;
     private boolean hasCost;
     private Long unitCost;
@@ -36,6 +38,7 @@ public class ApplicationResourceDTOFrontendDetail {
     private Date statusChanged;
     private String createdBy;
     private Date dateCreated;
+    private Long resourceUsage;
 
     @JsonIgnore
     public boolean isValid(){

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Service
@@ -25,6 +26,7 @@ public class ResourceAvailabilityService {
                 .ifPresentOrElse(saveExistingResourceAvailability(resourceAvailability),
                         saveNewResourceAvailability(resourceAvailability));
     }
+
 
     private Runnable saveNewResourceAvailability(ResourceAvailability resourceAvailability) {
         return () -> {
@@ -56,6 +58,15 @@ public class ResourceAvailabilityService {
             resourceAvailabilityRepository.save(resourceAvailability);
             log.info("Updated resourceAvailability with id: {}", existingResourceAvailability.getId());
         };
+    }
+
+    public Long getUsage(String resourceId){
+        Optional<ResourceAvailability> usageInDB = resourceAvailabilityRepository.findByResourceId(resourceId);
+        if (usageInDB.isEmpty()){
+            return 0L;
+        }
+
+        return usageInDB.get().getAssignedResources();
     }
 }
 

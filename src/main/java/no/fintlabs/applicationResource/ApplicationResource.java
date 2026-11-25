@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.plattform.Plattform;
 import no.fintlabs.resource.Resource;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -22,10 +23,13 @@ import java.util.*;
 public class ApplicationResource extends Resource {
     private String applicationAccessType;
     private String applicationAccessRole;
-    @ElementCollection
-    @CollectionTable(name = "application_resource_platform",joinColumns = @JoinColumn(name="id"))
+    @ManyToMany
+    @JoinTable(
+            name = "application_resource_platform",
+            joinColumns = @JoinColumn(name="id"),
+            inverseJoinColumns = @JoinColumn(name = "plattform_id"))
     @Builder.Default
-    private Set<String> platform = new HashSet<>();
+    private Set<Plattform> platform = new HashSet<>();
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;
@@ -40,7 +44,7 @@ public class ApplicationResource extends Resource {
 
     @ToString.Exclude
     @JsonManagedReference(value = "resource-location")
-    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy ="applicationResource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Setter(AccessLevel.NONE)
     @Builder.Default
     private Set<ApplicationResourceLocation> validForOrgUnits = new HashSet<>();

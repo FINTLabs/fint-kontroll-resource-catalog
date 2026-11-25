@@ -19,14 +19,14 @@ public class ApplicationResourceFrontendRequest {
     private String resourceId;
     private String resourceName;
     private String resourceType;
-    private List<String> platform;
+    private List<Long> platform;
     private String accessType;
     private Long resourceLimit;
     private String resourceOwnerOrgUnitId;
     private String resourceOwnerOrgUnitName;
     private List<ApplicationResourceLocation> validForOrgUnits;
     private List<String> validForRoles;
-    private List<String> applicationCategory;
+    private List<Long> applicationCategory;
     private String licenseEnforcement;
     private boolean hasCost;
     private Long unitCost;

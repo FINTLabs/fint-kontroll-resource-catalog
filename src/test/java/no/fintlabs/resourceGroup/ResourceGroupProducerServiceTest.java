@@ -4,6 +4,7 @@ import no.fintlabs.applicationResource.ApplicationResource;
 import no.fintlabs.applicationResourceLocation.ApplicationResourceLocation;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.kodeverk.applikasjonskategori.Applikasjonskategori;
+import no.fintlabs.kodeverk.plattform.Plattform;
 import no.novari.kafka.producing.ParameterizedProducerRecord;
 import no.novari.kafka.producing.ParameterizedTemplate;
 import no.novari.kafka.producing.ParameterizedTemplateFactory;
@@ -308,7 +309,10 @@ class ResourceGroupProducerServiceTest {
         applicationResource.setResourceId("resource-id");
         applicationResource.setResourceName("Resource name");
         applicationResource.setResourceType("ApplicationResource");
-        applicationResource.setPlatform(Set.of("web", "ios"));
+        applicationResource.setPlatform(Set.of(
+                Plattform.builder().id(1L).name("web").build(),
+                Plattform.builder().id(2L).name("ios").build()
+        ));
         applicationResource.setValidForRoles(Set.of("student", "employee"));
         applicationResource.setApplicationCategory(Set.of(
                 Applikasjonskategori.builder()

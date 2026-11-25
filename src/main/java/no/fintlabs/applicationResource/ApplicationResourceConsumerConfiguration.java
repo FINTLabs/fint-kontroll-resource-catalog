@@ -3,6 +3,8 @@ package no.fintlabs.applicationResource;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.KafkaConsumerConfigurationDefaults;
 import no.fintlabs.kodeverk.brukertype.BrukertypeService;
+import no.fintlabs.kodeverk.plattform.Plattform;
+import no.fintlabs.kodeverk.plattform.PlattformService;
 import no.fintlabs.resourceGroup.EntraGroup;
 import no.novari.kafka.consuming.*;
 import no.novari.kafka.topic.name.EntityTopicNameParameters;
