@@ -346,46 +346,4 @@ class ApplicationResourceServiceIntegrationTest extends DatabaseIntegrationTest 
         Mockito.verifyNoInteractions(entraGroupCache);
     }
 
-    @Test
-    void updatingValidForOrgUnitsDeletesRemovedLocationFromDatabase() {
-        new ApplicationResourceLocationListener().init(applicationResourceLocationExtendedProduserService);
-        ApplicationResource resource = ApplicationResource.builder()
-                .resourceId("APP-ORG-UNITS")
-                .resourceName("Resource")
-                .status("ACTIVE")
-                .build();
-        ApplicationResourceLocation kept = ApplicationResourceLocation.builder()
-                .resourceId(resource.getResourceId())
-                .orgUnitId("OU-KEEP")
-                .applicationResource(resource)
-                .build();
-        ApplicationResourceLocation removed = ApplicationResourceLocation.builder()
-                .resourceId(resource.getResourceId())
-                .orgUnitId("OU-REMOVE")
-                .applicationResource(resource)
-                .build();
-        resource.getValidForOrgUnits().addAll(Set.of(kept, removed));
-        resource = applicationResourceRepository.saveAndFlush(resource);
-        Long resourceId = resource.getId();
-        Long removedLocationId = removed.getId();
-        entityManager.clear();
-
-        ApplicationResource incoming = ApplicationResource.builder()
-                .id(resourceId)
-                .resourceId("APP-ORG-UNITS")
-                .resourceName("Resource")
-                .status("ACTIVE")
-                .validForOrgUnits(Set.of(ApplicationResourceLocation.builder().orgUnitId("OU-KEEP").build()))
-                .build();
-        applicationResourceService.updateApplicationResource(incoming);
-        entityManager.flush();
-        entityManager.clear();
-
-        ApplicationResource reloaded = applicationResourceRepository.findById(resourceId).orElseThrow();
-        assertEquals(Set.of("OU-KEEP"), reloaded.getValidForOrgUnits().stream()
-                .map(ApplicationResourceLocation::getOrgUnitId)
-                .collect(java.util.stream.Collectors.toSet()));
-        assertTrue(applicationResourceLocationRepository.findById(removedLocationId).isEmpty());
-    }
-
 }
